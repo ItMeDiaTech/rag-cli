@@ -1,0 +1,236 @@
+# RAG-CLI Default Configuration
+# ==============================
+
+# System Settings
+system:
+  name: "RAG-CLI"
+  version: "0.1.0"
+  debug: false
+  data_dir: "./data"
+  log_dir: "./logs"
+
+# Document Processing
+document_processing:
+  chunk_size: 500  # tokens
+  chunk_overlap: 100  # tokens
+  separators:
+    - "\n\n"
+    - "\n"
+    - ". "
+    - " "
+    - ""
+  supported_formats:
+    - ".md"
+    - ".txt"
+    - ".pdf"
+    - ".docx"
+    - ".html"
+  add_contextual_headers: true
+  metadata_fields:
+    - "source"
+    - "title"
+    - "section"
+    - "timestamp"
+    - "doc_type"
+
+# Embedding Configuration
+embeddings:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  dimensions: 384
+  batch_size: 32
+  normalize: true
+  cache_size: 1000  # LRU cache size
+  device: "cpu"  # or "cuda" if GPU available
+  max_seq_length: 256
+
+# Vector Store Configuration
+vector_store:
+  backend: "faiss"
+  index_type: "auto"  # auto, flat, hnsw, ivf
+  index_params:
+    flat:
+      metric: "l2"  # l2 or ip (inner product)
+    hnsw:
+      M: 32  # number of connections
+      ef_construction: 200
+      ef_search: 100
+    ivf:
+      nlist: 100
+      nprobe: 10
+  save_path: "./data/vectors/vectors.index"
+  metadata_path: "./data/vectors/metadata.pkl"
+  auto_save: true
+  backup_enabled: true
+  backup_count: 3
+
+# Retrieval Configuration
+retrieval:
+  # Hybrid search weights
+  vector_weight: 0.7
+  keyword_weight: 0.3
+
+  # Two-stage retrieval
+  initial_candidates: 10
+  final_results: 5
+
+  # Reranking
+  use_reranker: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  reranker_batch_size: 16
+
+  # Search parameters
+  min_score_threshold: 0.5
+  timeout_seconds: 10
+
+  # Caching
+  cache_enabled: true
+  cache_ttl_seconds: 3600  # 1 hour
+
+# Claude Integration
+claude:
+  model: "claude-haiku-4-5-20251001"
+  # Alternative models (uncomment to use)
+  # model: "claude-3-5-sonnet-20241022"
+  # model: "claude-3-opus-20240229"
+
+  api_key_env: "ANTHROPIC_API_KEY"  # Environment variable name
+
+  # API settings
+  max_tokens: 1024
+  temperature: 0.7
+  stream: true
+  timeout_seconds: 30
+
+  # Retry configuration
+  max_retries: 3
+  retry_delay: 1  # seconds
+  exponential_backoff: true
+
+  # Response settings
+  include_citations: true
+  citation_format: "[Source: {filename}]"
+
+  # Prompt template
+  system_prompt: |
+    You are a helpful assistant with access to retrieved documentation.
+    Answer questions based only on the provided context.
+    Always cite your sources using the format [Source: filename].
+    If the context doesn't contain enough information, clearly state this.
+
+  # Cost tracking
+  track_usage: true
+  warn_cost_threshold: 1.00  # dollars
+
+# Monitoring Configuration
+monitoring:
+  # Logging
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_format: "json"  # json or text
+  log_file: "./logs/rag-cli.log"
+  log_rotation:
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+
+  # Metrics
+  track_metrics: true
+  metrics_port: 9090  # Prometheus metrics port
+
+  # TCP Server (PowerShell monitoring)
+  tcp_server:
+    enabled: true
+    host: "127.0.0.1"
+    port: 9999
+    endpoints:
+      - "/status"
+      - "/logs"
+      - "/metrics"
+      - "/health"
+
+  # Performance tracking
+  track_latency: true
+  latency_buckets:
+    - 0.1
+    - 0.5
+    - 1.0
+    - 2.5
+    - 5.0
+    - 10.0
+
+# Plugin Configuration (Claude Code)
+plugin:
+  enabled: true
+
+  # Agent Skills
+  skills:
+    rag_retrieval:
+      enabled: true
+      auto_invoke: true
+      progressive_disclosure: true
+
+  # Hooks
+  hooks:
+    user_prompt_submit:
+      enabled: true
+      intercept_all: false
+      pattern: "*"
+
+  # Commands
+  commands:
+    search:
+      enabled: true
+      shortcut: "/search"
+    enable:
+      enabled: true
+      shortcut: "/rag:enable"
+    disable:
+      enabled: true
+      shortcut: "/rag:disable"
+
+  # Settings
+  settings_path: ".claude/settings.json"
+  auto_enable_on_start: false
+
+# Testing Configuration
+testing:
+  golden_dataset: "./tests/golden_dataset.json"
+  ragas_metrics:
+    - "context_precision"
+    - "context_recall"
+    - "faithfulness"
+    - "answer_relevancy"
+  min_scores:
+    context_precision: 0.8
+    context_recall: 0.8
+    faithfulness: 0.7
+    answer_relevancy: 0.75
+
+# Performance Targets
+performance:
+  targets:
+    vector_search_ms: 100
+    end_to_end_seconds: 5
+    embedding_speed: 0.5  # seconds per 100 docs
+    index_speed: 1000  # docs per minute
+    memory_limit_gb: 2
+
+# Development Settings
+development:
+  hot_reload: false
+  verbose_errors: true
+  profile_enabled: false
+  mock_claude_api: false  # Use mock responses for testing
+  sample_data_path: "./tests/sample_data"
+
+# Security Settings
+security:
+  validate_inputs: true
+  max_query_length: 1000
+  max_document_size_mb: 50
+  allowed_file_extensions:
+    - ".md"
+    - ".txt"
+    - ".pdf"
+    - ".docx"
+    - ".html"
+  sanitize_html: true
+  log_queries: false  # Set to false in production for privacy
