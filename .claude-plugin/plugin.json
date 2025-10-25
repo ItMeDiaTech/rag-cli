@@ -60,6 +60,13 @@
         "path": "src/plugin/skills/rag-retrieval",
         "entry_point": "retrieve.py",
         "icon": "search"
+      },
+      {
+        "name": "update-rag",
+        "description": "Synchronize RAG-CLI plugin with Claude Code installation",
+        "path": "src/plugin/skills/update-rag",
+        "entry_point": "update.py",
+        "icon": "refresh"
       }
     ],
 
@@ -79,6 +86,12 @@
         "name": "rag:disable",
         "description": "Disable automatic RAG enhancement",
         "path": "src/plugin/commands/rag-disable.md"
+      },
+      {
+        "name": "update-rag",
+        "description": "Synchronize RAG-CLI plugin with Claude Code installation",
+        "path": "src/plugin/commands/update-rag.md",
+        "alias": ["rag:update", "rag-sync"]
       }
     ],
 
@@ -89,6 +102,13 @@
         "path": "src/plugin/hooks/user-prompt-submit.py",
         "enabled": true,
         "priority": 100
+      },
+      {
+        "name": "UpdateRagCommand",
+        "description": "Handle /update-rag command execution",
+        "path": "src/plugin/hooks/update-rag-hook.py",
+        "enabled": true,
+        "priority": 90
       }
     ],
 
