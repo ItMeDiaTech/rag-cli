@@ -38,8 +38,12 @@ setup(
             "rag-retrieve=scripts.retrieve:main",
             "rag-monitor=src.monitoring.tcp_server:main",
             "rag-skill=src.plugin.skills.rag_retrieval.retrieve:main",
+            "rag-sync=sync_plugin:main",
         ],
     },
+    scripts=[
+        "sync_plugin.py",
+    ],
     python_requires=">=3.8",
     classifiers=[
         "Development Status :: 3 - Alpha",
