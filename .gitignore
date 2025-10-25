@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.hypothesis/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Environment variables
+.env
+.env.local
+*.env
+
+# Data files (can be large)
+data/documents/*
+data/vectors/*
+!data/documents/.gitkeep
+!data/vectors/.gitkeep
+
+# Model cache
+.cache/
+~/.cache/
+
+# Monitoring
+*.pid
+
+# Temporary files
+*.tmp
+*.bak
+temp/
+tmp/
+
+# Claude Code specific
+.claude/settings.local.json
+
+# OS specific
+Thumbs.db
+Desktop.ini
+
+# Project specific
+*.index
+*.pkl
+*.faiss

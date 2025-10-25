@@ -1,0 +1,59 @@
+# Core Dependencies
+# =================
+
+# Document Processing
+langchain==0.1.0
+langchain-community==0.0.10
+pypdf2==3.0.1
+python-docx==1.0.0
+beautifulsoup4==4.12.0
+lxml==5.0.0
+pandoc==2.3
+
+# Embeddings & Vector Store
+sentence-transformers==2.3.1
+faiss-cpu==1.7.4
+torch==2.1.2
+transformers==4.36.0
+numpy==1.26.0
+
+# Retrieval
+rank-bm25==0.2.2
+
+# Claude Integration
+anthropic==0.18.1
+python-dotenv==1.0.0
+
+# Monitoring & Logging
+flask==3.0.0
+prometheus-client==0.19.0
+structlog==24.1.0
+
+# CLI Tools
+click==8.1.7
+tqdm==4.66.0
+rich==13.7.0
+
+# Configuration
+pyyaml==6.0.1
+pydantic==2.5.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.23.0
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+ragas==0.1.0
+datasets==2.14.0
+
+# Development Tools
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.7.0
+pre-commit==3.6.0
+
+# Utilities
+aiohttp==3.9.1
+asyncio==3.4.3
+pickle-mixin==1.0.2

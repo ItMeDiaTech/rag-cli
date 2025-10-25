@@ -1,0 +1,38 @@
+{
+  "session_id": "rag-cli-impl-20251025",
+  "created": "2025-10-25T00:00:00Z",
+  "last_updated": "2025-10-25T00:00:00Z",
+  "status": "active",
+  "current_phase": 1,
+  "current_task": "Setup project structure",
+  "completed_tasks": [
+    "Create implementation plan",
+    "Initialize session state"
+  ],
+  "checkpoints": [
+    {
+      "timestamp": "2025-10-25T00:00:00Z",
+      "description": "Implementation plan created",
+      "files_modified": [
+        "implement/plan.md",
+        "implement/state.json"
+      ]
+    }
+  ],
+  "progress": {
+    "total_phases": 7,
+    "completed_phases": 0,
+    "total_tasks": 45,
+    "completed_tasks": 2,
+    "percentage": 4
+  },
+  "git_commits": [],
+  "dependencies_installed": false,
+  "tests_passing": false,
+  "performance_metrics": {
+    "vector_search_latency": null,
+    "end_to_end_latency": null,
+    "retrieval_precision": null,
+    "faithfulness": null
+  }
+}
