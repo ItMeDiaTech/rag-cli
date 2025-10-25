@@ -34,8 +34,10 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "rag-index=scripts.index:index_documents",
-            "rag-retrieve=scripts.retrieve:retrieve",
+            "rag-index=scripts.index:main",
+            "rag-retrieve=scripts.retrieve:main",
+            "rag-monitor=src.monitoring.tcp_server:main",
+            "rag-skill=src.plugin.skills.rag_retrieval.retrieve:main",
         ],
     },
     python_requires=">=3.8",
