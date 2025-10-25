@@ -12,8 +12,26 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-# Add project root to path
-project_root = Path(__file__).resolve().parents[3]
+# Add project root to path - handle multiple possible locations
+# Could be in .claude/plugins/rag-cli (when synced to Claude Code)
+# or in development directory
+hook_file = Path(__file__).resolve()
+
+# Try to find project root: walk up from hook location
+project_root = None
+current = hook_file.parent
+
+for _ in range(10):  # Search up to 10 levels
+    # Check if this is the RAG-CLI root (has sync_plugin.py)
+    if (current / 'sync_plugin.py').exists():
+        project_root = current
+        break
+    current = current.parent
+
+# Fallback to hook's parent.parent.parent if not found
+if project_root is None:
+    project_root = hook_file.parents[3]
+
 sys.path.insert(0, str(project_root))
 
 from src.monitoring.logger import get_logger

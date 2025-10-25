@@ -12,13 +12,31 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-# Add project root to path
-project_root = Path(__file__).resolve().parents[3]
+# Add project root to path - handle multiple possible locations
+# Could be in .claude/plugins/rag-cli (when synced to Claude Code)
+# or in development directory
+hook_file = Path(__file__).resolve()
+
+# Try to find project root: walk up from hook location
+project_root = None
+current = hook_file.parent
+
+for _ in range(10):  # Search up to 10 levels
+    # Check if this is the RAG-CLI root (has src/core and src/monitoring)
+    if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
+        project_root = current
+        break
+    current = current.parent
+
+# Fallback to hook's parent.parent.parent if not found
+if project_root is None:
+    project_root = hook_file.parents[3]
+
 sys.path.insert(0, str(project_root))
 
 from src.core.config import get_config
 from src.core.vector_store import get_vector_store
-from src.core.embeddings import get_embedding_model
+from src.core.embeddings import get_embedding_generator
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_code_adapter import get_adapter
 from src.monitoring.logger import get_logger
@@ -121,12 +139,12 @@ def retrieve_context(query: str, settings: Dict[str, Any]) -> List[Dict[str, Any
         # Initialize components
         config = get_config()
         vector_store = get_vector_store()
-        embedding_model = get_embedding_model()
+        embedding_generator = get_embedding_generator()
 
         # Create retriever
         retriever = HybridRetriever(
             vector_store=vector_store,
-            embedding_model=embedding_model,
+            embedding_generator=embedding_generator,
             config=config
         )
 

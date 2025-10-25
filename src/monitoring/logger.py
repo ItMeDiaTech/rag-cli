@@ -117,11 +117,24 @@ class Logger:
 
         # Determine log file path
         # Priority: plugin directory > project directory
-        claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+        try:
+            # Use expanduser to properly handle ~ on all platforms
+            claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+
+            # Verify the path is valid and accessible on Windows
+            # Check if we're in a valid RAG-CLI installation
+            is_valid_plugin_dir = (
+                claude_plugin_dir.exists() and
+                (claude_plugin_dir / 'src' / 'core').exists()
+            )
+        except Exception as e:
+            is_valid_plugin_dir = False
+            claude_plugin_dir = None
+
         project_root = Path(__file__).resolve().parents[2]
 
-        # Use plugin directory for logs if it exists, otherwise use project directory
-        if claude_plugin_dir.exists():
+        # Use plugin directory for logs if it exists and is valid, otherwise use project directory
+        if is_valid_plugin_dir:
             logs_dir = claude_plugin_dir / 'logs'
         else:
             logs_dir = project_root / 'logs'
