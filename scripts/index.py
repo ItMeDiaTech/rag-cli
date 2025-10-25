@@ -205,7 +205,7 @@ def index_documents(
 
         console.print(sources_table)
 
-        console.print("\n[bold green]✓ Indexing completed successfully![/bold green]")
+        console.print("\n[bold green][OK] Indexing completed successfully![/bold green]")
 
         if verbose:
             # Show vector store statistics
@@ -214,7 +214,7 @@ def index_documents(
             console.print(f"[dim]  Memory usage: {stats['memory_usage_bytes'] / 1024 / 1024:.2f} MB[/dim]")
 
     except Exception as e:
-        console.print(f"\n[bold red]✗ Indexing failed:[/bold red] {str(e)}")
+        console.print(f"\n[bold red][FAIL] Indexing failed:[/bold red] {str(e)}")
         logger.exception("Indexing failed", error=str(e))
         sys.exit(1)
 
