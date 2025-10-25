@@ -2,6 +2,8 @@
 
 Manages the lifecycle of monitoring services (TCP server, web dashboard)
 including auto-start, health checks, and graceful shutdown.
+
+Also implements MCP (Model Context Protocol) server interface for Claude Code integration.
 """
 
 import subprocess
@@ -9,6 +11,7 @@ import time
 import socket
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -280,22 +283,218 @@ def open_dashboard_in_browser():
         logger.error("Web dashboard is not running")
 
 
+# MCP Server Implementation
+def send_mcp_response(response: Dict[str, Any]):
+    """Send an MCP protocol response to stdout."""
+    json_response = json.dumps(response)
+    sys.stdout.write(json_response + '\n')
+    sys.stdout.flush()
+
+
+def handle_mcp_initialize(request_id: int) -> Dict[str, Any]:
+    """Handle MCP initialize message."""
+    return {
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "result": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {
+                "tools": {
+                    "listChanged": True
+                }
+            },
+            "serverInfo": {
+                "name": "RAG-CLI",
+                "version": "0.1.0"
+            }
+        }
+    }
+
+
+def handle_mcp_list_tools(request_id: int) -> Dict[str, Any]:
+    """Handle MCP list tools request."""
+    return {
+        "jsonrpc": "2.0",
+        "id": request_id,
+        "result": {
+            "tools": [
+                {
+                    "name": "start_services",
+                    "description": "Start RAG-CLI monitoring services (TCP server and web dashboard)",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                },
+                {
+                    "name": "get_services_status_tool",
+                    "description": "Get the current status of RAG-CLI services",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                },
+                {
+                    "name": "open_dashboard",
+                    "description": "Open the RAG-CLI web dashboard in the default browser",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": []
+                    }
+                }
+            ]
+        }
+    }
+
+
+def handle_mcp_call_tool(request_id: int, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle MCP tool call request."""
+    try:
+        if tool_name == "start_services":
+            results = ensure_services_running()
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Services started: {json.dumps(results, indent=2)}"
+                        }
+                    ]
+                }
+            }
+        elif tool_name == "get_services_status_tool":
+            status = get_services_status()
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"Service status:\n{json.dumps(status, indent=2)}"
+                        }
+                    ]
+                }
+            }
+        elif tool_name == "open_dashboard":
+            open_dashboard_in_browser()
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Web dashboard opened in default browser at http://localhost:5000"
+                        }
+                    ]
+                }
+            }
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32601,
+                    "message": f"Unknown tool: {tool_name}"
+                }
+            }
+    except Exception as e:
+        logger.error(f"Error calling tool {tool_name}: {e}")
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {
+                "code": -32603,
+                "message": f"Internal error: {str(e)}"
+            }
+        }
+
+
+def run_mcp_server():
+    """Run the MCP server, reading from stdin and writing to stdout."""
+    logger.info("RAG-CLI MCP server starting")
+
+    # Auto-start services when MCP server starts
+    logger.info("Auto-starting services...")
+    ensure_services_running()
+
+    # Read and process MCP messages from stdin
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+
+            try:
+                message = json.loads(line)
+                request_id = message.get("id", 0)
+                method = message.get("method")
+                params = message.get("params", {})
+
+                logger.debug(f"MCP request: {method}")
+
+                if method == "initialize":
+                    response = handle_mcp_initialize(request_id)
+                elif method == "tools/list":
+                    response = handle_mcp_list_tools(request_id)
+                elif method == "tools/call":
+                    tool_name = params.get("name")
+                    arguments = params.get("arguments", {})
+                    response = handle_mcp_call_tool(request_id, tool_name, arguments)
+                else:
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "error": {
+                            "code": -32601,
+                            "message": f"Unknown method: {method}"
+                        }
+                    }
+
+                send_mcp_response(response)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid JSON received: {e}")
+            except Exception as e:
+                logger.error(f"Error processing MCP message: {e}")
+    except KeyboardInterrupt:
+        logger.info("MCP server interrupted")
+    except Exception as e:
+        logger.error(f"MCP server error: {e}")
+
+
+def main():
+    """Main entry point - runs MCP server."""
+    # Check if running as module from Claude Code (MCP mode)
+    # When run from Claude Code, stdin is not a TTY
+    if not sys.stdin.isatty():
+        # Run as MCP server
+        run_mcp_server()
+    else:
+        # Run as CLI tool
+        print("RAG-CLI Service Manager")
+        print("=" * 50)
+
+        # Ensure services are running
+        print("\nStarting services...")
+        results = ensure_services_running()
+        print(f"Results: {results}")
+
+        # Get status
+        print("\nService Status:")
+        status = get_services_status()
+        for service, info in status.items():
+            if isinstance(info, dict):
+                running = "✓ Running" if info.get('running') else "✗ Stopped"
+                print(f"  {info.get('name', service)}: {running}")
+                if info.get('url'):
+                    print(f"    URL: {info['url']}")
+
+
 if __name__ == '__main__':
-    # Test the service manager
-    print("RAG-CLI Service Manager")
-    print("=" * 50)
-
-    # Ensure services are running
-    print("\nStarting services...")
-    results = ensure_services_running()
-    print(f"Results: {results}")
-
-    # Get status
-    print("\nService Status:")
-    status = get_services_status()
-    for service, info in status.items():
-        if isinstance(info, dict):
-            running = "✓ Running" if info.get('running') else "✗ Stopped"
-            print(f"  {info.get('name', service)}: {running}")
-            if info.get('url'):
-                print(f"    URL: {info['url']}")
+    main()

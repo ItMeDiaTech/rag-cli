@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "rag-cli": {
+      "command": "python",
+      "args": [
+        "-m",
+        "src.monitoring.service_manager"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "RAG_AUTO_START": "true"
+      },
+      "cwd": "C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI"
+    }
+  }
+}
