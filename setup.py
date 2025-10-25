@@ -27,7 +27,7 @@ setup(
     description="A Retrieval-Augmented Generation CLI tool with Claude integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/rag-cli",
+    url="https://github.com/ItMeDiaTech/rag-cli",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     include_package_data=True,
@@ -57,7 +57,7 @@ setup(
     ],
     keywords="rag retrieval augmented generation claude ai nlp",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/rag-cli/issues",
-        "Source": "https://github.com/yourusername/rag-cli",
+        "Bug Reports": "https://github.com/ItMeDiaTech/rag-cli/issues",
+        "Source": "https://github.com/ItMeDiaTech/rag-cli",
     },
 )
