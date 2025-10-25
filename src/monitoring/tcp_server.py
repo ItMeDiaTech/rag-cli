@@ -361,22 +361,30 @@ app = Flask(__name__)
 @app.route('/status')
 def flask_status():
     """Flask endpoint for status."""
-    server = MonitoringServer()
-    return server._get_status()
+    server = get_monitoring_server()
+    return jsonify(json.loads(server._get_status()))
 
 
 @app.route('/metrics')
 def flask_metrics():
     """Flask endpoint for metrics."""
-    server = MonitoringServer()
-    return server._get_metrics()
+    server = get_monitoring_server()
+    return jsonify(json.loads(server._get_metrics()))
 
 
 @app.route('/health')
 def flask_health():
     """Flask endpoint for health."""
-    server = MonitoringServer()
-    return server._get_health()
+    server = get_monitoring_server()
+    return jsonify(json.loads(server._get_health()))
+
+
+@app.route('/logs')
+def flask_logs():
+    """Flask endpoint for logs."""
+    server = get_monitoring_server()
+    logs = server._get_logs()
+    return jsonify({"logs": logs})
 
 
 # Singleton server instance
@@ -421,29 +429,14 @@ def start_monitoring_server():
 if __name__ == "__main__":
     import sys
 
-    # Test monitoring server
-    print("Starting RAG-CLI Monitoring Server...")
-
-    server = MonitoringServer()
-    server.start()
-
-    # Update some metrics for testing
-    metrics_collector.record_latency("vector_search", 45.2)
-    metrics_collector.record_latency("claude_api", 850.0)
-    metrics_collector.record_query()
-    metrics_collector.record_cache(True)
-    metrics_collector.add_log("INFO", "Test server started")
-    metrics_collector.update_component_status("vector_store", "operational")
-    metrics_collector.update_component_status("claude", "ready")
-
-    print(f"Server running on {server.host}:{server.port}")
-    print("Commands: STATUS, LOGS, METRICS, HEALTH")
+    # Start Flask HTTP server instead of raw TCP
+    print("Starting RAG-CLI Monitoring Server (HTTP)...")
+    print("Server running on http://localhost:9999")
+    print("Endpoints: /status, /metrics, /health, /logs")
     print("Press Ctrl+C to stop...")
 
     try:
-        while True:
-            time.sleep(1)
+        app.run(host="127.0.0.1", port=9999, debug=False, use_reloader=False)
     except KeyboardInterrupt:
         print("\nShutting down...")
-        server.stop()
         sys.exit(0)

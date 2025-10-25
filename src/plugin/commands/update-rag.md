@@ -1,12 +1,25 @@
 # /update-rag - Update RAG-CLI Plugin
 
-Synchronize RAG-CLI plugin files with your Claude Code installation.
+Execute the RAG-CLI plugin synchronization script to update all plugin files.
 
-## Usage
+## Task
 
+Run the following command to synchronize the plugin:
+
+```bash
+python scripts/sync_plugin.py
 ```
-/update-rag
-```
+
+This will:
+1. Copy all slash commands to ~/.claude/commands/
+2. Copy all hooks to ~/.claude/hooks/rag-cli/
+3. Copy all skills to ~/.claude/skills/rag-cli/
+4. Create/update MCP server configuration
+5. Report what was updated
+
+After the sync completes, inform the user that they should restart Claude Code for changes to take effect.
+
+---
 
 ## Description
 

@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 from src.core.config import get_config
 from src.core.vector_store import get_vector_store
-from src.core.embeddings import get_embedding_model
+from src.core.embeddings import get_embedding_generator
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_integration import ClaudeAssistant
 from src.monitoring.logger import get_logger
@@ -63,10 +63,10 @@ class RAGMCPServer:
 
             # Initialize components
             self.vector_store = get_vector_store()
-            self.embedding_model = get_embedding_model()
+            self.embedding_model = get_embedding_generator()
             self.retriever = HybridRetriever(
                 vector_store=self.vector_store,
-                embedding_model=self.embedding_model,
+                embedding_generator=self.embedding_model,
                 config=self.config
             )
             self.assistant = ClaudeAssistant(self.config)

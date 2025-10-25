@@ -18,7 +18,7 @@ Execute the following steps:
    - You can use: `Start-Process python -ArgumentList "-m src.monitoring.tcp_server" -WindowStyle Hidden`
 
 3. **Launch Windows Terminal with monitoring dashboard**
-   - Execute: `wt.exe -d "." "pwsh" "-NoExit" "-Command" ".\scripts\monitor.ps1 WATCH"`
+   - Execute: `wt.exe -d "." pwsh -NoExit -Command ".\scripts\monitor.ps1 WATCH"`
    - This opens a new Windows Terminal window with the PowerShell WATCH dashboard
    - The dashboard updates every 5 seconds showing:
      - Performance metrics (latencies for vector search, keyword search, reranking, Claude API)
