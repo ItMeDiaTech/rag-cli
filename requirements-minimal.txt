@@ -1,0 +1,35 @@
+# Minimal Requirements for Claude Code Deployment
+# =================================================
+# These are the essential packages needed to run RAG-CLI
+# as a Claude Code plugin (no API key required)
+
+# Document Processing
+langchain>=0.1.0
+langchain-community>=0.0.10
+PyPDF2>=3.0.0
+python-docx>=1.0.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+markdown>=3.5.0
+
+# Embeddings & Vector Store
+sentence-transformers>=2.3.1
+faiss-cpu>=1.9.0
+numpy>=1.24.0
+
+# Retrieval
+rank-bm25>=0.2.2
+
+# Configuration
+pyyaml>=6.0
+pydantic>=2.5.0
+
+# Monitoring
+psutil>=5.9.0
+
+# CLI Tools
+click>=8.1.0
+tqdm>=4.65.0
+
+# Note: anthropic package is NOT required for Claude Code mode
+# It's only needed if you want to run in standalone mode

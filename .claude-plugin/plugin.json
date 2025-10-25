@@ -59,7 +59,7 @@
         "description": "Query documents using semantic search",
         "path": "src/plugin/skills/rag-retrieval",
         "entry_point": "retrieve.py",
-        "icon": "🔍"
+        "icon": "search"
       }
     ],
 
