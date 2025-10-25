@@ -1,0 +1,172 @@
+{
+  "name": "RAG-CLI",
+  "version": "0.1.0",
+  "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses",
+  "author": "RAG-CLI Team",
+  "repository": "https://github.com/yourusername/rag-cli",
+  "license": "MIT",
+
+  "requirements": {
+    "claude_code_version": ">=1.0.0",
+    "python": ">=3.8",
+    "dependencies": [
+      "sentence-transformers",
+      "faiss-cpu",
+      "anthropic",
+      "langchain",
+      "flask",
+      "click",
+      "tqdm",
+      "pyyaml",
+      "psutil"
+    ]
+  },
+
+  "configuration": {
+    "environment_variables": [
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "description": "API key for Claude Haiku model",
+        "required": true
+      },
+      {
+        "name": "RAG_CLI_CONFIG",
+        "description": "Path to custom configuration file",
+        "required": false,
+        "default": "config/default.yaml"
+      },
+      {
+        "name": "RAG_CLI_LOG_LEVEL",
+        "description": "Logging level (DEBUG, INFO, WARNING, ERROR)",
+        "required": false,
+        "default": "INFO"
+      }
+    ],
+
+    "settings": {
+      "vector_store_path": "data/vectors",
+      "document_path": "data/documents",
+      "log_path": "logs",
+      "monitoring_port": 9999,
+      "auto_rag_enabled": false
+    }
+  },
+
+  "components": {
+    "skills": [
+      {
+        "name": "rag-retrieval",
+        "description": "Query documents using semantic search",
+        "path": "src/plugin/skills/rag-retrieval",
+        "entry_point": "retrieve.py",
+        "icon": "🔍"
+      }
+    ],
+
+    "commands": [
+      {
+        "name": "search",
+        "description": "Search indexed documents and get AI answers",
+        "path": "src/plugin/commands/search.md",
+        "alias": ["rag", "query"]
+      },
+      {
+        "name": "rag:enable",
+        "description": "Enable automatic RAG enhancement",
+        "path": "src/plugin/commands/rag-enable.md"
+      },
+      {
+        "name": "rag:disable",
+        "description": "Disable automatic RAG enhancement",
+        "path": "src/plugin/commands/rag-disable.md"
+      }
+    ],
+
+    "hooks": [
+      {
+        "name": "UserPromptSubmit",
+        "description": "Enhance queries with document context",
+        "path": "src/plugin/hooks/user-prompt-submit.py",
+        "enabled": true,
+        "priority": 100
+      }
+    ],
+
+    "mcp_servers": [
+      {
+        "name": "rag-server",
+        "description": "MCP server for RAG operations",
+        "command": "python",
+        "args": ["-m", "src.plugin.mcp.server"],
+        "env": {
+          "PYTHONPATH": "${plugin_path}"
+        }
+      }
+    ]
+  },
+
+  "scripts": {
+    "install": "pip install -r requirements.txt",
+    "setup": "python scripts/setup.py",
+    "index": "python scripts/index.py --input data/documents",
+    "test": "pytest tests/",
+    "monitor": "python -m src.monitoring.tcp_server",
+    "clean": "rm -rf data/vectors/* logs/*"
+  },
+
+  "features": {
+    "document_processing": {
+      "supported_formats": ["txt", "md", "pdf", "docx", "html"],
+      "chunk_size": 500,
+      "chunk_overlap": 50
+    },
+
+    "embeddings": {
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "dimensions": 384,
+      "cache_enabled": true
+    },
+
+    "retrieval": {
+      "method": "hybrid",
+      "vector_weight": 0.7,
+      "keyword_weight": 0.3,
+      "reranking": true,
+      "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    },
+
+    "generation": {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 4096,
+      "streaming": true,
+      "temperature": 0.7
+    },
+
+    "monitoring": {
+      "tcp_server": true,
+      "port": 9999,
+      "metrics_enabled": true,
+      "log_rotation": true
+    }
+  },
+
+  "performance": {
+    "vector_search_latency": "<100ms",
+    "end_to_end_latency": "<5s",
+    "memory_usage": "<2GB",
+    "index_capacity": "1M documents"
+  },
+
+  "documentation": {
+    "readme": "README.md",
+    "api_docs": "docs/api.md",
+    "user_guide": "docs/user-guide.md",
+    "development": "docs/development.md"
+  },
+
+  "support": {
+    "issues": "https://github.com/yourusername/rag-cli/issues",
+    "discussions": "https://github.com/yourusername/rag-cli/discussions",
+    "email": "support@rag-cli.example.com"
+  }
+}
