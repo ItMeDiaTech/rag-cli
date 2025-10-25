@@ -154,7 +154,7 @@ Use conventional commits:
 
 ## Key Technical Decisions
 
-1. **Local-first**: Everything runs locally except Claude API
+1. **Local-first**: Everything runs locally except Claude API and online research calls
 2. **Lightweight model**: all-MiniLM-L6-v2 for speed (0.5s/100 docs)
 3. **FAISS for development**: Simple, fast, no persistence complexity
 4. **Hybrid retrieval**: Better accuracy than pure vector search

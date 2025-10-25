@@ -108,12 +108,41 @@ When the user asks a question that might be answered by documentation:
 4. Include top 3-5 most relevant chunks in your response
 5. Cite sources when using retrieved information
 
-## When to Use
+## When to Activate RAG Retrieval
 
-- Questions about product features or documentation
-- Technical how-to questions
-- Requests for specific information from documents
-- Troubleshooting issues covered in documentation
+### Code and Implementation Scenarios
+
+Activate retrieval when the user asks about:
+- Specific functions, classes, or modules in their codebase
+- Implementation patterns or examples from existing code
+- How certain features were previously implemented
+- Code architecture or design decisions
+- API usage patterns from their own code
+- Function signatures and parameter documentation
+- Best practices demonstrated in their codebase
+
+### Coding Documentation Scenarios
+
+Retrieve context for:
+- API documentation queries
+- README files and setup instructions
+- Configuration documentation
+- Inline code comments and docstrings
+- Architecture decision records (ADRs)
+- Technical specifications
+- Development guidelines and standards
+
+### Debug and Troubleshooting Scenarios
+
+Use retrieval for:
+- Error messages that have appeared before
+- Stack traces and their solutions
+- Performance optimization patterns
+- Bug fixes and their explanations
+- Test failures and resolutions
+- Logging output analysis
+- System behavior investigations
+- Implementation debugging steps
 
 ## Retrieval Process
 
