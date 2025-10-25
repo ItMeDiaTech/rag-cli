@@ -22,6 +22,7 @@ from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_model
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_integration import ClaudeAssistant
+from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from src.monitoring.logger import get_logger
 from src.monitoring.tcp_server import metrics_collector
 
@@ -192,22 +193,38 @@ def perform_retrieval(
             result["answer"] = f"No relevant documents found for your query. Try lowering the threshold or using different keywords."
             return result
 
-        # Generate answer with Claude if requested
+        # Generate answer based on mode
         if use_llm:
-            claude_start = time.time()
+            # Check if we're in Claude Code mode
+            if is_claude_code_mode():
+                logger.info("Claude Code mode - formatting context for Claude")
 
-            assistant = ClaudeAssistant(config)
-            response = assistant.generate_response(query, filtered_docs)
+                # Use adapter to format response for Claude Code
+                adapter = get_adapter()
+                formatted_response = adapter.format_skill_response(filtered_docs, query)
 
-            claude_time = (time.time() - claude_start) * 1000
-            result["metrics"]["claude_api_ms"] = claude_time
-            result["answer"] = response["answer"]
+                result["answer"] = formatted_response.get("context", "")
+                result["mode"] = "claude_code"
+                result["message"] = formatted_response.get("message", "")
 
-            metrics_collector.record_latency("claude_api", claude_time)
+                logger.info("Context formatted for Claude Code",
+                           docs_count=len(filtered_docs))
+            else:
+                # Standalone mode - use Claude API
+                claude_start = time.time()
 
-            logger.info("Answer generated successfully",
-                       answer_length=len(response["answer"]),
-                       sources_used=len(filtered_docs))
+                assistant = ClaudeAssistant(config)
+                response = assistant.generate_response(query, filtered_docs)
+
+                claude_time = (time.time() - claude_start) * 1000
+                result["metrics"]["claude_api_ms"] = claude_time
+                result["answer"] = response["answer"]
+
+                metrics_collector.record_latency("claude_api", claude_time)
+
+                logger.info("Answer generated successfully",
+                           answer_length=len(response["answer"]),
+                           sources_used=len(filtered_docs))
 
         # Calculate total time
         total_time = (time.time() - start_time) * 1000

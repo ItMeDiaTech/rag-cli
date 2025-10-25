@@ -17,7 +17,7 @@ A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claud
 
 - Python 3.8 or higher
 - 4GB RAM minimum (8GB recommended)
-- Anthropic API key for Claude integration
+- (Optional) Anthropic API key for standalone mode
 
 ### Installation
 
@@ -33,13 +33,19 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-### Environment Setup
+### Claude Code Deployment
 
-Create a `.env` file or set environment variables:
+When running as a Claude Code plugin, NO API key is required. The system automatically detects the Claude Code environment and uses its internal interface.
+
+### Standalone Setup (Optional)
+
+For standalone operation or testing outside Claude Code:
 
 ```bash
+# Set API key for direct Claude API access
 export ANTHROPIC_API_KEY="your-api-key-here"
 export RAG_CLI_LOG_LEVEL="INFO"
+export RAG_CLI_MODE="standalone"
 ```
 
 ### Basic Usage
@@ -57,6 +63,33 @@ python scripts/retrieve.py "How to configure API authentication?"
 3. **Start monitoring server**:
 ```bash
 python -m src.monitoring.tcp_server
+```
+
+## Operation Modes
+
+RAG-CLI supports three operation modes:
+
+### 1. Claude Code Mode (Default)
+- **No API key required**
+- Automatically detected when running as Claude Code plugin
+- Returns formatted context for Claude's internal processing
+- Optimal performance with zero API costs
+
+### 2. Standalone Mode
+- Requires Anthropic API key
+- Direct API calls to Claude
+- Full control over model parameters
+- Useful for testing and development
+
+### 3. Hybrid Mode
+- Auto-detects environment
+- Uses Claude Code when available
+- Falls back to API when needed
+- Maximum flexibility
+
+Set mode via environment variable:
+```bash
+export RAG_CLI_MODE="claude_code"  # or "standalone" or "hybrid"
 ```
 
 ## Architecture
@@ -102,27 +135,40 @@ RAG-CLI/
 ### Core Settings (`config/default.yaml`)
 
 ```yaml
+# Operation Mode
+mode:
+  operation: hybrid     # claude_code, standalone, or hybrid
+  claude_code:
+    format_context: true
+    include_metadata: true
+    max_context_length: 10000
+
+# Embeddings
 embeddings:
   model_name: sentence-transformers/all-MiniLM-L6-v2
   model_dim: 384
   batch_size: 32
   cache_enabled: true
 
+# Vector Store
 vector_store:
   type: faiss
   index_type: flat    # Use 'hnsw' for >100K documents
   save_path: data/vectors
 
+# Retrieval
 retrieval:
   top_k: 5
   hybrid_ratio: 0.7   # 70% vector, 30% keyword
   rerank: true
   reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2
 
+# Claude (for standalone mode)
 claude:
   model: claude-haiku-4-5-20251001
   max_tokens: 4096
   temperature: 0.7
+  api_key_env: ANTHROPIC_API_KEY  # Only needed for standalone
 ```
 
 ## Claude Code Plugin
@@ -282,10 +328,16 @@ pytest tests/test_core.py::TestEmbeddings
 - Enable caching in configuration
 - Use HNSW index for large datasets
 
-**API errors**:
+**API errors** (Standalone mode only):
 - Verify ANTHROPIC_API_KEY is set
 - Check rate limits
+- Switch to Claude Code mode if running as plugin
 - Review logs: `tail -f logs/rag_cli.log`
+
+**Mode detection issues**:
+- Check current mode: `python -c "from src.core.claude_code_adapter import get_adapter; print(get_adapter().get_mode_info())"`
+- Force mode: `export RAG_CLI_MODE="claude_code"`
+- Verify .claude directory exists for Claude Code
 
 ### Debug Mode
 

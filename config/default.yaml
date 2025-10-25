@@ -9,6 +9,20 @@ system:
   data_dir: "./data"
   log_dir: "./logs"
 
+# Operation Mode Configuration
+mode:
+  # Options: claude_code, standalone, hybrid
+  # - claude_code: Use Claude Code's internal interface (no API key needed)
+  # - standalone: Use Anthropic API directly (requires API key)
+  # - hybrid: Auto-detect based on environment
+  operation: hybrid
+
+  # Claude Code specific settings
+  claude_code:
+    format_context: true
+    include_metadata: true
+    max_context_length: 10000
+
 # Document Processing
 document_processing:
   chunk_size: 500  # tokens

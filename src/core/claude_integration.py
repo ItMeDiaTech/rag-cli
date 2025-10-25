@@ -11,12 +11,19 @@ from typing import List, Dict, Any, Optional, Generator, Tuple
 from dataclasses import dataclass, asdict
 from datetime import datetime
 
-import anthropic
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
-from anthropic.types import MessageStreamEvent
+try:
+    import anthropic
+    from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+    from anthropic.types import MessageStreamEvent
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    ANTHROPIC_AVAILABLE = False
+    anthropic = None
+    Anthropic = None
 
 from src.core.config import get_config
 from src.core.retrieval_pipeline import RetrievalResult
+from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from src.monitoring.logger import get_logger, get_metrics_logger, log_api_call
 
 
@@ -46,6 +53,10 @@ class ClaudeIntegration:
         """
         config = get_config()
 
+        # Get adapter for mode detection
+        self.adapter = get_adapter()
+        self.is_claude_code = is_claude_code_mode()
+
         # API configuration
         self.model = config.claude.model
         self.max_tokens = config.claude.max_tokens
@@ -69,19 +80,26 @@ class ClaudeIntegration:
         self.total_tokens_used = {"input": 0, "output": 0}
         self.total_cost = 0.0
 
-        # Get API key
+        # Get API key (only needed in standalone mode)
         if api_key:
             self.api_key = api_key
         else:
             self.api_key = os.environ.get(config.claude.api_key_env)
 
-        if not self.api_key:
-            logger.warning("No API key found, Claude integration will not work")
+        # Initialize client based on mode
+        if self.is_claude_code:
+            logger.info("Claude Code mode detected - API calls will be skipped")
+            self.client = None
+        elif not self.api_key:
+            logger.warning("No API key found - operating in context-only mode")
+            self.client = None
+        elif not ANTHROPIC_AVAILABLE:
+            logger.warning("Anthropic package not installed - operating in context-only mode")
             self.client = None
         else:
-            # Initialize Anthropic client
+            # Initialize Anthropic client for standalone mode
             self.client = Anthropic(api_key=self.api_key)
-            logger.info(f"Claude integration initialized", model=self.model)
+            logger.info(f"Claude integration initialized in standalone mode", model=self.model)
 
         # Response cache (simple in-memory cache)
         self.cache = {}
@@ -237,11 +255,35 @@ Please provide a comprehensive answer based on the context above."""
         Returns:
             Claude's response with metadata
         """
-        if not self.client:
-            logger.error("Claude client not initialized (no API key)")
+        # Check if we're in Claude Code mode
+        if self.is_claude_code:
+            logger.debug("Claude Code mode - returning formatted context instead of API call")
+
+            # Format context for Claude Code
+            context_response = self.adapter.format_context_for_claude(
+                documents=[{"content": r.text, "source": r.source, "score": r.score}
+                          for r in retrieval_results],
+                query=query
+            )
+
             return ClaudeResponse(
-                answer="Claude API is not configured. Please set your API key.",
-                sources=[],
+                answer=context_response.context,
+                sources=context_response.sources,
+                token_usage={"input": 0, "output": 0},
+                latency_seconds=0,
+                model="claude-code-internal",
+                cached=False
+            )
+
+        # Check if client is available for standalone mode
+        if not self.client:
+            logger.warning("No Claude client available - returning context only")
+
+            # Fall back to context-only response
+            context = self._build_context(retrieval_results)
+            return ClaudeResponse(
+                answer=f"### Retrieved Context\n\n{context}\n\n### Note\nClaude API is not configured. The above context has been retrieved for your query: {query}",
+                sources=[os.path.basename(r.source) for r in retrieval_results if r.source],
                 token_usage={"input": 0, "output": 0},
                 latency_seconds=0,
                 model=self.model,
@@ -504,6 +546,31 @@ def get_claude_integration(api_key: Optional[str] = None) -> ClaudeIntegration:
         _claude_integration = ClaudeIntegration(api_key)
 
     return _claude_integration
+
+
+# Alias for backward compatibility
+class ClaudeAssistant(ClaudeIntegration):
+    """Backward compatibility alias for ClaudeIntegration."""
+    pass
+
+
+# Singleton instance
+_claude_instance: Optional[ClaudeIntegration] = None
+
+
+def get_claude_integration(api_key: Optional[str] = None) -> ClaudeIntegration:
+    """Get or create Claude integration instance.
+
+    Args:
+        api_key: Optional API key override
+
+    Returns:
+        Claude integration instance
+    """
+    global _claude_instance
+    if _claude_instance is None:
+        _claude_instance = ClaudeIntegration(api_key)
+    return _claude_instance
 
 
 if __name__ == "__main__":

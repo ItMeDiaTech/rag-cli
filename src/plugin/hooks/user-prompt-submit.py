@@ -20,6 +20,7 @@ from src.core.config import get_config
 from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_model
 from src.core.retrieval_pipeline import HybridRetriever
+from src.core.claude_code_adapter import get_adapter
 from src.monitoring.logger import get_logger
 
 logger = get_logger(__name__)
@@ -166,25 +167,9 @@ def format_enhanced_query(query: str, documents: List[Dict[str, Any]]) -> str:
     if not documents:
         return query
 
-    enhanced = []
-    enhanced.append("### Context from Knowledge Base\n")
-
-    for i, doc in enumerate(documents, 1):
-        source = doc.get("source", "Unknown")
-        content = doc.get("content", "")
-        score = doc.get("score", 0)
-
-        # Truncate long content
-        if len(content) > 500:
-            content = content[:500] + "..."
-
-        enhanced.append(f"**[{i}] {source}** (Relevance: {score:.1%})")
-        enhanced.append(f"{content}\n")
-
-    enhanced.append("### User Query\n")
-    enhanced.append(query)
-
-    return "\n".join(enhanced)
+    # Use adapter for consistent formatting
+    adapter = get_adapter()
+    return adapter.format_hook_enhancement(documents, query)
 
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
