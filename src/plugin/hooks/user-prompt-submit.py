@@ -22,6 +22,7 @@ from src.core.embeddings import get_embedding_model
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_code_adapter import get_adapter
 from src.monitoring.logger import get_logger
+from src.monitoring.service_manager import ensure_services_running
 
 logger = get_logger(__name__)
 
@@ -182,6 +183,12 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         Modified event data
     """
     try:
+        # Ensure monitoring services are running (auto-start if needed)
+        try:
+            ensure_services_running()
+        except Exception as e:
+            logger.debug(f"Service startup check failed: {e}")
+
         # Extract query from event
         query = event.get("prompt", "")
         if not query:

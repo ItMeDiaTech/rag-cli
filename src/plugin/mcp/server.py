@@ -22,6 +22,7 @@ from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_integration import ClaudeAssistant
 from src.monitoring.logger import get_logger
 from src.monitoring.tcp_server import metrics_collector
+from src.monitoring.service_manager import ensure_services_running
 
 logger = get_logger(__name__)
 
@@ -46,6 +47,14 @@ class RAGMCPServer:
             return
 
         try:
+            # Ensure monitoring services are running
+            logger.info("Ensuring monitoring services are running...")
+            try:
+                services_status = ensure_services_running()
+                logger.info(f"Monitoring services status: {services_status}")
+            except Exception as e:
+                logger.warning(f"Failed to start monitoring services: {e}")
+
             # Check if vector store exists
             vector_store_path = project_root / "data" / "vectors" / "faiss_index"
             if not vector_store_path.exists():

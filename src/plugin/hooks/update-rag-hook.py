@@ -17,6 +17,7 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from src.monitoring.logger import get_logger
+from src.monitoring.service_manager import ensure_services_running
 
 logger = get_logger(__name__)
 
@@ -170,6 +171,12 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         Modified event with command output
     """
     try:
+        # Ensure monitoring services are running (auto-start if needed)
+        try:
+            ensure_services_running()
+        except Exception as e:
+            logger.debug(f"Service startup check failed: {e}")
+
         prompt = event.get('prompt', '')
 
         # Check if this is an /update-rag command
