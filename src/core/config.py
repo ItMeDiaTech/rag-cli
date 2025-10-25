@@ -16,6 +16,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def resolve_data_path(relative_path: str) -> str:
+    """Resolve a data path to work from both project and plugin directories.
+
+    When running from Claude Code plugin, uses plugin directory.
+    When running from project, uses project directory.
+
+    Args:
+        relative_path: Relative path like "data/vectors/vectors.index"
+
+    Returns:
+        Absolute path resolved to correct base directory
+    """
+    claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+    project_root = Path(__file__).resolve().parents[2]
+
+    # Use plugin directory for data if it exists, otherwise use project directory
+    if claude_plugin_dir.exists():
+        base_dir = claude_plugin_dir
+    else:
+        base_dir = project_root
+
+    return str(base_dir / relative_path)
+
+
 class DocumentProcessingConfig(BaseModel):
     """Document processing configuration."""
     chunk_size: int = Field(500, ge=100, le=2000)
@@ -48,11 +72,23 @@ class VectorStoreConfig(BaseModel):
     backend: str = "faiss"
     index_type: str = Field("auto", pattern="^(auto|flat|hnsw|ivf)$")
     index_params: Dict[str, Any] = {}
-    save_path: str = "./data/vectors/vectors.index"
-    metadata_path: str = "./data/vectors/metadata.pkl"
+    save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/vectors.index"))
+    metadata_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/metadata.pkl"))
     auto_save: bool = True
     backup_enabled: bool = True
     backup_count: int = Field(3, ge=0, le=10)
+
+    @validator('save_path', 'metadata_path', pre=True)
+    @classmethod
+    def resolve_paths(cls, v):
+        """Resolve data paths to work from both project and plugin directories."""
+        if v and v.startswith('./data/'):
+            # If it's a relative data path, resolve it
+            return resolve_data_path(v.lstrip('./'))
+        elif v and not Path(v).is_absolute() and 'data/' in v:
+            # If it's any relative path with data in it, resolve it
+            return resolve_data_path(v)
+        return v
 
 
 class RetrievalConfig(BaseModel):

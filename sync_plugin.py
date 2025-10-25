@@ -76,6 +76,7 @@ class PluginSyncer:
     # Files/patterns to preserve in .claude directory
     PRESERVED_PATTERNS = {
         'logs/',
+        'data/vectors/',
         '*.log',
         '*state.json',
         '.DS_Store',
@@ -92,10 +93,16 @@ class PluginSyncer:
         'mcp': 'mcp',
     }
 
-    # Core directories to symlink
-    SYMLINK_DIRS = {
+    # Core directories to copy (no symlinks)
+    CORE_DIRS = {
         'core': 'src/core',
         'monitoring': 'src/monitoring',
+    }
+
+    # Data directories to sync
+    DATA_DIRS = {
+        'documents': 'data/documents',
+        'vectors': 'data/vectors',
     }
 
     def __init__(self, config: SyncConfig):
@@ -219,50 +226,6 @@ class PluginSyncer:
 
         return count
 
-    def create_symlink(self, src: Path, dst: Path) -> bool:
-        """Create symlink for directory"""
-        try:
-            if dst.exists() or dst.is_symlink():
-                if dst.is_symlink():
-                    logger.debug(f"Symlink already exists: {dst}")
-                    return False
-                elif self.should_preserve(dst):
-                    logger.info(f"Preserving existing: {dst}")
-                    return False
-                else:
-                    logger.info(f"Removing existing: {dst}")
-                    if dst.is_dir():
-                        shutil.rmtree(dst)
-                    else:
-                        dst.unlink()
-
-            dst.parent.mkdir(parents=True, exist_ok=True)
-
-            if self.config.dry_run:
-                logger.info(f"[DRY RUN] Would create symlink: {dst.name} -> {src}")
-                self.result.symlinks_created.append(f"{dst.name} -> {src}")
-                return True
-
-            # Use relative symlink for portability
-            try:
-                # Try absolute symlink first (requires admin on Windows)
-                dst.symlink_to(src)
-                logger.info(f"Created symlink: {dst.name} -> {src}")
-                self.result.symlinks_created.append(f"{dst.name} -> {src}")
-                return True
-            except OSError as e:
-                if "Insufficient privileges" in str(e) and sys.platform == "win32":
-                    logger.warning(f"Cannot create symlink (admin required): {dst.name}")
-                    logger.info(f"Falling back to copy for: {src.name}")
-                    self.sync_directory(src, dst, src.name)
-                    return False
-                raise
-
-        except Exception as e:
-            error_msg = f"Failed to create symlink {dst.name}: {e}"
-            logger.error(error_msg)
-            self.result.errors.append(error_msg)
-            return False
 
     def get_tracked_files(self, directory: Path, base_type: str) -> Set[Path]:
         """Get files that are tracked (synced) in a directory"""
@@ -371,18 +334,23 @@ class PluginSyncer:
             for cmd_file in commands_src.glob('*.md'):
                 self.sync_file(cmd_file, self.commands_dir / cmd_file.name, 'commands')
 
-        # Sync/symlink core code
-        if not self.config.no_symlink:
-            for symlink_key, symlink_src in self.SYMLINK_DIRS.items():
-                src = self.config.source_root / symlink_src
-                dst = self.plugin_dir / symlink_src.split('/')[0] / symlink_key
+        # Sync core code (always copy, no symlinks)
+        for core_key, core_src in self.CORE_DIRS.items():
+            src = self.config.source_root / core_src
+            dst = self.plugin_dir / core_src.split('/')[0] / core_key
 
-                if src.exists():
-                    logger.info(f"Setting up {symlink_key}...")
-                    if not self.create_symlink(src, dst):
-                        # Fallback to copy if symlink fails
-                        logger.info(f"Syncing {symlink_key} (copy mode)...")
-                        self.sync_directory(src, dst, symlink_key)
+            if src.exists():
+                logger.info(f"Syncing {core_key}...")
+                self.sync_directory(src, dst, core_key)
+
+        # Sync data directories (documents and vectors)
+        for data_key, data_src in self.DATA_DIRS.items():
+            src = self.config.source_root / data_src
+            dst = self.plugin_dir / data_src
+
+            if src.exists():
+                logger.info(f"Syncing data/{data_key}...")
+                self.sync_directory(src, dst, f"data/{data_key}")
 
         # Sync README and requirements
         for file_name in ['README.md', 'requirements.txt', 'requirements-minimal.txt']:
@@ -457,7 +425,6 @@ Examples:
   python sync_plugin.py --verbose          # Detailed output
   python sync_plugin.py --force            # Force sync (ignore timestamps)
   python sync_plugin.py --no-backup        # Skip backup
-  python sync_plugin.py --no-symlink       # Use copy instead of symlinks
         """
     )
 
@@ -469,8 +436,6 @@ Examples:
                        help='Force sync (ignore timestamps)')
     parser.add_argument('--no-backup', action='store_true',
                        help='Skip backup creation')
-    parser.add_argument('--no-symlink', action='store_true',
-                       help='Use copy instead of symlinks')
     parser.add_argument('--claude-dir', type=Path,
                        default=Path.home() / '.claude',
                        help='Path to Claude configuration directory')
@@ -485,7 +450,7 @@ Examples:
         verbose=args.verbose,
         force=args.force,
         backup=not args.no_backup,
-        no_symlink=args.no_symlink
+        no_symlink=False  # Always use copy mode (no symlinks)
     )
 
     try:

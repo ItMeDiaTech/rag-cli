@@ -115,6 +115,19 @@ class Logger:
         """Set up logging configuration."""
         from src.core.config import get_config
 
+        # Determine log file path
+        # Priority: plugin directory > project directory
+        claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+        project_root = Path(__file__).resolve().parents[2]
+
+        # Use plugin directory for logs if it exists, otherwise use project directory
+        if claude_plugin_dir.exists():
+            logs_dir = claude_plugin_dir / 'logs'
+        else:
+            logs_dir = project_root / 'logs'
+
+        log_file = logs_dir / 'rag-cli.log'
+
         # Get configuration
         try:
             config = get_config()
@@ -124,15 +137,18 @@ class Logger:
             log_config = {
                 "log_level": "INFO",
                 "log_format": "json",
-                "log_file": "./logs/rag-cli.log",
+                "log_file": str(log_file),
                 "log_rotation": {"max_bytes": 10485760, "backup_count": 5}
             }
 
-        # Create logs directory if it doesn't exist
+        # Override log file path with plugin directory
         if hasattr(log_config, 'log_file'):
-            log_file = Path(log_config.log_file)
-        else:
-            log_file = Path(log_config.get('log_file', './logs/rag-cli.log'))
+            # Use the resolved log file path
+            log_config.log_file = str(log_file)
+        elif isinstance(log_config, dict):
+            log_config['log_file'] = str(log_file)
+
+        # Create logs directory if it doesn't exist
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Get log level
