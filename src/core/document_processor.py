@@ -13,8 +13,14 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 
 # Document parsing imports
-import pypdf2
-import docx
+try:
+    import PyPDF2
+except ImportError:
+    PyPDF2 = None
+try:
+    import docx
+except ImportError:
+    docx = None
 from bs4 import BeautifulSoup
 import markdown
 
@@ -211,7 +217,9 @@ class DocumentProcessor:
         text_parts = []
 
         with open(file_path, 'rb') as f:
-            pdf_reader = pypdf2.PdfReader(f)
+            if PyPDF2 is None:
+                raise ImportError("PyPDF2 is required for PDF processing. Install with: pip install PyPDF2")
+            pdf_reader = PyPDF2.PdfReader(f)
             num_pages = len(pdf_reader.pages)
 
             for page_num in range(num_pages):
