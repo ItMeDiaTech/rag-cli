@@ -49,7 +49,11 @@
     "644c723 - feature: implement embedding system and FAISS vector store",
     "2b6bc62 - feature: implement document processor and hybrid retrieval pipeline",
     "b20c82c - feature: implement CLI scripts for indexing and retrieval",
-    "9cff0d0 - feature: implement Claude Code plugin integration"
+    "9cff0d0 - feature: implement Claude Code plugin integration",
+    "bec95f2 - test: add comprehensive test suites and finalize setup",
+    "abaceb4 - docs: update implementation plan with completion status",
+    "ab6b928 - feat: complete RAG-CLI implementation with documentation",
+    "c4db9d6 - feat: implement Claude Code integration without API key requirement"
   ],
   "dependencies_installed": false,
   "tests_passing": false,
