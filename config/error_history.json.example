@@ -1,0 +1,26 @@
+{
+  "errors": {
+    "5845edbfe19a44ab": [
+      {
+        "error_signature": "5845edbfe19a44ab",
+        "error_type": "I'm getting a TypeError",
+        "error_message": "cannot read property 'map' of undefined. How do I fix this?",
+        "timestamp": "2025-10-29T23:26:00.202345",
+        "context": "User query",
+        "resolved": false,
+        "solution": null
+      },
+      {
+        "error_signature": "5845edbfe19a44ab",
+        "error_type": "I'm getting a TypeError",
+        "error_message": "cannot read property 'map' of undefined. How do I fix this?",
+        "timestamp": "2025-10-29T23:34:10.692572",
+        "context": "User query",
+        "resolved": false,
+        "solution": null
+      }
+    ]
+  },
+  "saved_at": "2025-10-29T23:34:12.707720",
+  "threshold": 3
+}

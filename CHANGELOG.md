@@ -1,150 +1,73 @@
-# Changelog
+# Changelog - RAG-CLI
 
-All notable changes to RAG-CLI will be documented in this file.
+All notable changes to RAG-CLI are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.2.0] - 2025-10-30
 
-## [1.1.0] - 2025-10-30
+### Major Features
 
-### Added - MCP Integration
-- **ArXiv Connector** - Free academic paper search with rate limiting (3 req/sec)
-  - Search CS/AI papers by keywords
-  - Extract abstracts, PDFs, authors, publish dates
-  - 30-day caching for papers
-  - Zero cost, no API key needed
-- **Tavily Connector** - AI-optimized web search with quota tracking
-  - Free tier: 1,000 searches/month
-  - Quota tracking with graceful fallback
-  - Warning at 900/1000 (90% usage)
-  - Rate limited to 10 req/min
-  - Optional - works without API key
-- **RESEARCH Query Intent** - Detects academic/research queries for ArXiv routing
-- **RECENT_NEWS Query Intent** - Detects version/news queries for Tavily routing
-- **MCP-Enhanced Online Retrieval** - Intelligent routing to ArXiv and Tavily
-  - ArXiv for research/algorithm queries
-  - Tavily for latest version/breaking changes
-  - Fallback to Tavily when primary sources yield few results
-  - URL deduplication across all sources
+#### Embedded Multi-Agent Framework (MAF)
+- **Complete MAF integration**: All 7 specialized agents embedded in plugin
+  - Debugger, Developer, Reviewer, Tester, Architect, Documenter, Optimizer
+- **Parallel Execution**: RAG and MAF run simultaneously via asyncio
+- **Intelligent Routing**: 4 execution strategies (RAG_ONLY, MAF_ONLY, PARALLEL_RAG_MAF, DECOMPOSED)
+- **Graceful Fallback**: Auto-fallback to RAG-only with user notifications
 
-### Changed - MCP Integration
-- **Query Classifier** - Added RESEARCH and RECENT_NEWS intent patterns
-- **Online Retriever** - Integrated ArXiv and Tavily into fallback chain
-- **Retrieval Statistics** - Added Tavily quota and ArXiv cache stats
+#### New Commands
+- `/rag-maf-config`: Control Multi-Agent Framework
+  - `status`, `enable`, `disable`, `test-connection`, `list-agents`, `set-mode`
 
----
+#### Plugin Installation Ready
+- Added LICENSE file (MIT)
+- Added pyproject.toml (PEP 517/518)
+- Added .env.example template
+- Fixed all GitHub URLs (yourusername → ItMeDiaTech)
+- Synchronized versions to 1.2.0
+- Created config template files
+- Fixed Python package structure
 
-## [1.0.0] - 2025-10-30
-
-### Added
-- **Slash Command Blocker Hook** - Prevents Claude from responding to slash commands, showing only execution status
-- **Complete Hook Registration** - All 6 hooks now properly registered in `.claude-plugin/hooks.json`
-  - UserPromptSubmit (2 hooks: slash-command-blocker + user-prompt-submit)
-  - ResponsePost (citation injection)
-  - PluginStateChange (settings persistence)
-  - FileCreated/FileModified (auto-indexing)
-- **Clean Output Formatting System** - Comprehensive `OutputFormatter` class for readable orchestration output
-  - Structured headers and sections
-  - Progress indicators and metrics tables
-  - Document previews with intelligent truncation
-  - Collapsible sections for verbose mode
-  - Helper functions for RAG, MAF, and hybrid pipeline formatting
-- **`/rag-project` Command** - Analyze current project and index relevant documentation
-- **Multi-Agent Orchestration Documentation** - Fully documented MAF integration in README and plugin docs
-- **Formatted MCP Server Output** - Clean, structured output for search results with metrics
-- **Formatted Orchestrator Output** - Readable document previews and structured responses
-- **Formatted Hook Output** - User-prompt-submit hook now includes formatted orchestration summaries
-
-### Changed
-- **Torch Dependency** - Updated from `>=2.2.0,<2.5.0` to `>=2.6.0` for Python 3.13 compatibility
-- **MCP Search Results** - Now displays structured output with headers, timing, and clean document previews
-- **Agent Orchestrator** - Response formatting uses new OutputFormatter for consistent presentation
-- **Documentation** - Updated README.md and CLAUDE_PLUGIN.md with complete hook listings and priorities
+### Documentation
+- MAF_INTEGRATION_v1.2.0.md (architecture)
+- IMPLEMENTATION_COMPLETE_v1.2.0.md (implementation)
+- PLUGIN_INSTALLATION_FIXES_v1.2.0.md (fixes)
+- HOOK_FILES_REFERENCE.md (hook documentation)
 
 ### Fixed
-- Python 3.13 compatibility issue with torch version constraint
-- Missing hook registrations (only 1 of 6 was registered)
-- Missing `/rag-project` command file in plugin distribution
-- Inconsistent output formatting across different components
+- Missing __init__.py files (CRITICAL)
+- Broken sync_plugin.py references (CRITICAL)
+- GitHub URL placeholders (CRITICAL)
+- Version inconsistencies (CRITICAL)
+- Missing LICENSE (CRITICAL)
+- Broken setup.py entry points (HIGH)
+- Missing .env.example (HIGH)
 
-### Technical Details
+## [1.1.0] - 2025-10-29
 
-#### Hook System
-- 7 hook implementation files
-- 6 registered in hooks.json (update-rag-hook not registered as it's redundant with slash command)
-- Priority-based execution order (150, 100, 80, 70, 60, 50)
-- All hooks include comprehensive error handling and logging
+### Added
+- ArXiv integration for academic papers
+- Tavily integration for web search
+- Enhanced query classifier (10 intent types)
+- Query decomposer for complex queries
+- Result synthesizer for RAG+MAF
+- Output formatter (550+ lines)
+- Web dashboard for monitoring
+- Latency tracker
 
-#### Output Formatting
-- 550+ lines of formatting utilities
-- Support for markdown, progress bars, metrics tables
-- Configurable verbosity levels
-- Integration points: MCP server, agent orchestrator, user-prompt-submit hook
+### Improved
+- HyDE (70% latency reduction)
+- Semantic caching
+- Error tracking
 
-#### Commands
-- 5 slash commands: `/search`, `/rag-enable`, `/rag-disable`, `/rag-project`, `/update-rag`
-- All commands follow consistent format with clear instructions
-- Slash command blocker ensures clean execution without AI commentary
+## [1.0.0] - 2025-10-25
 
-#### Multi-Agent Framework
-- 6 MAF integration files (maf_connector, orchestrator, 3 agents, monitor)
-- 4 routing strategies: RAG_ONLY, MAF_ONLY, PARALLEL_RAG_MAF, DECOMPOSED
-- Intelligent query classification and strategy selection
-- Formatted output for all orchestration paths
-
-### Installation
-Plugin can be installed via GitHub:
-```bash
-/plugin install rag-cli
-```
-
-Or from marketplace:
-```bash
-/plugin marketplace add ItMeDiaTech/rag-cli
-/plugin install rag-cli
-```
-
-### Requirements
-- Python 3.8+ (recommended 3.13 for latest features)
-- 4GB RAM minimum (8GB recommended)
-- Dependencies automatically installed from requirements.txt
-
-### Migration Notes
-Users upgrading from development versions should:
-1. Ensure all hooks are enabled in Claude Code
-2. Restart Claude Code to activate new hooks
-3. Verify `rag_settings.json` is configured correctly
-4. Test `/rag-project` command to index current project
+### Initial Release
+- Local RAG pipeline with FAISS
+- Claude Code plugin with 5 commands
+- 6 active hooks for lifecycle management
+- MCP Server with 14 tools
+- Monitoring and observability
+- Comprehensive documentation
 
 ---
 
-## [Unreleased]
-
-### Planned Features
-- Real-time progress indicators for long-running operations
-- Enhanced MAF agent output formatting
-- Custom output templates for different use cases
-- Performance metrics dashboard integration
-- Additional orchestration strategies
-
----
-
-## Version History
-
-### Development Milestones
-- **Phase 1**: Core RAG pipeline implementation
-- **Phase 2**: Multi-agent orchestration integration
-- **Phase 3**: Query decomposition and sub-agent routing
-- **Phase 4**: Claude Code plugin integration
-- **Phase 5**: Hook system and output formatting
-- **v1.0.0**: First stable release with complete feature set
-
-### Contributors
-- DiaTech - Lead Developer
-
-### License
-MIT License - See LICENSE file for details
-
-### Support
-- GitHub Issues: https://github.com/ItMeDiaTech/rag-cli/issues
-- Documentation: https://github.com/ItMeDiaTech/rag-cli/wiki
+For upgrade guide and more details, see the documentation.

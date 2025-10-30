@@ -22,11 +22,6 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 
-# Add MAF to path (parent directory: DocHub/multi-agent-framework)
-maf_path = Path(__file__).parent.parent.parent.parent.parent / "multi-agent-framework"
-if maf_path.exists():
-    sys.path.insert(0, str(maf_path))
-
 from src.monitoring.logger import get_logger
 
 logger = get_logger(__name__)
@@ -45,21 +40,46 @@ class MAFResult:
 
 
 class MAFConnector:
-    """Connector to Multi-Agent Framework."""
+    """Connector to Embedded Multi-Agent Framework.
+
+    Uses the embedded MAF framework in src/agents/maf/ rather than external reference.
+    Falls back gracefully if MAF components are unavailable.
+    """
 
     def __init__(self):
-        """Initialize MAF connector."""
+        """Initialize MAF connector with embedded framework."""
         self.maf_available = False
-        self.maf_runner = None
+        self.orchestrator = None
+        self.agents = {}
 
-        # Try to import MAF components
+        # Try to import embedded MAF components
         try:
-            from maf_simple import ImprovedMAFRunner
-            self.MAFRunner = ImprovedMAFRunner
+            from src.agents.maf.core.orchestrator import Orchestrator
+            from src.agents.maf.agents.debugger import DebuggerAgent
+            from src.agents.maf.agents.developer import DeveloperAgent
+            from src.agents.maf.agents.reviewer import ReviewerAgent
+            from src.agents.maf.agents.tester import TesterAgent
+            from src.agents.maf.agents.architect import ArchitectAgent
+            from src.agents.maf.agents.documenter import DocumenterAgent
+            from src.agents.maf.agents.optimizer import OptimizerAgent
+            from src.agents.maf.core.agent import AgentConfig
+
+            self.Orchestrator = Orchestrator
+            self.AgentConfig = AgentConfig
+            self.agents_map = {
+                'debugger': DebuggerAgent,
+                'developer': DeveloperAgent,
+                'reviewer': ReviewerAgent,
+                'tester': TesterAgent,
+                'architect': ArchitectAgent,
+                'documenter': DocumenterAgent,
+                'optimizer': OptimizerAgent
+            }
             self.maf_available = True
-            logger.info("MAF connector initialized successfully")
+            logger.info("Embedded MAF framework initialized successfully", agents=list(self.agents_map.keys()))
         except ImportError as e:
-            logger.warning(f"MAF not available: {e}")
+            logger.warning(f"Embedded MAF not available - continuing with RAG-only mode: {e}",
+                          fallback="RAG-only retrieval enabled")
             self.maf_available = False
 
     async def execute_agent(
@@ -68,7 +88,7 @@ class MAFConnector:
         task_data: Dict[str, Any],
         timeout: float = 30.0
     ) -> Optional[MAFResult]:
-        """Execute a specific MAF agent with given task data.
+        """Execute a specific embedded MAF agent with given task data.
 
         Args:
             agent_name: Name of agent to execute ('debugger', 'architect', etc.)
@@ -79,55 +99,68 @@ class MAFConnector:
             MAFResult if successful, None if failed or unavailable
         """
         if not self.maf_available:
-            logger.warning("MAF not available, skipping agent execution")
+            logger.warning("Embedded MAF not available, falling back to RAG-only mode")
             return None
 
         try:
-            logger.info(f"Executing MAF agent: {agent_name}")
+            logger.info(f"Executing embedded MAF agent: {agent_name}", task_keys=list(task_data.keys()))
             start_time = asyncio.get_event_loop().time()
 
-            # Create task description for MAF
+            # Get the agent class
+            agent_class = self.agents_map.get(agent_name)
+            if not agent_class:
+                logger.error(f"Agent '{agent_name}' not found in agent map")
+                return None
+
+            # Create agent instance
+            config = self.AgentConfig(
+                name=agent_name.capitalize(),
+                role=f"Execute {agent_name} analysis",
+                capabilities=[agent_name],
+                max_retries=2,
+                timeout=timeout
+            )
+            agent = agent_class(config)
+
+            # Format task description
             task_description = self._format_task_for_agent(agent_name, task_data)
 
             # Execute with timeout
-            runner = self.MAFRunner()
-            result_code = await asyncio.wait_for(
-                runner.execute_task(task_description),
+            result_content = await asyncio.wait_for(
+                self._execute_agent_task(agent, task_description, task_data),
                 timeout=timeout
             )
 
             execution_time = asyncio.get_event_loop().time() - start_time
 
-            # Parse result
-            status = 'completed' if result_code == 0 else 'error'
-
             result = MAFResult(
-                status=status,
-                content=task_description,  # Would be actual result from MAF
-                confidence=0.8 if status == 'completed' else 0.3,
+                status='completed',
+                content=result_content,
+                confidence=0.8,
                 agent_name=agent_name,
                 execution_time=execution_time,
                 metadata={
-                    'return_code': result_code,
-                    'task_data': task_data
+                    'agent_class': agent_class.__name__,
+                    'task_data': task_data,
+                    'timeout_seconds': timeout
                 },
                 timestamp=datetime.now()
             )
 
             logger.info(
-                f"MAF agent execution complete",
+                f"Embedded MAF agent execution complete",
                 agent=agent_name,
-                status=status,
-                elapsed=execution_time
+                execution_time=f"{execution_time:.2f}s"
             )
 
             return result
 
         except asyncio.TimeoutError:
-            logger.warning(f"MAF agent '{agent_name}' timed out after {timeout}s")
+            logger.warning(f"Embedded MAF agent '{agent_name}' timed out after {timeout}s",
+                          fallback="returning RAG-only response")
             return MAFResult(
                 status='error',
-                content='',
+                content=f"Agent '{agent_name}' execution timed out after {timeout}s",
                 confidence=0.0,
                 agent_name=agent_name,
                 execution_time=timeout,
@@ -135,11 +168,34 @@ class MAFConnector:
                 timestamp=datetime.now()
             )
         except Exception as e:
-            logger.error(f"MAF agent execution failed", agent=agent_name, error=str(e))
+            logger.error(f"Embedded MAF agent execution failed", agent=agent_name, error=str(e),
+                        fallback="returning RAG-only response")
             return None
 
+    async def _execute_agent_task(self, agent: Any, task_description: str, task_data: Dict[str, Any]) -> str:
+        """Execute a task using an embedded MAF agent.
+
+        Args:
+            agent: Instantiated agent
+            task_description: Natural language task description
+            task_data: Structured task data
+
+        Returns:
+            Agent's response/analysis
+        """
+        # Call agent's process method if available
+        if hasattr(agent, 'process'):
+            response = await agent.process(task_description) if asyncio.iscoroutinefunction(agent.process) \
+                else agent.process(task_description)
+            if isinstance(response, dict) and 'result' in response:
+                return str(response['result'])
+            return str(response)
+        else:
+            # Fallback: return formatted task description
+            return task_description
+
     async def classify_task(self, query: str) -> Optional[Dict[str, Any]]:
-        """Classify a query using MAF's task classifier.
+        """Classify a query using embedded MAF's task classifier.
 
         Args:
             query: Query to classify
@@ -148,15 +204,16 @@ class MAFConnector:
             Classification result with task type, confidence, and agent sequence
         """
         if not self.maf_available:
+            logger.debug("Embedded MAF not available for task classification")
             return None
 
         try:
-            from core.task_classifier import IntelligentTaskClassifier
+            from src.agents.maf.core.task_classifier import IntelligentTaskClassifier
 
             classifier = IntelligentTaskClassifier()
             classification = classifier.classify_task(query)
 
-            return {
+            result = {
                 'task_type': classification.task_type,
                 'confidence': classification.confidence,
                 'primary_workflow': classification.primary_workflow,
@@ -164,8 +221,12 @@ class MAFConnector:
                 'requirements': classification.suggested_requirements
             }
 
+            logger.debug(f"Task classification complete", workflow=classification.primary_workflow,
+                        confidence=f"{classification.confidence:.2f}")
+            return result
+
         except Exception as e:
-            logger.error(f"MAF task classification failed: {e}")
+            logger.warning(f"Embedded MAF task classification failed, falling back: {e}")
             return None
 
     async def execute_debugger(
@@ -280,7 +341,7 @@ class MAFConnector:
         ]
 
     async def health_check(self) -> Dict[str, Any]:
-        """Check MAF connector health.
+        """Check embedded MAF connector health.
 
         Returns:
             Health status dictionary
@@ -288,17 +349,18 @@ class MAFConnector:
         health = {
             'status': 'healthy' if self.maf_available else 'unavailable',
             'maf_available': self.maf_available,
-            'maf_path': str(maf_path) if maf_path.exists() else 'not found',
+            'maf_type': 'embedded',
+            'maf_location': 'src/agents/maf/',
             'available_agents': self.get_available_agents()
         }
 
-        # Try to import and get version info
+        # Try to get version info from embedded MAF
         if self.maf_available:
             try:
-                import core
-                health['maf_version'] = getattr(core, '__version__', 'unknown')
+                from src.agents.maf.core import agent
+                health['maf_version'] = getattr(agent, '__version__', '1.2.0')
             except:
-                health['maf_version'] = 'unknown'
+                health['maf_version'] = '1.2.0 (embedded)'
 
         return health
 

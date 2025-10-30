@@ -23,7 +23,7 @@ A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claud
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/rag-cli.git
+git clone https://github.com/ItMeDiaTech/rag-cli.git
 cd rag-cli
 
 # Install in development mode
@@ -460,9 +460,9 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- GitHub Issues: [Report bugs](https://github.com/yourusername/rag-cli/issues)
-- Documentation: [Wiki](https://github.com/yourusername/rag-cli/wiki)
-- Discussions: [Community forum](https://github.com/yourusername/rag-cli/discussions)
+- GitHub Issues: [Report bugs](https://github.com/ItMeDiaTech/rag-cli/issues)
+- Documentation: [Wiki](https://github.com/ItMeDiaTech/rag-cli/wiki)
+- Discussions: [Community forum](https://github.com/ItMeDiaTech/rag-cli/discussions)
 
 ## Acknowledgments
 

@@ -21,10 +21,10 @@ else:
 
 setup(
     name="rag-cli",
-    version="0.1.0",
-    author="RAG-CLI Team",
-    author_email="",
-    description="A Retrieval-Augmented Generation CLI tool with Claude integration",
+    version="1.2.0",
+    author="DiaTech",
+    author_email="support@rag-cli.dev",
+    description="Local RAG system with embedded Multi-Agent Framework for Claude Code plugin",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ItMeDiaTech/rag-cli",
@@ -37,16 +37,11 @@ setup(
             "rag-index=scripts.index:main",
             "rag-retrieve=scripts.retrieve:main",
             "rag-monitor=src.monitoring.tcp_server:main",
-            "rag-skill=src.plugin.skills.rag_retrieval.retrieve:main",
-            "rag-sync=sync_plugin:main",
         ],
     },
-    scripts=[
-        "sync_plugin.py",
-    ],
     python_requires=">=3.8",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Text Processing :: Linguistic",
