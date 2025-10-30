@@ -4,10 +4,13 @@ Includes improved components with multi-instance support and enhanced CLI output
 """
 
 from .agent import Agent, AgentConfig, AgentResponse
-from .orchestrator import Orchestrator
+from .orchestrator import WorkflowOrchestrator
 from .agent_communication import AgentCommunicationHub
 from .memory import MemoryManager
 from .task_classifier import IntelligentTaskClassifier
+
+# Alias for backward compatibility
+Orchestrator = WorkflowOrchestrator
 
 # Import improved components (v1.3.0+)
 try:

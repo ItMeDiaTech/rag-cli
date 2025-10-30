@@ -909,7 +909,10 @@ class UnifiedMCPServer:
     # Multi-Agent Framework Tool Handlers
 
     async def handle_maf_execute(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle multi-agent framework execution request."""
+        """Handle multi-agent framework execution request.
+
+        Uses embedded MAF at src/agents/maf/ via maf_connector.
+        """
         task = arguments.get("task", "")
         workflow = arguments.get("workflow", "code_generation")
         use_rag = arguments.get("use_rag", True)
@@ -918,62 +921,83 @@ class UnifiedMCPServer:
             return self.error_response(request_id, "Missing required parameter: task")
 
         try:
-            # Get multi-agent framework path
-            maf_root = project_root.parent.parent / "multi-agent-framework"
+            # Use embedded MAF via maf_connector
+            from src.integrations.maf_connector import get_maf_connector
 
-            if not maf_root.exists():
-                return self.error_response(request_id, "Multi-agent framework not found at expected location")
+            maf_connector = get_maf_connector()
 
-            # Add MAF to path
-            sys.path.insert(0, str(maf_root))
+            if not maf_connector.is_available():
+                return self.error_response(
+                    request_id,
+                    "Multi-agent framework not available. Embedded MAF may not be properly installed."
+                )
 
-            # Import and use agent orchestrator
-            from src.core.agent_orchestrator import AgentOrchestrator
-
-            orchestrator = AgentOrchestrator(
-                vector_store=self.vector_store if use_rag else None,
-                embedding_model=self.embedding_model if use_rag else None,
-                retriever=self.retriever if use_rag else None
-            )
-
-            # Execute task through orchestrator
-            result = await orchestrator.execute_task(task, workflow)
-
-            return {
-                "jsonrpc": "2.0",
-                "id": request_id,
-                "result": {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"Multi-Agent Execution Result:\n\n{result}"
-                        }
-                    ]
-                }
+            # Map workflow to agent name
+            workflow_agent_map = {
+                "bug_fix": "debugger",
+                "code_generation": "developer",
+                "code_review": "reviewer",
+                "testing": "tester",
+                "design": "architect",
+                "documentation": "documenter",
+                "optimization": "optimizer"
             }
+
+            agent_name = workflow_agent_map.get(workflow, "developer")
+
+            # Execute via embedded MAF
+            task_data = {
+                "task": task,
+                "workflow": workflow,
+                "use_rag": use_rag
+            }
+
+            result = await maf_connector.execute_agent(agent_name, task_data, timeout=30.0)
+
+            if result and result.status == 'completed':
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": f"Multi-Agent Execution Result ({agent_name}):\n\n{result.content}\n\nExecution time: {result.execution_time:.2f}s"
+                            }
+                        ]
+                    }
+                }
+            else:
+                error_msg = result.content if result else "Task execution failed"
+                return self.error_response(request_id, f"MAF execution failed: {error_msg}")
 
         except Exception as e:
             logger.error(f"Multi-agent execution failed: {e}", exc_info=True)
             return self.error_response(request_id, f"Multi-agent execution failed: {str(e)}")
 
     async def handle_maf_status(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle multi-agent framework status request."""
-        try:
-            maf_root = project_root.parent.parent / "multi-agent-framework"
+        """Handle multi-agent framework status request.
 
+        Uses embedded MAF at src/agents/maf/ via maf_connector.
+        """
+        try:
+            # Use embedded MAF health check
+            from src.integrations.maf_connector import get_maf_connector
+
+            maf_connector = get_maf_connector()
+            health = await maf_connector.health_check()
+
+            # Add RAG integration status
             status = {
-                "available": maf_root.exists(),
-                "path": str(maf_root),
-                "rag_integration": self.retriever is not None
+                **health,
+                "rag_integration": self.retriever is not None,
+                "retriever_initialized": self.retriever is not None,
+                "vector_store_loaded": self.vector_store is not None
             }
 
-            if maf_root.exists():
-                # Check for main components
-                status["components"] = {
-                    "main": (maf_root / "main.py").exists(),
-                    "agents": (maf_root / "agents").exists(),
-                    "core": (maf_root / "core").exists()
-                }
+            # Add component count
+            if status['maf_available']:
+                status['agent_count'] = len(status['available_agents'])
 
             return {
                 "jsonrpc": "2.0",
@@ -993,7 +1017,10 @@ class UnifiedMCPServer:
             return self.error_response(request_id, f"Status check failed: {str(e)}")
 
     async def handle_maf_classify(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle query classification request."""
+        """Handle query classification request.
+
+        Uses embedded query classifier from src/core which integrates with embedded MAF.
+        """
         query = arguments.get("query", "")
 
         if not query:

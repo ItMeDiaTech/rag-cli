@@ -52,7 +52,6 @@ class MAFConnector:
 
         # Try to import embedded MAF components
         try:
-            from src.agents.maf.core.orchestrator import Orchestrator
             from src.agents.maf.agents.debugger import DebuggerAgent
             from src.agents.maf.agents.developer import DeveloperAgent
             from src.agents.maf.agents.reviewer import ReviewerAgent
@@ -62,7 +61,6 @@ class MAFConnector:
             from src.agents.maf.agents.optimizer import OptimizerAgent
             from src.agents.maf.core.agent import AgentConfig
 
-            self.Orchestrator = Orchestrator
             self.AgentConfig = AgentConfig
             self.agents_map = {
                 'debugger': DebuggerAgent,
