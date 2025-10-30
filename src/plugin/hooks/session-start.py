@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-"""PluginStateChange hook for RAG-CLI.
+"""SessionStart hook for RAG-CLI initialization.
 
-This hook handles plugin enable/disable events and persists settings
-across Claude Code restarts.
-
-Metadata:
-  priority: 60
-  enabled: true
-  triggers: ["plugin_enabled", "plugin_disabled"]
+This hook initializes RAG-CLI resources when a Claude Code session starts,
+including loading settings, checking vector store availability, and
+starting monitoring services.
 """
 
 import sys
@@ -44,7 +40,6 @@ if project_root is None:
     potential_paths = [
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         Path.cwd(),
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
     ]
 
     for path in potential_paths:
@@ -84,35 +79,18 @@ def load_settings() -> Dict[str, Any]:
         else:
             # Return defaults
             return {
-                "enabled": True,
+                "enabled": False,
                 "auto_trigger_threshold": 5,
                 "context_limit": 3,
                 "relevance_threshold": 0.6,
-                "exclude_patterns": []
+                "exclude_patterns": [],
+                "enable_agent_orchestration": True,
+                "classification_confidence_threshold": 0.3,
+                "min_classification_confidence": 0.5
             }
     except Exception as e:
         logger.error(f"Failed to load settings: {e}")
         return {}
-
-
-def save_settings(settings: Dict[str, Any]) -> bool:
-    """Save RAG settings to file.
-
-    Args:
-        settings: Settings dictionary
-
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(SETTINGS_FILE, 'w') as f:
-            json.dump(settings, f, indent=2)
-        logger.info("Settings saved successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to save settings: {e}")
-        return False
 
 
 def initialize_resources() -> bool:
@@ -129,7 +107,7 @@ def initialize_resources() -> bool:
         index_path = Path(config.vector_store.save_path)
 
         if not index_path.exists():
-            logger.warning("Vector store not found - will be created on first use")
+            logger.info("Vector store not yet initialized - will be created on first indexing")
             return True
 
         # Try to load vector store to verify it's accessible
@@ -137,17 +115,19 @@ def initialize_resources() -> bool:
             from src.core.vector_store import get_vector_store
             vector_store = get_vector_store()
             doc_count = vector_store.count()
-            logger.info(f"Vector store loaded: {doc_count} documents")
+            logger.info(f"Vector store loaded successfully: {doc_count} documents available")
         except Exception as e:
             logger.warning(f"Could not load vector store: {e}")
+            return True  # Not critical for session start
 
         # Try to start monitoring services
         try:
             from src.monitoring.service_manager import ensure_services_running
             ensure_services_running()
-            logger.info("Monitoring services started")
+            logger.info("Monitoring services started for session")
         except Exception as e:
-            logger.warning(f"Could not start monitoring services: {e}")
+            logger.debug(f"Monitoring services not started: {e}")
+            # Not critical for session start
 
         return True
 
@@ -156,36 +136,8 @@ def initialize_resources() -> bool:
         return False
 
 
-def cleanup_resources() -> bool:
-    """Cleanup RAG resources on plugin disable.
-
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        # Clear cache
-        cache_dir = project_root / "data" / "cache"
-        if cache_dir.exists():
-            import shutil
-            try:
-                shutil.rmtree(cache_dir)
-                cache_dir.mkdir(parents=True, exist_ok=True)
-                logger.info("Cache cleared")
-            except OSError as e:
-                logger.warning(f"Failed to clear cache directory: {e}")
-                # Don't fail entirely if cache cleanup fails
-
-        # Note: Don't stop monitoring services as they may be used by other sessions
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Resource cleanup failed: {e}")
-        return False
-
-
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Process PluginStateChange hook event.
+    """Process SessionStart hook event.
 
     Args:
         event: Hook event data
@@ -194,55 +146,27 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         Modified event
     """
     try:
-        state_change = event.get('state_change', '')
-        plugin_name = event.get('plugin', '')
-        timestamp = event.get('timestamp', '')
+        session_id = event.get('session_id', 'unknown')
+        logger.info(f"RAG-CLI session started", session_id=session_id)
 
-        logger.info(
-            f"Plugin state change: {state_change}",
-            plugin=plugin_name,
-            timestamp=timestamp
-        )
+        # Load settings
+        settings = load_settings()
+        logger.debug("RAG settings loaded", enabled=settings.get('enabled', False))
 
-        # Only process RAG-CLI events
-        if plugin_name != 'rag-cli':
-            return event
+        # Initialize resources
+        if initialize_resources():
+            logger.info("RAG-CLI session initialization completed successfully")
+            event['initialization_status'] = 'success'
+        else:
+            logger.warning("RAG-CLI session initialization completed with warnings")
+            event['initialization_status'] = 'partial'
 
-        if state_change == 'enabled':
-            # Load settings
-            settings = load_settings()
-            logger.info("Settings loaded", enabled=settings.get('enabled'))
-
-            # Initialize resources
-            if initialize_resources():
-                logger.info("RAG-CLI plugin enabled and initialized")
-                event['initialization_status'] = 'success'
-            else:
-                logger.warning("RAG-CLI plugin enabled but initialization failed")
-                event['initialization_status'] = 'partial'
-
-            # Store settings in event metadata
-            event['settings'] = settings
-
-        elif state_change == 'disabled':
-            # Save current settings
-            settings = load_settings()
-            save_settings(settings)
-
-            # Cleanup resources
-            if cleanup_resources():
-                logger.info("RAG-CLI plugin disabled and cleaned up")
-                event['cleanup_status'] = 'success'
-            else:
-                logger.warning("RAG-CLI plugin disabled but cleanup failed")
-                event['cleanup_status'] = 'partial'
-
-        # Mark event as processed
-        event['state_change_processed'] = True
+        # Store settings in event metadata for downstream hooks
+        event['rag_settings'] = settings
 
     except Exception as e:
-        logger.error(f"State change hook failed: {e}")
-        # Return original event on error
+        logger.error(f"Session start hook failed: {e}")
+        event['initialization_status'] = 'error'
 
     return event
 

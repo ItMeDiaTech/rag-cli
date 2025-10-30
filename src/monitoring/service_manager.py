@@ -94,7 +94,7 @@ def cleanup_stale_processes():
     try:
         import psutil
     except ImportError:
-        logger.warning("psutil not installed, skipping stale process cleanup")
+        logger.warning("psutil not available, skipping stale process cleanup")
         return
 
     logger.info("Checking for stale processes from previous runs...")
@@ -616,11 +616,12 @@ def open_dashboard_in_browser(use_chrome: bool = True, wait_for_ready: bool = Tr
                     logger.debug(f"Launching Chrome with command: {chrome_flags}")
 
                     # Start Chrome
+                    creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0) if sys.platform == 'win32' else 0
                     subprocess.Popen(
                         chrome_flags,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+                        creationflags=creationflags
                     )
 
                     logger.info(f"Successfully opened dashboard in Chrome at {chrome_path}: {url}")

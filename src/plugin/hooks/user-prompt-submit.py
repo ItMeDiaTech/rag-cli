@@ -17,20 +17,60 @@ from typing import Dict, Any, Optional, List, Tuple
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Import path resolution utilities
-from path_utils import setup_sys_path
-from event_validator import EventValidator
-
 # Add project root to path - handle multiple possible locations
 # Could be in .claude/plugins/rag-cli (when synced to Claude Code)
 # or in development directory
 hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file)
+
+# Strategy 1: Check environment variable (most explicit)
+project_root = None
+if 'RAG_CLI_ROOT' in os.environ:
+    env_path = Path(os.environ['RAG_CLI_ROOT'])
+    if env_path.exists() and (env_path / 'src' / 'core').exists():
+        project_root = env_path
+
+# Strategy 2: Try to find project root by walking up from hook location
+if project_root is None:
+    current = hook_file.parent
+    for _ in range(10):  # Search up to 10 levels
+        # Check if this is the RAG-CLI root (has src/core and src/monitoring)
+        if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
+            project_root = current
+            break
+        current = current.parent
+
+# Strategy 3: Check common installation locations
+if project_root is None:
+    potential_paths = [
+        # User's home directory plugin location
+        Path.home() / '.claude' / 'plugins' / 'rag-cli',
+        # Relative to current working directory
+        Path.cwd(),
+    ]
+
+    for path in potential_paths:
+        if path.exists() and (path / 'src' / 'core').exists():
+            project_root = path
+            break
+
+# Strategy 4: Last resort - relative to hook file location
+if project_root is None:
+    # Assume hook is in src/plugin/hooks/, so project root is 3 levels up
+    project_root = hook_file.parents[3]
+    # Validate this actually looks like project root
+    if not (project_root / 'src' / 'core').exists():
+        # If validation fails, raise clear error
+        raise RuntimeError(
+            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
+            f"Please set RAG_CLI_ROOT environment variable to the project directory.\n"
+            f"Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
+        )
+
+sys.path.insert(0, str(project_root))
 
 from src.core.config import get_config
 from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_generator
-from src.core.async_utils import safe_asyncio_run
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_code_adapter import get_adapter
 from src.monitoring.logger import get_logger
@@ -50,10 +90,9 @@ _tcp_check_time = 0
 
 
 def check_tcp_server_available() -> bool:
-    """Check if TCP server is available using socket connection.
+    """Check if TCP server is available.
 
     Uses caching to avoid repeated connection attempts within a short time window.
-    Uses direct socket connection for faster health checks than HTTP requests.
 
     Returns:
         True if server is reachable, False otherwise
@@ -66,31 +105,20 @@ def check_tcp_server_available() -> bool:
     if _tcp_server_available is not None and (current_time - _tcp_check_time) < 30:
         return _tcp_server_available
 
-    # Try to connect to TCP server using socket for better performance
+    # Try to connect to TCP server
     try:
-        import socket
+        import urllib.request
+        import urllib.error
 
-        # Parse host and port from TCP_SERVER_URL (format: http://host:port)
-        url = TCP_SERVER_URL.replace('http://', '').replace('https://', '')
-        if ':' in url:
-            host, port_str = url.rsplit(':', 1)
-            try:
-                port = int(port_str)
-            except ValueError:
-                port = 9999  # Default fallback port
-        else:
-            host = url
-            port = 9999
+        req = urllib.request.Request(
+            f"{TCP_SERVER_URL}/api/health",
+            method='GET'
+        )
 
-        # Create socket connection with timeout
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.5)
-        result = sock.connect_ex((host, port))
-        sock.close()
-
-        _tcp_server_available = (result == 0)
-        _tcp_check_time = current_time
-        return _tcp_server_available
+        with urllib.request.urlopen(req, timeout=0.5) as response:
+            _tcp_server_available = (response.status == 200)
+            _tcp_check_time = current_time
+            return _tcp_server_available
 
     except Exception:
         _tcp_server_available = False
@@ -382,11 +410,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     start_time = time.time()
     logger.info("Hook execution started", hook="UserPromptSubmit")
 
-    # Validate event structure
-    if not EventValidator.validate_or_log(event, logger, 'UserPromptSubmit'):
-        logger.warning("Invalid event structure, returning unmodified")
-        return event
-
     try:
         # Ensure monitoring services are running (auto-start if needed)
         try:
@@ -463,15 +486,12 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                 # Initialize orchestrator
                 orchestrator = AgentOrchestrator()
 
-                # Run async orchestration (safe for hooks in Claude Code)
-                orchestration_result = safe_asyncio_run(
-                    orchestrator.orchestrate(
-                        query=query,
-                        top_k=settings.get("context_limit", 3),
-                        use_cache=True
-                    ),
-                    timeout=settings.get("orchestrator_timeout", 30)
-                )
+                # Run async orchestration
+                orchestration_result = asyncio.run(orchestrator.orchestrate(
+                    query=query,
+                    top_k=settings.get("context_limit", 3),
+                    use_cache=True
+                ))
 
                 # Extract documents from orchestration result
                 if orchestration_result.rag_results:
@@ -606,7 +626,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Hook processing failed: {e}")
-        # Return original event on error - don't enhance if exception occurs
+        # Return original event on error
     finally:
         execution_time = (time.time() - start_time) * 1000
         logger.info("Hook execution completed",
