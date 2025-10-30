@@ -1,6 +1,18 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. Do not use emojis in code or documentation.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## CRITICAL: No Emojis Policy
+
+NEVER use emojis in ANY documentation, plans, guides, or written output for this project UNLESS explicitly given permission. This includes:
+- README files
+- Documentation files
+- Code comments and docstrings
+- Plan descriptions
+- Commit messages
+- All text-based output
+
+Focus on clear, professional documentation without decorative elements.
 
 ## Project Overview
 
