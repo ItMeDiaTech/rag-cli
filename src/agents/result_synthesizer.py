@@ -21,9 +21,9 @@ from dataclasses import dataclass
 from collections import defaultdict
 import hashlib
 
-from src.core.retrieval_pipeline import RetrievalResult
-from src.agents.query_decomposer import SubQuery
-from src.monitoring.logger import get_logger
+from core.retrieval_pipeline import RetrievalResult
+from agents.query_decomposer import SubQuery
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -371,7 +371,7 @@ async def test_synthesizer():
     print("Testing Result Synthesizer...")
     print("=" * 70)
 
-    from src.agents.query_decomposer import SubQuery
+    from agents.query_decomposer import SubQuery
 
     synthesizer = get_result_synthesizer()
 

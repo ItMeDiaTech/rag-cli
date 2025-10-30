@@ -13,27 +13,22 @@ import asyncio
 from pathlib import Path
 from typing import Dict, Any
 
-# Add project root to path using environment variable first, then fallback
-project_root = Path(os.getenv('RAG_CLI_ROOT', Path(__file__).resolve().parents[3]))
-sys.path.insert(0, str(project_root))
-
-from src.monitoring.logger import get_logger
-from src.monitoring.service_manager import (
+from monitoring.logger import get_logger
+from monitoring.service_manager import (
     ensure_services_running,
     get_services_status,
     open_dashboard_in_browser
 )
-from src.monitoring.output_formatter import OutputFormatter
+from monitoring.output_formatter import OutputFormatter
 
 logger = get_logger(__name__)
-
 
 class UnifiedMCPServer:
     """Unified MCP server combining RAG operations and service management."""
 
     def __init__(self):
         """Initialize the MCP server."""
-        from src.core.config import get_config
+        from core.config import get_config
 
         self.config = get_config()
         self.vector_store = None
@@ -67,10 +62,10 @@ class UnifiedMCPServer:
                 return
 
             # Initialize RAG components
-            from src.core.vector_store import get_vector_store
-            from src.core.embeddings import get_embedding_generator
-            from src.core.retrieval_pipeline import HybridRetriever
-            from src.core.claude_integration import ClaudeAssistant
+            from core.vector_store import get_vector_store
+            from core.embeddings import get_embedding_generator
+            from core.retrieval_pipeline import HybridRetriever
+            from core.claude_integration import ClaudeAssistant
 
             self.vector_store = get_vector_store()
             self.embedding_model = get_embedding_generator()
@@ -582,7 +577,7 @@ class UnifiedMCPServer:
 
     async def handle_rag_index(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle RAG index request."""
-        from src.core.document_processor import DocumentProcessor
+        from core.document_processor import DocumentProcessor
 
         path = arguments.get("path", "")
         recursive = arguments.get("recursive", True)
@@ -597,8 +592,8 @@ class UnifiedMCPServer:
         try:
             # Re-initialize components if needed
             if not self.vector_store:
-                from src.core.vector_store import get_vector_store
-                from src.core.embeddings import get_embedding_generator
+                from core.vector_store import get_vector_store
+                from core.embeddings import get_embedding_generator
                 self.vector_store = get_vector_store()
                 self.embedding_model = get_embedding_generator()
 
@@ -922,7 +917,7 @@ class UnifiedMCPServer:
 
         try:
             # Use embedded MAF via maf_connector
-            from src.integrations.maf_connector import get_maf_connector
+            from integrations.maf_connector import get_maf_connector
 
             maf_connector = get_maf_connector()
 
@@ -982,7 +977,7 @@ class UnifiedMCPServer:
         """
         try:
             # Use embedded MAF health check
-            from src.integrations.maf_connector import get_maf_connector
+            from integrations.maf_connector import get_maf_connector
 
             maf_connector = get_maf_connector()
             health = await maf_connector.health_check()
@@ -1028,7 +1023,7 @@ class UnifiedMCPServer:
 
         try:
             # Import query classifier
-            from src.core.query_classifier import get_query_classifier
+            from core.query_classifier import get_query_classifier
 
             classifier = get_query_classifier()
             classification = classifier.classify(query)
@@ -1110,7 +1105,6 @@ class UnifiedMCPServer:
 
         logger.info("Unified MCP server stopped")
 
-
 async def main():
     """Main entry point."""
     if not sys.stdin.isatty():
@@ -1133,7 +1127,6 @@ async def main():
         print("\n  Multi-Agent Framework:")
         print("    - maf_execute, maf_status, maf_classify")
         print("\nTo use this server, configure it in Claude Code's MCP settings.")
-
 
 if __name__ == '__main__':
     try:

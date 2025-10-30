@@ -8,7 +8,6 @@ crashes on malformed input.
 from typing import Dict, Any, Optional
 import logging
 
-
 class EventValidator:
     """Validates hook event structures."""
 

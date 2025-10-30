@@ -49,9 +49,9 @@ Repository = "https://github.com/ItMeDiaTech/rag-cli"
 Documentation = "https://github.com/ItMeDiaTech/rag-cli/wiki"
 
 [project.scripts]
-rag-index = "scripts.index:main"
-rag-retrieve = "scripts.retrieve:main"
-rag-monitor = "src.monitoring.tcp_server:main"
+rag-index = "cli.index:main"
+rag-retrieve = "cli.retrieve:main"
+rag-monitor = "monitoring.__main__:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

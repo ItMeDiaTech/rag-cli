@@ -13,7 +13,7 @@ def test_mode_detection():
     print("Testing Mode Detection")
     print("=" * 50)
 
-    from src.core.claude_code_adapter import get_adapter, OperationMode
+    from core.claude_code_adapter import get_adapter, OperationMode
 
     adapter = get_adapter()
     mode_info = adapter.get_mode_info()
@@ -35,7 +35,7 @@ def test_context_formatting():
     print("\n\nTesting Context Formatting")
     print("=" * 50)
 
-    from src.core.claude_code_adapter import get_adapter
+    from core.claude_code_adapter import get_adapter
 
     adapter = get_adapter()
 
@@ -79,8 +79,8 @@ def test_claude_integration():
     print("\n\nTesting Claude Integration")
     print("=" * 50)
 
-    from src.core.claude_integration import ClaudeAssistant
-    from src.core.claude_code_adapter import is_claude_code_mode
+    from core.claude_integration import ClaudeAssistant
+    from core.claude_code_adapter import is_claude_code_mode
 
     # Create assistant
     assistant = ClaudeAssistant()
@@ -125,7 +125,7 @@ def test_skill_execution():
     # Set Claude Code mode for testing
     os.environ['RAG_CLI_MODE'] = 'claude_code'
 
-    from src.plugin.skills.rag_retrieval.retrieve import perform_retrieval
+    from plugin.skills.rag_retrieval.retrieve import perform_retrieval
 
     # Test retrieval without LLM (context only)
     result = perform_retrieval(

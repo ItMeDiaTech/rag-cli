@@ -16,7 +16,7 @@ print("Claude Code Integration Verification")
 print("=" * 60)
 
 # Test 1: Check mode detection
-from src.core.claude_code_adapter import get_adapter
+from core.claude_code_adapter import get_adapter
 
 adapter = get_adapter()
 mode_info = adapter.get_mode_info()
@@ -30,7 +30,7 @@ print(f"    Result: {'[OK]' if mode_info['mode'] == 'claude_code' else '[FAIL]'}
 # Test 2: Check vector store
 print("\n[2] Vector Store:")
 try:
-    from src.core.vector_store import get_vector_store
+    from core.vector_store import get_vector_store
     store = get_vector_store()
     print(f"    Documents indexed: {store.index.ntotal}")
     print(f"    Result: [OK]")
@@ -41,7 +41,7 @@ except Exception as e:
 # Test 3: Test retrieval
 print("\n[3] Document Retrieval:")
 try:
-    from src.core.retrieval_pipeline import HybridRetriever
+    from core.retrieval_pipeline import HybridRetriever
     retriever = HybridRetriever()
     results = retriever.retrieve("API authentication", top_k=1)
     if results:
@@ -58,7 +58,7 @@ except Exception as e:
 # Test 4: Claude Integration
 print("\n[4] Claude Integration:")
 try:
-    from src.core.claude_integration import ClaudeAssistant
+    from core.claude_integration import ClaudeAssistant
     assistant = ClaudeAssistant()
 
     if assistant.is_claude_code:

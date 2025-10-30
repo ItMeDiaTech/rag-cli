@@ -16,16 +16,6 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Add project root to path - handle multiple possible locations
-hook_file = Path(__file__).resolve()
-
-# Strategy 1: Check environment variable (most explicit)
-project_root = None
-if 'RAG_CLI_ROOT' in os.environ:
-    env_path = Path(os.environ['RAG_CLI_ROOT'])
-    if env_path.exists() and (env_path / 'src' / 'core').exists():
-        project_root = env_path
-
 # Strategy 2: Try to find project root by walking up from hook location
 if project_root is None:
     current = hook_file.parent
@@ -58,13 +48,12 @@ if project_root is None:
 
 sys.path.insert(0, str(project_root))
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Settings file
 SETTINGS_FILE = project_root / "config" / "rag_settings.json"
-
 
 def load_settings() -> Dict[str, Any]:
     """Load RAG settings from file.
@@ -92,7 +81,6 @@ def load_settings() -> Dict[str, Any]:
         logger.error(f"Failed to load settings: {e}")
         return {}
 
-
 def initialize_resources() -> bool:
     """Initialize RAG resources (vector store, services, etc.).
 
@@ -101,7 +89,7 @@ def initialize_resources() -> bool:
     """
     try:
         # Check if vector store exists
-        from src.core.config import get_config
+        from core.config import get_config
 
         config = get_config()
         index_path = Path(config.vector_store.save_path)
@@ -112,7 +100,7 @@ def initialize_resources() -> bool:
 
         # Try to load vector store to verify it's accessible
         try:
-            from src.core.vector_store import get_vector_store
+            from core.vector_store import get_vector_store
             vector_store = get_vector_store()
             doc_count = vector_store.count()
             logger.info(f"Vector store loaded successfully: {doc_count} documents available")
@@ -122,7 +110,7 @@ def initialize_resources() -> bool:
 
         # Try to start monitoring services
         try:
-            from src.monitoring.service_manager import ensure_services_running
+            from monitoring.service_manager import ensure_services_running
             ensure_services_running()
             logger.info("Monitoring services started for session")
         except Exception as e:
@@ -134,7 +122,6 @@ def initialize_resources() -> bool:
     except Exception as e:
         logger.error(f"Resource initialization failed: {e}")
         return False
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process SessionStart hook event.
@@ -170,7 +157,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -189,7 +175,6 @@ def main():
         # On error, pass through the original event
         print(event_json if 'event_json' in locals() else "{}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import statistics
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 

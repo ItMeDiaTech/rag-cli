@@ -17,8 +17,8 @@ import numpy as np
 import faiss
 import threading
 
-from src.core.config import get_config
-from src.monitoring.logger import get_logger, get_metrics_logger, log_execution_time
+from core.config import get_config
+from monitoring.logger import get_logger, get_metrics_logger, log_execution_time
 
 
 logger = get_logger(__name__)

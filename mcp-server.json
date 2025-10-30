@@ -6,7 +6,7 @@
   "command": "python",
   "args": [
     "-m",
-    "src.plugin.mcp.unified_server"
+    "plugin.mcp.unified_server"
   ],
   "env": {
     "PYTHONUNBUFFERED": "1",

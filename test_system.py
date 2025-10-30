@@ -15,22 +15,22 @@ def test_imports():
     """Test that all core imports work."""
     print("Testing imports...")
     try:
-        from src.core.config import get_config
+        from core.config import get_config
         print("[OK] Config module")
 
-        from src.core.embeddings import EmbeddingModel
+        from core.embeddings import EmbeddingModel
         print("[OK] Embeddings module")
 
-        from src.core.vector_store import VectorStore
+        from core.vector_store import VectorStore
         print("[OK] Vector store module")
 
-        from src.core.document_processor import DocumentProcessor
+        from core.document_processor import DocumentProcessor
         print("[OK] Document processor module")
 
-        from src.core.retrieval_pipeline import HybridRetriever
+        from core.retrieval_pipeline import HybridRetriever
         print("[OK] Retrieval pipeline module")
 
-        from src.monitoring.logger import get_logger
+        from monitoring.logger import get_logger
         print("[OK] Logging module")
 
         return True
@@ -43,7 +43,7 @@ def test_configuration():
     """Test configuration loading."""
     print("\nTesting configuration...")
     try:
-        from src.core.config import get_config
+        from core.config import get_config
         config = get_config()
 
         print(f"[OK] Config loaded")
@@ -61,8 +61,8 @@ def test_document_processing():
     """Test document processing with sample files."""
     print("\nTesting document processing...")
     try:
-        from src.core.document_processor import DocumentProcessor
-        from src.core.config import get_config
+        from core.document_processor import DocumentProcessor
+        from core.config import get_config
 
         config = get_config()
         processor = DocumentProcessor(config)
@@ -101,8 +101,8 @@ def test_embeddings():
     """Test embedding generation."""
     print("\nTesting embeddings...")
     try:
-        from src.core.embeddings import EmbeddingModel
-        from src.core.config import get_config
+        from core.embeddings import EmbeddingModel
+        from core.config import get_config
 
         config = get_config()
         model = EmbeddingModel(config)
@@ -133,8 +133,8 @@ def test_vector_store():
     """Test vector store operations."""
     print("\nTesting vector store...")
     try:
-        from src.core.vector_store import VectorStore
-        from src.core.config import get_config
+        from core.vector_store import VectorStore
+        from core.config import get_config
         import numpy as np
 
         config = get_config()
@@ -175,10 +175,10 @@ def test_retrieval_pipeline():
     """Test the full retrieval pipeline."""
     print("\nTesting retrieval pipeline...")
     try:
-        from src.core.vector_store import VectorStore
-        from src.core.embeddings import EmbeddingModel
-        from src.core.retrieval_pipeline import HybridRetriever
-        from src.core.config import get_config
+        from core.vector_store import VectorStore
+        from core.embeddings import EmbeddingModel
+        from core.retrieval_pipeline import HybridRetriever
+        from core.config import get_config
 
         config = get_config()
 
@@ -221,7 +221,7 @@ def test_monitoring():
     """Test monitoring components."""
     print("\nTesting monitoring...")
     try:
-        from src.monitoring.tcp_server import MetricsCollector
+        from monitoring.tcp_server import MetricsCollector
 
         collector = MetricsCollector()
 
@@ -252,9 +252,9 @@ def run_performance_test():
     }
 
     try:
-        from src.core.embeddings import EmbeddingModel
-        from src.core.vector_store import VectorStore
-        from src.core.config import get_config
+        from core.embeddings import EmbeddingModel
+        from core.vector_store import VectorStore
+        from core.config import get_config
         import time
 
         config = get_config()

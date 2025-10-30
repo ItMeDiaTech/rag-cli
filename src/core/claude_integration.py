@@ -18,12 +18,12 @@ except ImportError:
     anthropic = None
     Anthropic = None
 
-from src.core.config import get_config
-from src.core.retrieval_pipeline import RetrievalResult
-from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
-from src.core.prompt_templates import get_prompt_manager
-from src.core.query_classifier import QueryClassification
-from src.monitoring.logger import get_logger, get_metrics_logger, log_api_call
+from core.config import get_config
+from core.retrieval_pipeline import RetrievalResult
+from core.claude_code_adapter import get_adapter, is_claude_code_mode
+from core.prompt_templates import get_prompt_manager
+from core.query_classifier import QueryClassification
+from monitoring.logger import get_logger, get_metrics_logger, log_api_call
 
 
 logger = get_logger(__name__)

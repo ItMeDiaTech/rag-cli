@@ -11,21 +11,16 @@ import time
 from typing import Dict, Any
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).resolve().parents[4]
-sys.path.insert(0, str(project_root))
-
-from src.core.config import get_config
-from src.core.vector_store import get_vector_store
-from src.core.embeddings import get_embedding_model
-from src.core.retrieval_pipeline import HybridRetriever
-from src.core.claude_integration import ClaudeAssistant
-from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
-from src.monitoring.logger import get_logger
-from src.monitoring.tcp_server import metrics_collector
+from core.config import get_config
+from core.vector_store import get_vector_store
+from core.embeddings import get_embedding_model
+from core.retrieval_pipeline import HybridRetriever
+from core.claude_integration import ClaudeAssistant
+from core.claude_code_adapter import get_adapter, is_claude_code_mode
+from monitoring.logger import get_logger
+from monitoring.tcp_server import metrics_collector
 
 logger = get_logger(__name__)
-
 
 def parse_arguments():
     """Parse command line arguments."""
@@ -75,7 +70,6 @@ def parse_arguments():
 
     return parser.parse_args()
 
-
 def format_output(result: Dict[str, Any], verbose: bool = False) -> str:
     """Format the result for CLI output.
 
@@ -116,7 +110,6 @@ def format_output(result: Dict[str, Any], verbose: bool = False) -> str:
         output.append(f"- Total: {metrics.get('total_ms', 0):.0f}ms")
 
     return "\n".join(output)
-
 
 def perform_retrieval(
     query: str,
@@ -250,7 +243,6 @@ def perform_retrieval(
 
         return result
 
-
 def main():
     """Main function for the RAG retrieval skill."""
     args = parse_arguments()
@@ -278,7 +270,6 @@ def main():
     # Return error code if retrieval failed
     if "error" in result:
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

@@ -17,10 +17,10 @@ def test_retrieval():
     print("Testing RAG Retrieval in Claude Code Mode")
     print("=" * 60)
 
-    from src.core.config import get_config
-    from src.core.retrieval_pipeline import HybridRetriever
-    from src.core.claude_integration import ClaudeAssistant
-    from src.core.claude_code_adapter import get_adapter
+    from core.config import get_config
+    from core.retrieval_pipeline import HybridRetriever
+    from core.claude_integration import ClaudeAssistant
+    from core.claude_code_adapter import get_adapter
 
     # Check mode
     adapter = get_adapter()

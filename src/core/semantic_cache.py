@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from pathlib import Path
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 

@@ -8,8 +8,8 @@ import sys
 import time
 import signal
 
-from src.monitoring.logger import get_logger
-from src.monitoring.service_manager import ensure_services_running, get_services_status
+from monitoring.logger import get_logger
+from monitoring.service_manager import ensure_services_running, get_services_status
 
 logger = get_logger(__name__)
 

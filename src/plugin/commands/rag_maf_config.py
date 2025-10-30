@@ -13,12 +13,11 @@ from typing import Optional
 plugin_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(plugin_root.parent.parent))
 
-from src.integrations.maf_connector import get_maf_connector
-from src.monitoring.output_formatter import OutputFormatter
-from src.monitoring.logger import get_logger
+from integrations.maf_connector import get_maf_connector
+from monitoring.output_formatter import OutputFormatter
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
-
 
 class MAFConfigCommand:
     """Manages MAF configuration and status."""
@@ -236,7 +235,6 @@ class MAFConfigCommand:
 
         logger.info("MAF configuration updated", config_file=str(self.config_file))
 
-
 def main():
     """Main entry point for /rag-maf-config command."""
     option = sys.argv[1] if len(sys.argv) > 1 else None
@@ -245,7 +243,6 @@ def main():
     result = command.execute(option)
 
     print(result)
-
 
 if __name__ == "__main__":
     main()

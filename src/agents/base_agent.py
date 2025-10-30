@@ -33,7 +33,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 import threading
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 

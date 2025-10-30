@@ -20,7 +20,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -52,14 +52,14 @@ class MAFConnector:
 
         # Try to import embedded MAF components
         try:
-            from src.agents.maf.agents.debugger import DebuggerAgent
-            from src.agents.maf.agents.developer import DeveloperAgent
-            from src.agents.maf.agents.reviewer import ReviewerAgent
-            from src.agents.maf.agents.tester import TesterAgent
-            from src.agents.maf.agents.architect import ArchitectAgent
-            from src.agents.maf.agents.documenter import DocumenterAgent
-            from src.agents.maf.agents.optimizer import OptimizerAgent
-            from src.agents.maf.core.agent import AgentConfig
+            from agents.maf.agents.debugger import DebuggerAgent
+            from agents.maf.agents.developer import DeveloperAgent
+            from agents.maf.agents.reviewer import ReviewerAgent
+            from agents.maf.agents.tester import TesterAgent
+            from agents.maf.agents.architect import ArchitectAgent
+            from agents.maf.agents.documenter import DocumenterAgent
+            from agents.maf.agents.optimizer import OptimizerAgent
+            from agents.maf.core.agent import AgentConfig
 
             self.AgentConfig = AgentConfig
             self.agents_map = {
@@ -204,7 +204,7 @@ class MAFConnector:
             return None
 
         try:
-            from src.agents.maf.core.task_classifier import IntelligentTaskClassifier
+            from agents.maf.core.task_classifier import IntelligentTaskClassifier
 
             classifier = IntelligentTaskClassifier()
             classification = classifier.classify_task(query)
@@ -353,7 +353,7 @@ class MAFConnector:
         # Try to get version info from embedded MAF
         if self.maf_available:
             try:
-                from src.agents.maf.core import agent
+                from agents.maf.core import agent
                 health['maf_version'] = getattr(agent, '__version__', '1.2.0')
             except Exception:
                 health['maf_version'] = '1.2.0 (embedded)'

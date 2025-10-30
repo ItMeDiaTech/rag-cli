@@ -24,18 +24,13 @@ os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 # Import path resolution utilities
 from path_utils import setup_sys_path
 
-# Add project root to path - handle multiple possible locations
-hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file)
-
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Cache file for retrieval results
 CACHE_DIR = project_root / "data" / "cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
 
 def get_cache_key(session_id: str, prompt: str) -> str:
     """Generate cache key from session ID and prompt.
@@ -50,7 +45,6 @@ def get_cache_key(session_id: str, prompt: str) -> str:
     # Use hash of prompt to create deterministic key
     prompt_hash = hashlib.md5(prompt.encode()).hexdigest()[:16]
     return f"{session_id}_{prompt_hash}"
-
 
 def load_cached_results(cache_key: str) -> Optional[List[Dict[str, Any]]]:
     """Load retrieval results from cache.
@@ -80,7 +74,6 @@ def load_cached_results(cache_key: str) -> Optional[List[Dict[str, Any]]]:
     except Exception as e:
         logger.error(f"Failed to load cache: {e}")
         return None
-
 
 def format_citations(documents: List[Dict[str, Any]], max_citations: int = 3) -> str:
     """Format document sources as citations.
@@ -122,7 +115,6 @@ def format_citations(documents: List[Dict[str, Any]], max_citations: int = 3) ->
 
     return "\n".join(citations)
 
-
 def inject_inline_citations(response: str, num_citations: int) -> str:
     """Inject inline citation markers [1][2] into response text.
 
@@ -145,7 +137,6 @@ def inject_inline_citations(response: str, num_citations: int) -> str:
     # - Avoid over-citing (max 1 citation per sentence)
 
     return response
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process ResponsePost hook event.
@@ -202,7 +193,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -221,7 +211,6 @@ def main():
         # On error, pass through the original event
         print(event_json if 'event_json' in locals() else "{}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

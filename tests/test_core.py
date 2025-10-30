@@ -12,11 +12,11 @@ import sys
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
-from src.core.embeddings import EmbeddingGenerator, EmbeddingCache
-from src.core.vector_store import FAISSVectorStore
-from src.core.document_processor import DocumentProcessor
-from src.core.retrieval_pipeline import HybridRetriever
-from src.core.claude_integration import ClaudeAssistant
+from core.embeddings import EmbeddingGenerator, EmbeddingCache
+from core.vector_store import FAISSVectorStore
+from core.document_processor import DocumentProcessor
+from core.retrieval_pipeline import HybridRetriever
+from core.claude_integration import ClaudeAssistant
 
 
 class TestEmbeddingCache:
@@ -135,7 +135,7 @@ class TestQueryClassifier:
 
     def test_intent_detection(self):
         """Test query intent detection."""
-        from src.core.query_classifier import QueryClassifier, QueryIntent, get_query_classifier
+        from core.query_classifier import QueryClassifier, QueryIntent, get_query_classifier
 
         classifier = get_query_classifier()
 

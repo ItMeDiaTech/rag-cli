@@ -15,9 +15,6 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import print as rprint
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from core.config import load_config, get_config
 from core.document_processor import get_document_processor
 from core.embeddings import get_embedding_generator
@@ -37,7 +34,7 @@ logger = get_logger(__name__)
 @click.option('--chunk-overlap', type=int, help='Override chunk overlap (tokens)')
 @click.option('--clear', is_flag=True, help='Clear existing index before indexing')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def index_documents(
+def main(
     directory: str,
     recursive: bool,
     pattern: str,
@@ -53,7 +50,7 @@ def index_documents(
     FAISS vector index for later retrieval.
 
     Example:
-        python index.py ./docs --recursive --pattern "*.md"
+        rag-index ./docs --recursive --pattern "*.md"
     """
     # Load configuration
     config = load_config()
@@ -220,4 +217,4 @@ def index_documents(
 
 
 if __name__ == "__main__":
-    index_documents()
+    main()

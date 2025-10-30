@@ -34,9 +34,9 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "rag-index=scripts.index:main",
-            "rag-retrieve=scripts.retrieve:main",
-            "rag-monitor=src.monitoring.tcp_server:main",
+            "rag-index=cli.index:main",
+            "rag-retrieve=cli.retrieve:main",
+            "rag-monitor=monitoring.__main__:main",
         ],
     },
     python_requires=">=3.8",

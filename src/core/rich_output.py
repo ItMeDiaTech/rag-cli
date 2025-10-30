@@ -14,7 +14,7 @@ from rich.markdown import Markdown
 from rich.tree import Tree
 from rich import box
 
-from src.core.output import Verbosity, get_output
+from core.output import Verbosity, get_output
 
 
 class RichOutput:

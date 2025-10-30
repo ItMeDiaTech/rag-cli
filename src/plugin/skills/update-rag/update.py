@@ -14,14 +14,9 @@ from pathlib import Path
 from typing import Dict, Any
 from dataclasses import dataclass
 
-# Add project root to path
-project_root = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(project_root))
-
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
-
 
 @dataclass
 class SyncOptions:
@@ -31,7 +26,6 @@ class SyncOptions:
     force: bool = False
     no_backup: bool = False
     no_symlink: bool = False
-
 
 class UpdateRagSkill:
     """Skill for updating RAG-CLI plugin"""
@@ -130,7 +124,6 @@ class UpdateRagSkill:
         options = SyncOptions(dry_run=True, verbose=True)
         return self.execute(options)
 
-
 @click.command()
 @click.option('--dry-run', is_flag=True, help='Preview changes without applying')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
@@ -183,11 +176,9 @@ def update_rag(dry_run, verbose, force, no_backup, no_symlink, preview, output_j
             print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-
 def main():
     """Main entry point for the skill"""
     update_rag()
-
 
 if __name__ == '__main__':
     main()

@@ -15,9 +15,9 @@ from .source_connectors.stackoverflow import StackOverflowConnector
 from .source_connectors.readthedocs import ReadTheDocsConnector, OfficialDocsConnector
 from .content_extractors import ContentExtractor
 from .config import Config, get_config
-from src.integrations.arxiv_connector import get_arxiv_connector
-from src.integrations.tavily_connector import get_tavily_connector
-from src.core.query_classifier import QueryIntent
+from integrations.arxiv_connector import get_arxiv_connector
+from integrations.tavily_connector import get_tavily_connector
+from core.query_classifier import QueryIntent
 
 logger = logging.getLogger(__name__)
 

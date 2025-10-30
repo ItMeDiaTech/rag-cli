@@ -161,7 +161,7 @@ class Logger:
 
     def _setup_logging(self):
         """Set up logging configuration."""
-        from src.core.config import get_config
+        from core.config import get_config
 
         # Determine log file path
         # Priority: plugin directory > project directory

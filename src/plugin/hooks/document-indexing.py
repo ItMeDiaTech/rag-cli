@@ -26,15 +26,11 @@ os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 # Import path resolution utilities
 from path_utils import setup_sys_path
 
-# Add project root to path - handle multiple possible locations
-hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file)
-
-from src.core.config import get_config
-from src.core.document_processor import DocumentProcessor
-from src.core.vector_store import get_vector_store
-from src.core.embeddings import get_embedding_generator
-from src.monitoring.logger import get_logger
+from core.config import get_config
+from core.document_processor import DocumentProcessor
+from core.vector_store import get_vector_store
+from core.embeddings import get_embedding_generator
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -44,7 +40,6 @@ CONFIG_FILE = project_root / "config" / "auto_indexing.json"
 # Debounce tracking
 _pending_files: Dict[str, float] = {}  # file_path -> last_modified_time
 _debounce_interval = 5.0  # seconds
-
 
 def load_auto_indexing_config() -> Dict[str, Any]:
     """Load auto-indexing configuration.
@@ -84,7 +79,6 @@ def load_auto_indexing_config() -> Dict[str, Any]:
         logger.error(f"Failed to load auto-indexing config: {e}")
         return default_config
 
-
 def should_index_file(file_path: Path, config: Dict[str, Any]) -> bool:
     """Check if file should be indexed.
 
@@ -119,7 +113,6 @@ def should_index_file(file_path: Path, config: Dict[str, Any]) -> bool:
             return False
 
     return True
-
 
 async def index_file(file_path: Path) -> bool:
     """Index a single file into the knowledge base.
@@ -171,7 +164,6 @@ async def index_file(file_path: Path) -> bool:
     except Exception as e:
         logger.error(f"Failed to index file {file_path}: {e}")
         return False
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process DocumentIndexing hook event.
@@ -256,7 +248,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -275,7 +266,6 @@ def main():
         # On error, pass through the original event
         print(event_json if 'event_json' in locals() else "{}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

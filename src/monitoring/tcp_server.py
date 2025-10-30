@@ -18,8 +18,8 @@ from queue import Queue, Empty, Full
 from flask import Flask, jsonify, request
 import psutil
 
-from src.core.config import get_config
-from src.monitoring.logger import get_logger, get_metrics_logger
+from core.config import get_config
+from monitoring.logger import get_logger, get_metrics_logger
 
 
 logger = get_logger(__name__)
@@ -427,7 +427,7 @@ class MonitoringServer:
 
     def _get_status(self) -> str:
         """Get system status."""
-        from src.core.vector_store import get_vector_store
+        from core.vector_store import get_vector_store
         from datetime import datetime
 
         try:
@@ -664,7 +664,7 @@ def get_event_history():
 def get_latency_stats():
     """Get latency statistics with percentiles."""
     try:
-        from src.monitoring.latency_tracker import get_latency_tracker
+        from monitoring.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         summary = tracker.get_summary()
@@ -682,7 +682,7 @@ def get_latency_stats():
 def get_operation_latency(operation: str):
     """Get latency statistics for a specific operation."""
     try:
-        from src.monitoring.latency_tracker import get_latency_tracker
+        from monitoring.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         stats = tracker.get_stats(operation)

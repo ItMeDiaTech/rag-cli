@@ -14,8 +14,8 @@ import sys
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
-from src.core.config import Config, get_config
-from src.monitoring.logger import get_logger, get_metrics_logger
+from core.config import Config, get_config
+from monitoring.logger import get_logger, get_metrics_logger
 
 
 class TestConfiguration:
@@ -193,7 +193,7 @@ class TestMonitoringServer:
 
     def test_metrics_collector(self):
         """Test metrics collector functionality."""
-        from src.monitoring.tcp_server import MetricsCollector
+        from monitoring.tcp_server import MetricsCollector
 
         collector = MetricsCollector(max_history=100)
 
@@ -212,7 +212,7 @@ class TestMonitoringServer:
 
     def test_cache_hit_rate(self):
         """Test cache hit rate calculation."""
-        from src.monitoring.tcp_server import MetricsCollector
+        from monitoring.tcp_server import MetricsCollector
 
         collector = MetricsCollector()
 
@@ -229,7 +229,7 @@ class TestMonitoringServer:
 
     def test_uptime_tracking(self):
         """Test uptime tracking."""
-        from src.monitoring.tcp_server import MetricsCollector
+        from monitoring.tcp_server import MetricsCollector
         import time
 
         collector = MetricsCollector()
@@ -243,7 +243,7 @@ class TestMonitoringServer:
 
     def test_component_status(self):
         """Test component status tracking."""
-        from src.monitoring.tcp_server import MetricsCollector
+        from monitoring.tcp_server import MetricsCollector
 
         collector = MetricsCollector()
 
@@ -257,7 +257,7 @@ class TestMonitoringServer:
     @patch('socket.socket')
     def test_server_lifecycle(self, mock_socket):
         """Test server start and stop."""
-        from src.monitoring.tcp_server import MonitoringServer
+        from monitoring.tcp_server import MonitoringServer
 
         server = MonitoringServer(host="127.0.0.1", port=9999)
 
@@ -280,7 +280,7 @@ class TestPluginComponents:
 
             # Mock the settings file path
             with patch('src.plugin.hooks.user-prompt-submit.SETTINGS_FILE', new=settings_file):
-                from src.plugin.hooks.user_prompt_submit import (
+                from plugin.hooks.user_prompt_submit import (
                     load_rag_settings,
                     save_rag_settings
                 )

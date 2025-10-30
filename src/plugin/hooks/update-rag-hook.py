@@ -15,17 +15,12 @@ from typing import Dict, Any
 # Import path resolution utilities
 from path_utils import setup_sys_path
 
-# Add project root to path - handle multiple possible locations
 # Could be in .claude/plugins/rag-cli (when synced to Claude Code)
 # or in development directory
-hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file, marker_file='sync_plugin.py')
-
-from src.monitoring.logger import get_logger
-from src.monitoring.service_manager import ensure_services_running
+from monitoring.logger import get_logger
+from monitoring.service_manager import ensure_services_running
 
 logger = get_logger(__name__)
-
 
 def parse_command_args(command: str) -> tuple[str, list[str]]:
     """Parse /update-rag command and extract arguments.
@@ -44,7 +39,6 @@ def parse_command_args(command: str) -> tuple[str, list[str]]:
     args = parts[1:] if len(parts) > 1 else []
 
     return cmd, args
-
 
 def build_sync_command(args: list[str]) -> list[str]:
     """Build the sync_plugin.py command with arguments.
@@ -77,7 +71,6 @@ def build_sync_command(args: list[str]) -> list[str]:
             logger.warning(f"Unknown argument: {arg}")
 
     return cmd
-
 
 def execute_sync(cmd: list[str]) -> Dict[str, Any]:
     """Execute the sync command and capture output.
@@ -138,7 +131,6 @@ def execute_sync(cmd: list[str]) -> Dict[str, Any]:
             'error': 'execution'
         }
 
-
 def format_output(result: Dict[str, Any]) -> str:
     """Format sync output for display in Claude Code.
 
@@ -164,7 +156,6 @@ def format_output(result: Dict[str, Any]) -> str:
         output.append(f"\nError output:\n{result['stderr']}")
 
     return ''.join(output)
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process the /update-rag command.
@@ -228,7 +219,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -250,7 +240,6 @@ def main():
         logger.error(f"Hook failed: {e}")
         print(json.dumps({'error': str(e)}))
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,7 @@ def test_embeddings():
     """Test embedding generation."""
     print("Testing embedding system...")
 
-    from src.core.embeddings import get_embedding_generator
+    from core.embeddings import get_embedding_generator
 
     try:
         # Initialize generator
@@ -67,7 +67,7 @@ def test_vector_store():
     """Test FAISS vector store."""
     print("\nTesting vector store...")
 
-    from src.core.vector_store import get_vector_store
+    from core.vector_store import get_vector_store
 
     try:
         # Initialize store
@@ -124,8 +124,8 @@ def test_integration():
     """Test embeddings and vector store together."""
     print("\nTesting integration...")
 
-    from src.core.embeddings import get_embedding_generator
-    from src.core.vector_store import get_vector_store
+    from core.embeddings import get_embedding_generator
+    from core.vector_store import get_vector_store
 
     try:
         # Initialize components

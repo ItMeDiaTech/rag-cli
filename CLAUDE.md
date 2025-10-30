@@ -18,45 +18,68 @@ Focus on clear, professional documentation without decorative elements.
 
 RAG-CLI is a local Retrieval-Augmented Generation system designed as a Claude Code plugin. It processes documents locally, generates embeddings, stores vectors in FAISS, and uses claude-haiku-4-5-20251001 for response generation.
 
-## Project Structure to Create
+## Project Structure
 
 ```
 RAG-CLI/
-├── src/
-│   ├── core/
-│   │   ├── __init__.py
+├── src/                             # Package root (installed as Python package)
+│   ├── core/                        # Core RAG functionality
 │   │   ├── document_processor.py    # Document chunking (400-500 tokens)
 │   │   ├── embeddings.py            # sentence-transformers/all-MiniLM-L6-v2
 │   │   ├── vector_store.py          # FAISS operations
 │   │   ├── retrieval_pipeline.py    # Hybrid search + reranking
 │   │   └── claude_integration.py    # claude-haiku-4-5-20251001 interface
-│   ├── monitoring/
-│   │   ├── __init__.py
+│   ├── monitoring/                  # Monitoring and observability
 │   │   ├── logger.py                # Comprehensive logging
 │   │   ├── metrics.py               # Performance tracking
-│   │   └── tcp_server.py            # PowerShell interface (port 9999)
-│   └── plugin/
-│       ├── skills/                  # Agent Skills
-│       ├── commands/                 # Slash commands
-│       ├── hooks/                    # UserPromptSubmit hooks
-│       └── mcp/                      # MCP server configs
-├── scripts/
-│   ├── index.py                     # Document indexing script
-│   ├── retrieve.py                  # Retrieval CLI
-│   └── monitor.ps1                  # PowerShell monitoring
-├── tests/
-│   ├── test_document_processor.py
-│   ├── test_embeddings.py
-│   ├── test_vector_store.py
-│   └── test_integration.py
-├── data/
+│   │   ├── tcp_server.py            # REST API (port 9999)
+│   │   └── __main__.py              # Entry point for rag-monitor
+│   ├── cli/                         # Command-line tools
+│   │   ├── index.py                 # Document indexing (rag-index)
+│   │   └── retrieve.py              # Retrieval CLI (rag-retrieve)
+│   ├── agents/                      # Multi-agent framework
+│   │   ├── base_agent.py            # Agent base class
+│   │   ├── query_decomposer.py      # Query decomposition
+│   │   └── result_synthesizer.py    # Result synthesis
+│   ├── integrations/                # External integrations
+│   │   ├── arxiv_connector.py       # ArXiv integration
+│   │   ├── tavily_connector.py      # Tavily search
+│   │   └── maf_connector.py         # Multi-agent framework
+│   └── plugin/                      # Claude Code plugin components
+│       ├── commands/                # Slash commands (.md + .py)
+│       ├── hooks/                   # Event hooks (.py)
+│       ├── skills/                  # Agent skills
+│       └── mcp/                     # MCP server
+├── scripts/                         # Utility scripts
+│   ├── fix_imports.py               # Import fixer
+│   ├── remove_syspath.py            # sys.path cleaner
+│   └── verify_installation.py       # Installation verifier
+├── tests/                           # Test suite
+│   ├── test_foundation.py           # Foundation tests
+│   ├── test_core.py                 # Core module tests
+│   └── test_integration.py          # Integration tests
+├── data/                            # Data storage
 │   ├── documents/                   # Source documents
-│   └── vectors/                      # FAISS indexes
-├── requirements.txt
-├── setup.py
-├── pytest.ini
-└── .gitignore
+│   └── vectors/                     # FAISS indexes
+├── config/                          # Configuration files
+│   └── rag_settings.json           # RAG settings
+├── .claude-plugin/                  # Plugin metadata
+│   ├── plugin.json                  # Plugin configuration
+│   └── hooks.json                   # Hook configurations
+├── requirements.txt                 # Python dependencies
+├── setup.py                         # Package setup (distutils)
+├── pyproject.toml                   # Package setup (PEP 517/518)
+├── install_plugin.py                # Plugin installation script
+└── pytest.ini                       # Test configuration
 ```
+
+## Package Structure
+
+RAG-CLI uses a **src-layout** package structure. All imports use the pattern:
+- `from core.config import get_config` (NOT `from src.core.config`)
+- `from monitoring.logger import get_logger` (NOT `from src.monitoring.logger`)
+
+This allows the package to be installed properly with pip and work seamlessly as a Claude Code plugin.
 
 ## Development Commands
 
@@ -66,28 +89,43 @@ RAG-CLI/
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies (create requirements.txt first)
-pip install sentence-transformers faiss-cpu anthropic flask langchain pytest pytest-asyncio
+# Install dependencies
+pip install -r requirements.txt
 
-# Initialize git repository
-git init
-git add .
-git commit -m "feature: initialize RAG-CLI project structure"
+# Install package in editable mode (development)
+pip install -e .
 ```
 
-### Build and Run
+### Plugin Installation
 ```bash
-# Index documents
-python scripts/index.py --input data/documents --output data/vectors
+# Install as Claude Code plugin
+python install_plugin.py
 
-# Test retrieval
-python scripts/retrieve.py --query "How to configure API?" --top-k 5
+# This will:
+# 1. Install RAG-CLI as Python package (pip install -e .)
+# 2. Create plugin directory in ~/.claude/plugins/rag-cli/
+# 3. Copy configuration files and commands
+# 4. Set up data directory symlinks
+# 5. Configure MCP server
+```
+
+### Command-Line Tools
+```bash
+# Index documents (after installation)
+rag-index ./data/documents --recursive --pattern "*.md"
+
+# Retrieve and generate responses
+rag-retrieve --query "How to configure API?" --top-k 5
+
+# Interactive retrieval mode
+rag-retrieve --interactive
 
 # Run monitoring server
-python -m src.monitoring.tcp_server
+rag-monitor
+# Or: python -m monitoring
 
-# PowerShell monitoring
-./scripts/monitor.ps1 -Command STATUS
+# Test installation
+python scripts/verify_installation.py
 ```
 
 ### Testing
@@ -107,42 +145,59 @@ pytest tests/test_integration.py -v
 
 ## Core Implementation Details
 
-### 1. Document Processing (`src/core/document_processor.py`)
+### 1. Document Processing (core/document_processor.py)
 - Chunk size: 400-500 tokens
 - Overlap: 10-20% (50-100 tokens)
 - Use RecursiveCharacterTextSplitter from langchain
 - Add contextual headers (document title, section)
 - Support formats: MD, PDF, DOCX, HTML, TXT
 
-### 2. Embeddings (`src/core/embeddings.py`)
+### 2. Embeddings (core/embeddings.py)
 - Model: sentence-transformers/all-MiniLM-L6-v2
 - Dimensions: 384
 - Batch processing for efficiency
 - LRU cache for repeated queries
 
-### 3. Vector Store (`src/core/vector_store.py`)
+### 3. Vector Store (core/vector_store.py)
 - FAISS IndexFlatL2 for <100K vectors
 - FAISS IndexHNSWFlat for 100K-1M vectors
 - Save/load functionality
 - Metadata storage with pickle
 
-### 4. Retrieval Pipeline (`src/core/retrieval_pipeline.py`)
+### 4. Retrieval Pipeline (core/retrieval_pipeline.py)
 - Hybrid search: 0.7 vector + 0.3 keyword
 - Two-stage: retrieve 10, rerank to 5
 - Cross-encoder: cross-encoder/ms-marco-MiniLM-L-6-v2
 - Target latency: <100ms for search
 
-### 5. Claude Integration (`src/core/claude_integration.py`)
+### 5. Claude Integration (core/claude_integration.py)
 - Model: claude-haiku-4-5-20251001
 - Stream responses for better UX
 - Context assembly from retrieved chunks
 - Prompt template with citations
 
-### 6. Monitoring (`src/monitoring/tcp_server.py`)
+### 6. Monitoring (monitoring/tcp_server.py)
 - TCP server on port 9999
 - Endpoints: /status, /logs, /metrics
 - JSON responses
 - Real-time log streaming
+
+## Import Guidelines
+
+All imports should use package-relative imports (NOT src. prefix):
+
+```python
+# Correct imports
+from core.config import get_config
+from monitoring.logger import get_logger
+from plugin.mcp.unified_server import MCPServer
+
+# Incorrect imports (DO NOT USE)
+from src.core.config import get_config
+from src.monitoring.logger import get_logger
+```
+
+The package is installed using pip, so `src/` directory structure is not preserved in the installed package.
 
 ## Git Commit Checkpoints
 

@@ -29,13 +29,13 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
-from src.core.retrieval_pipeline import get_retriever
-from src.core.query_classifier import get_query_classifier, QueryIntent, QueryClassification, TechnicalDepth
-from src.integrations.maf_connector import get_maf_connector, MAFResult
-from src.agents.query_decomposer import get_query_decomposer, DecompositionResult
-from src.agents.result_synthesizer import get_result_synthesizer, SynthesisResult
-from src.monitoring.logger import get_logger, get_metrics_logger
-from src.monitoring.output_formatter import OutputFormatter
+from core.retrieval_pipeline import get_retriever
+from core.query_classifier import get_query_classifier, QueryIntent, QueryClassification, TechnicalDepth
+from integrations.maf_connector import get_maf_connector, MAFResult
+from agents.query_decomposer import get_query_decomposer, DecompositionResult
+from agents.result_synthesizer import get_result_synthesizer, SynthesisResult
+from monitoring.logger import get_logger, get_metrics_logger
+from monitoring.output_formatter import OutputFormatter
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
@@ -129,7 +129,7 @@ class AgentOrchestrator:
         logger.info("Routing strategy selected", strategy=strategy.value)
 
         # Emit reasoning event
-        from src.monitoring.tcp_server import metrics_collector
+        from monitoring.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Agent orchestration: Classified as {classification.primary_intent.value} "
             f"with {classification.confidence:.0%} confidence. "
@@ -307,7 +307,7 @@ class AgentOrchestrator:
         logger.debug("Executing parallel RAG + MAF strategy")
 
         # Emit activity event
-        from src.monitoring.tcp_server import metrics_collector
+        from monitoring.tcp_server import metrics_collector
         metrics_collector.record_activity_event(
             activity="parallel_rag_maf_started",
             component="agent_orchestrator",
@@ -438,7 +438,7 @@ class AgentOrchestrator:
             content = "\n\n".join(content_parts)
 
         # Emit reasoning event
-        from src.monitoring.tcp_server import metrics_collector
+        from monitoring.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Hybrid synthesis: Combined MAF {'analysis' if maf_result else 'unavailable'} "
             f"with {len(rag_results)} RAG results. "
@@ -494,7 +494,7 @@ class AgentOrchestrator:
         logger.debug("Executing decomposed strategy")
 
         # Emit activity event
-        from src.monitoring.tcp_server import metrics_collector
+        from monitoring.tcp_server import metrics_collector
         metrics_collector.record_activity_event(
             activity="query_decomposition_started",
             component="agent_orchestrator",

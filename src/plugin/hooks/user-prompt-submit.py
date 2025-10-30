@@ -17,18 +17,8 @@ from typing import Dict, Any, Optional, List, Tuple
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Add project root to path - handle multiple possible locations
 # Could be in .claude/plugins/rag-cli (when synced to Claude Code)
 # or in development directory
-hook_file = Path(__file__).resolve()
-
-# Strategy 1: Check environment variable (most explicit)
-project_root = None
-if 'RAG_CLI_ROOT' in os.environ:
-    env_path = Path(os.environ['RAG_CLI_ROOT'])
-    if env_path.exists() and (env_path / 'src' / 'core').exists():
-        project_root = env_path
-
 # Strategy 2: Try to find project root by walking up from hook location
 if project_root is None:
     current = hook_file.parent
@@ -68,14 +58,14 @@ if project_root is None:
 
 sys.path.insert(0, str(project_root))
 
-from src.core.config import get_config
-from src.core.vector_store import get_vector_store
-from src.core.embeddings import get_embedding_generator
-from src.core.retrieval_pipeline import HybridRetriever
-from src.core.claude_code_adapter import get_adapter
-from src.core.query_classifier import QueryClassification
-from src.monitoring.logger import get_logger
-from src.monitoring.service_manager import ensure_services_running
+from core.config import get_config
+from core.vector_store import get_vector_store
+from core.embeddings import get_embedding_generator
+from core.retrieval_pipeline import HybridRetriever
+from core.claude_code_adapter import get_adapter
+from core.query_classifier import QueryClassification
+from monitoring.logger import get_logger
+from monitoring.service_manager import ensure_services_running
 
 logger = get_logger(__name__)
 
@@ -88,7 +78,6 @@ TCP_SERVER_URL = "http://localhost:9999"
 # Cache TCP server availability to avoid repeated checks
 _tcp_server_available = None
 _tcp_check_time = 0
-
 
 def check_tcp_server_available() -> bool:
     """Check if TCP server is available.
@@ -125,7 +114,6 @@ def check_tcp_server_available() -> bool:
         _tcp_server_available = False
         _tcp_check_time = current_time
         return False
-
 
 def submit_event_to_server(event_type: str, data: Dict[str, Any]) -> bool:
     """Submit an event to the TCP server via HTTP POST.
@@ -170,7 +158,6 @@ def submit_event_to_server(event_type: str, data: Dict[str, Any]) -> bool:
         logger.debug(f"Failed to submit event to TCP server: {e}")
         return False
 
-
 def load_rag_settings() -> Dict[str, Any]:
     """Load RAG settings from file.
 
@@ -194,7 +181,6 @@ def load_rag_settings() -> Dict[str, Any]:
         "exclude_patterns": []  # Patterns to exclude from enhancement
     }
 
-
 def save_rag_settings(settings: Dict[str, Any]):
     """Save RAG settings to file.
 
@@ -207,7 +193,6 @@ def save_rag_settings(settings: Dict[str, Any]):
             json.dump(settings, f, indent=2)
     except Exception as e:
         logger.error(f"Failed to save RAG settings: {e}")
-
 
 def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Optional['QueryClassification']]:
     """Determine if a query should be enhanced with RAG using intelligent classification.
@@ -229,7 +214,7 @@ def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Op
 
     # Import query classifier
     try:
-        from src.core.query_classifier import get_query_classifier
+        from core.query_classifier import get_query_classifier
     except ImportError:
         logger.warning("Query classifier not available, falling back to basic filtering")
         # Fallback to basic word count check
@@ -284,7 +269,6 @@ def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Op
     )
 
     return (True, classification)
-
 
 def retrieve_context(query: str, settings: Dict[str, Any], classification: Optional['QueryClassification'] = None) -> List[Dict[str, Any]]:
     """Retrieve relevant context for a query.
@@ -380,7 +364,6 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
         logger.error(f"Failed to retrieve context: {e}")
         return []
 
-
 def format_enhanced_query(query: str, documents: List[Dict[str, Any]]) -> str:
     """Format the enhanced query with retrieved context.
 
@@ -397,7 +380,6 @@ def format_enhanced_query(query: str, documents: List[Dict[str, Any]]) -> str:
     # Use adapter for consistent formatting
     adapter = get_adapter()
     return adapter.format_hook_enhancement(documents, query)
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process the UserPromptSubmit hook event.
@@ -482,7 +464,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         if use_orchestrator:
             try:
-                from src.core.agent_orchestrator import AgentOrchestrator
+                from core.agent_orchestrator import AgentOrchestrator
 
                 # Initialize orchestrator
                 orchestrator = AgentOrchestrator()
@@ -500,7 +482,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                     strategy_used = orchestration_result.strategy_used.value
 
                     # Format orchestration output for clean display
-                    from src.monitoring.output_formatter import OutputFormatter
+                    from monitoring.output_formatter import OutputFormatter
                     formatter = OutputFormatter(verbose=False)
 
                     # Create formatted summary based on strategy
@@ -637,7 +619,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -656,7 +637,6 @@ def main():
         # On error, pass through the original event
         print(event_json if 'event_json' in locals() else "{}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

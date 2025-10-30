@@ -24,19 +24,19 @@ from rank_bm25 import BM25Okapi
 # Cross-encoder for reranking
 from sentence_transformers import CrossEncoder
 
-from src.core.config import get_config
-from src.core.embeddings import get_embedding_generator
-from src.core.vector_store import get_vector_store
-from src.core.document_processor import DocumentChunk, get_document_processor
-from src.monitoring.logger import get_logger, get_metrics_logger, log_execution_time
-from src.monitoring.tcp_server import metrics_collector
-from src.monitoring.latency_tracker import get_latency_tracker, time_operation
-from src.core.online_retriever import OnlineRetriever
-from src.monitoring.error_tracker import get_error_tracker
-from src.core.duplicate_detector import get_duplicate_detector
-from src.core.semantic_cache import get_semantic_cache
-from src.core.hyde import get_hyde_generator
-from src.core.query_classifier import QueryClassification
+from core.config import get_config
+from core.embeddings import get_embedding_generator
+from core.vector_store import get_vector_store
+from core.document_processor import DocumentChunk, get_document_processor
+from monitoring.logger import get_logger, get_metrics_logger, log_execution_time
+from monitoring.tcp_server import metrics_collector
+from monitoring.latency_tracker import get_latency_tracker, time_operation
+from core.online_retriever import OnlineRetriever
+from monitoring.error_tracker import get_error_tracker
+from core.duplicate_detector import get_duplicate_detector
+from core.semantic_cache import get_semantic_cache
+from core.hyde import get_hyde_generator
+from core.query_classifier import QueryClassification
 
 
 logger = get_logger(__name__)
@@ -541,7 +541,7 @@ class HybridRetriever:
 
         # Import QueryIntent for type checking
         try:
-            from src.core.query_classifier import QueryIntent
+            from core.query_classifier import QueryIntent
         except ImportError:
             return (vector_weight, keyword_weight)
 

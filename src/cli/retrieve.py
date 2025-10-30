@@ -17,9 +17,6 @@ from rich.table import Table
 from rich import print as rprint
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from core.config import load_config, get_config
 from core.embeddings import get_embedding_generator
 from core.vector_store import get_vector_store
@@ -67,7 +64,7 @@ def format_response(response_text: str, sources: list, show_sources: bool = True
 @click.option('--stream', is_flag=True, help='Stream the response')
 @click.option('--interactive', '-i', is_flag=True, help='Interactive mode (multiple queries)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
-def retrieve(
+def main(
     query: str,
     top_k: int,
     no_generate: bool,
@@ -83,9 +80,9 @@ def retrieve(
     and optionally generates a response using Claude.
 
     Examples:
-        python retrieve.py --query "What is RAG?"
-        python retrieve.py --interactive
-        python retrieve.py -q "How does it work?" --show-chunks
+        rag-retrieve --query "What is RAG?"
+        rag-retrieve --interactive
+        rag-retrieve -q "How does it work?" --show-chunks
     """
     # Load configuration
     config = load_config()
@@ -119,7 +116,7 @@ def retrieve(
 
     # Check if index exists
     if vector_store.index.ntotal == 0:
-        console.print("[red]No documents indexed! Please run index.py first.[/red]")
+        console.print("[red]No documents indexed! Please run rag-index first.[/red]")
         sys.exit(1)
 
     console.print(f"[green]Index loaded: {vector_store.index.ntotal} vectors[/green]\n")
@@ -254,4 +251,4 @@ def retrieve(
 
 
 if __name__ == "__main__":
-    retrieve()
+    main()

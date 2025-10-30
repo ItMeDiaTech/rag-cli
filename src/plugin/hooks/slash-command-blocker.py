@@ -24,14 +24,9 @@ os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 # Import path resolution utilities
 from path_utils import setup_sys_path
 
-# Add project root to path - handle multiple possible locations
-hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file)
-
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
-
 
 def is_slash_command(text: str) -> bool:
     """Check if the text is a slash command.
@@ -43,7 +38,6 @@ def is_slash_command(text: str) -> bool:
         True if text starts with /, False otherwise
     """
     return text.strip().startswith('/')
-
 
 def extract_command_name(text: str) -> str:
     """Extract the command name from slash command text.
@@ -61,7 +55,6 @@ def extract_command_name(text: str) -> str:
     # Remove the / and get the first word
     parts = stripped[1:].split()
     return parts[0] if parts else ""
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process the UserPromptSubmit hook event.
@@ -117,7 +110,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         # Try to send event to monitoring dashboard if available
         try:
-            from src.monitoring.service_manager import ServiceManager
+            from monitoring.service_manager import ServiceManager
 
             manager = ServiceManager()
             if manager.is_healthy():
@@ -136,7 +129,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error in slash-command-blocker hook: {e}", exc_info=True)
         # On error, pass through original event to avoid breaking workflow
         return event
-
 
 def main():
     """Main entry point for hook execution.
@@ -162,7 +154,6 @@ def main():
         except (UnicodeEncodeError, IOError):
             print("{}")
         sys.exit(1)
-
 
 if __name__ == '__main__':
     main()

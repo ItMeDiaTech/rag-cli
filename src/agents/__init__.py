@@ -8,7 +8,7 @@ This package contains specialized agents for complex query processing:
 - DocumentationAgent: Maintains project documentation (future)
 """
 
-from src.agents.base_agent import (
+from agents.base_agent import (
     BaseAgent,
     AgentCoordinator,
     AgentMessage,
@@ -17,13 +17,13 @@ from src.agents.base_agent import (
     AgentMetrics,
     get_agent_coordinator
 )
-from src.agents.query_decomposer import (
+from agents.query_decomposer import (
     QueryDecomposer,
     SubQuery,
     DecompositionResult,
     get_query_decomposer
 )
-from src.agents.result_synthesizer import (
+from agents.result_synthesizer import (
     ResultSynthesizer,
     SynthesisResult,
     get_result_synthesizer

@@ -22,8 +22,8 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from src.monitoring.logger import get_logger
-from src.integrations.maf_connector import get_maf_connector
+from monitoring.logger import get_logger
+from integrations.maf_connector import get_maf_connector
 
 logger = get_logger(__name__)
 

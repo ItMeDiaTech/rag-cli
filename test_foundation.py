@@ -11,7 +11,7 @@ def test_config():
     """Test configuration loading."""
     print("Testing configuration system...")
 
-    from src.core.config import load_config, validate_config
+    from core.config import load_config, validate_config
 
     try:
         # Load configuration
@@ -43,7 +43,7 @@ def test_logging():
     """Test logging system."""
     print("\nTesting logging system...")
 
-    from src.monitoring.logger import get_logger, get_metrics_logger
+    from monitoring.logger import get_logger, get_metrics_logger
 
     try:
         # Get logger
@@ -89,7 +89,7 @@ def test_decorators():
     """Test logging decorators."""
     print("\nTesting logging decorators...")
 
-    from src.monitoring.logger import log_execution_time, log_api_call
+    from monitoring.logger import log_execution_time, log_api_call
     import time
 
     try:

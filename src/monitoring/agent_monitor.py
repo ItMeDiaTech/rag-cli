@@ -8,7 +8,7 @@ for the multi-agent orchestration system. It tracks:
 - System-wide agent performance
 
 USAGE:
-    from src.monitoring.agent_monitor import get_agent_monitor
+    from monitoring.agent_monitor import get_agent_monitor
 
     monitor = get_agent_monitor()
     monitor.trace_agent_execution(agent_id, duration, success)
@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 

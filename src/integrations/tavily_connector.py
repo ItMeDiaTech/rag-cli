@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 import requests
 
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 

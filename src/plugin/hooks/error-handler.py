@@ -23,14 +23,9 @@ os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 # Import path resolution utilities
 from path_utils import setup_sys_path
 
-# Add project root to path - handle multiple possible locations
-hook_file = Path(__file__).resolve()
-project_root = setup_sys_path(hook_file)
-
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
-
 
 # Error type classification
 RAG_ERROR_TYPES = {
@@ -71,7 +66,6 @@ RAG_ERROR_TYPES = {
     }
 }
 
-
 def classify_error(error: Dict[str, Any]) -> str:
     """Classify error type from error object.
 
@@ -106,7 +100,6 @@ def classify_error(error: Dict[str, Any]) -> str:
 
     # Default to generic service error
     return 'ServiceUnavailable'
-
 
 def format_error_message(error_type: str, context: Dict[str, Any]) -> str:
     """Format error message for display.
@@ -152,7 +145,6 @@ def format_error_message(error_type: str, context: Dict[str, Any]) -> str:
     lines.append("")
 
     return "\n".join(lines)
-
 
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process ErrorHandler hook event.
@@ -209,7 +201,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
     return event
 
-
 def main():
     """Main function for the hook."""
     try:
@@ -228,7 +219,6 @@ def main():
         # On error, pass through the original event
         print(event_json if 'event_json' in locals() else "{}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

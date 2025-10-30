@@ -24,15 +24,9 @@ except ImportError:
 
 import sys
 
-# Add project root to path
-project_root = Path(__file__).resolve().parents[3]
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
-
-from src.monitoring.logger import get_logger
+from monitoring.logger import get_logger
 
 logger = get_logger(__name__)
-
 
 class DocumentFileHandler(FileSystemEventHandler):
     """Handles file system events for document indexing."""
@@ -144,7 +138,6 @@ class DocumentFileHandler(FileSystemEventHandler):
                 loop.run_until_complete(self.index_callback(file_path))
             finally:
                 loop.close()
-
 
 class FileWatcher:
     """Manages file system watching for document indexing."""
@@ -268,7 +261,6 @@ class FileWatcher:
         """
         return WATCHDOG_AVAILABLE and self.observer and self.observer.is_alive()
 
-
 async def index_document_callback(file_path: Path) -> bool:
     """Default callback for indexing a document.
 
@@ -281,10 +273,10 @@ async def index_document_callback(file_path: Path) -> bool:
     try:
         logger.info(f"Indexing document: {file_path}")
 
-        from src.core.config import get_config
-        from src.core.document_processor import DocumentProcessor
-        from src.core.vector_store import get_vector_store
-        from src.core.embeddings import get_embedding_generator
+        from core.config import get_config
+        from core.document_processor import DocumentProcessor
+        from core.vector_store import get_vector_store
+        from core.embeddings import get_embedding_generator
 
         # Initialize components
         config = get_config()
