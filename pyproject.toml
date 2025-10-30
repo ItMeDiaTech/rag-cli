@@ -54,10 +54,10 @@ rag-retrieve = "scripts.retrieve:main"
 rag-monitor = "src.monitoring.tcp_server:main"
 
 [tool.setuptools]
-packages = ["src"]
+package-dir = {"" = "src"}
 
-[tool.setuptools.package-dir]
-"" = "src"
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.isort]
 profile = "black"
