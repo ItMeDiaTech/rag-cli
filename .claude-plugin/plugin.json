@@ -1,10 +1,12 @@
 {
-  "name": "RAG-CLI",
-  "version": "0.1.0",
-  "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses",
-  "author": "RAG-CLI Team",
-  "repository": "https://github.com/yourusername/rag-cli",
+  "name": "rag-cli",
+  "version": "1.0.0",
+  "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses with multi-agent orchestration",
+  "author": "DiaTech",
+  "repository": "https://github.com/ItMeDiaTech/rag-cli",
   "license": "MIT",
+  "homepage": "https://github.com/ItMeDiaTech/rag-cli",
+  "bugs": "https://github.com/ItMeDiaTech/rag-cli/issues",
   "requirements": {
     "claude_code_version": ">=1.0.0",
     "python": ">=3.8",

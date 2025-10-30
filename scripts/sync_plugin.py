@@ -67,7 +67,7 @@ def sync_directory(src: Path, dest: Path, pattern: str = '*') -> Tuple[int, int]
         Tuple of (files_copied, files_skipped)
     """
     if not src.exists():
-        print(f"⚠ Source directory not found: {src}")
+        print(f"[WARNING] Source directory not found: {src}")
         return 0, 0
 
     # Create destination if it doesn't exist
@@ -276,6 +276,41 @@ monitoring:
     print("  + Created data and log directories")
 
 
+def configure_api_tokens(interactive: bool = True):
+    """Configure API tokens from .env or user prompts.
+
+    Args:
+        interactive: Whether to prompt user for missing tokens
+    """
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT))
+        from src.core.token_manager import TokenManager
+
+        print("\n[Tokens] Configuring API tokens...")
+
+        token_manager = TokenManager(PROJECT_ROOT)
+        tokens = token_manager.configure_tokens(interactive=interactive)
+
+        # Update config file if tokens were provided
+        if tokens['github_token'] or tokens['stackoverflow_key']:
+            # Only update if user wants to (for backward compatibility)
+            # Tokens in .env are preferred over config file
+            pass
+
+        if not tokens['github_token'] and not tokens['stackoverflow_key']:
+            print("  [INFO] No API tokens configured (optional)")
+            print("  [INFO] You can add them later to .env file")
+        else:
+            print("  [OK] API tokens configured successfully")
+
+    except ImportError as e:
+        print(f"  [WARNING] Token manager not available: {e}")
+        print("  [INFO] You can manually add tokens to .env file later")
+    except Exception as e:
+        print(f"  [WARNING] Token configuration failed: {e}")
+        print("  [INFO] You can manually add tokens to .env file later")
+
+
 def main():
     """Main synchronization function."""
     print("\n" + "="*60)
@@ -324,6 +359,9 @@ def main():
     print("[Config] Initializing configuration files...")
     initialize_config_files()
     print()
+
+    # Configure API tokens
+    configure_api_tokens(interactive=True)
 
     # Summary
     print("="*60)

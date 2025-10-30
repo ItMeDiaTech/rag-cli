@@ -118,6 +118,59 @@ This opens a web dashboard at http://localhost:5000 showing:
 - Performance metrics
 - System logs
 
+## API Token Configuration
+
+### Automatic Token Detection
+
+RAG-CLI can automatically detect and use API tokens from your `.env` file during installation:
+
+1. **Copy the example file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Add your tokens** (all optional):
+   ```bash
+   # GitHub token for documentation access
+   GITHUB_TOKEN="your_github_token_here"
+
+   # Stack Overflow API key for higher rate limits
+   STACKOVERFLOW_KEY="your_stackoverflow_key_here"
+   ```
+
+3. **Run installation**:
+   ```bash
+   python scripts/sync_plugin.py
+   ```
+
+The setup script will:
+- Check for existing tokens in `.env` file
+- Prompt you to enter tokens if not found
+- Securely save tokens to `.env` file
+- Never commit tokens to version control (`.env` is gitignored)
+
+### Manual Token Configuration
+
+If you skip token configuration during installation, you can add them later:
+
+1. Create or edit `.env` file in project root
+2. Add your tokens using the format shown in `.env.example`
+3. Restart Claude Code or re-run the sync script
+
+### Token Usage
+
+**GitHub Token**:
+- Used for accessing documentation from GitHub repositories
+- Provides higher API rate limits
+- Optional but recommended for heavy usage
+
+**Stack Overflow Key**:
+- Provides higher rate limits for Stack Overflow API
+- Completely optional and rarely needed
+- Only useful if you frequently query Stack Overflow
+
+Note: When running as a Claude Code plugin, NO Anthropic API key is required.
+
 ## Configuration
 
 ### RAG Settings
