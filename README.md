@@ -235,6 +235,43 @@ RAG-CLI integrates with the Multi-Agent Framework (MAF) to provide intelligent q
 
 The orchestrator automatically selects the best strategy based on query intent, providing faster and more accurate responses.
 
+### Clean Output Formatting
+
+RAG-CLI provides structured, readable output for all operations:
+
+**Search Results Example:**
+```
+# RAG Search Results
+
+## Retrieval Results
+Found: 5 relevant documents
+Time: 145ms
+
+## Retrieved Documents
+**1. Getting Started Guide (score: 0.890)**
+> This guide will help you get started with the installation process...
+
+**2. Configuration Reference (score: 0.870)**
+> The configuration file allows you to customize various aspects...
+```
+
+**Orchestration Output Example:**
+```
+## Query Processing
+**Strategy:** parallel
+**Intent:** troubleshooting
+**Confidence:** 87.5%
+**Documents:** 3
+**MAF Agent:** debugger
+```
+
+The formatting system provides:
+- Clean markdown headers for each stage
+- Performance metrics (time, document count, confidence scores)
+- Document previews with intelligent truncation
+- Progress indicators for multi-step operations
+- Collapsible sections for detailed logs (when verbose mode enabled)
+
 ## API Reference
 
 ### Document Indexing

@@ -35,6 +35,7 @@ from src.integrations.maf_connector import get_maf_connector, MAFResult
 from src.agents.query_decomposer import get_query_decomposer, DecompositionResult
 from src.agents.result_synthesizer import get_result_synthesizer, SynthesisResult
 from src.monitoring.logger import get_logger, get_metrics_logger
+from src.monitoring.output_formatter import OutputFormatter, format_rag_pipeline, format_maf_pipeline, format_hybrid_pipeline
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
@@ -653,7 +654,7 @@ class AgentOrchestrator:
         )
 
     def _format_rag_response(self, results: List) -> str:
-        """Format RAG retrieval results into readable text.
+        """Format RAG retrieval results into readable text with clean formatting.
 
         Args:
             results: List of RetrievalResult objects
@@ -664,15 +665,17 @@ class AgentOrchestrator:
         if not results:
             return "No relevant information found."
 
-        formatted = []
-        for i, result in enumerate(results[:5], 1):  # Top 5
-            formatted.append(f"{i}. [{result.source}] (score: {result.score:.2f})")
-            formatted.append(f"   {result.text[:300]}")  # First 300 chars
-            if len(result.text) > 300:
-                formatted.append("   ...")
-            formatted.append("")
+        formatter = OutputFormatter(verbose=False)
+        output = formatter.format_header("Retrieved Documents", 2)
 
-        return "\n".join(formatted)
+        for i, result in enumerate(results[:5], 1):  # Top 5
+            output += formatter.format_document_preview(
+                title=f"{i}. {result.source} (score: {result.score:.2f})",
+                content=result.text,
+                max_length=300
+            )
+
+        return output
 
 
 # Singleton instance

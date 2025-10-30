@@ -500,13 +500,28 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                     documents = orchestration_result.rag_results
                     strategy_used = orchestration_result.strategy_used.value
 
-                    # Emit orchestration reasoning
+                    # Format orchestration output for clean display
+                    from src.monitoring.output_formatter import OutputFormatter
+                    formatter = OutputFormatter(verbose=False)
+
+                    # Create formatted summary based on strategy
+                    formatted_summary = formatter.format_header("Query Processing", 2)
+                    formatted_summary += f"**Strategy:** {strategy_used}\n"
+                    formatted_summary += f"**Intent:** {classification.primary_intent.value if classification else 'unknown'}\n"
+                    formatted_summary += f"**Confidence:** {orchestration_result.confidence:.1%}\n"
+                    formatted_summary += f"**Documents:** {len(documents)}\n"
+
+                    if orchestration_result.maf_result:
+                        formatted_summary += f"**MAF Agent:** {orchestration_result.maf_result.agent_name}\n"
+
+                    # Emit orchestration reasoning with formatted output
                     submit_event_to_server("reasoning", {
                         "reasoning": f"Agent orchestration used strategy: {strategy_used}. "
                                     f"Classification: {classification.primary_intent.value if classification else 'unknown'}. "
                                     f"Confidence: {orchestration_result.confidence:.2f}. "
                                     f"Retrieved {len(documents)} documents.",
                         "component": "agent_orchestrator",
+                        "formatted_output": formatted_summary,
                         "context": {
                             "strategy": strategy_used,
                             "intent": classification.primary_intent.value if classification else None,
