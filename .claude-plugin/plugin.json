@@ -2,220 +2,47 @@
   "name": "rag-cli",
   "version": "1.0.0",
   "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses with multi-agent orchestration",
-  "author": "DiaTech",
+  "author": {
+    "name": "DiaTech",
+    "email": "support@rag-cli.dev",
+    "url": "https://github.com/ItMeDiaTech"
+  },
+  "homepage": "https://github.com/ItMeDiaTech/rag-cli",
   "repository": "https://github.com/ItMeDiaTech/rag-cli",
   "license": "MIT",
-  "homepage": "https://github.com/ItMeDiaTech/rag-cli",
-  "bugs": "https://github.com/ItMeDiaTech/rag-cli/issues",
-  "requirements": {
-    "claude_code_version": ">=1.0.0",
-    "python": ">=3.8",
-    "dependencies": [
-      "sentence-transformers",
-      "faiss-cpu",
-      "anthropic",
-      "langchain",
-      "flask",
-      "click",
-      "tqdm",
-      "pyyaml",
-      "psutil"
-    ]
+  "keywords": [
+    "rag",
+    "retrieval",
+    "augmented-generation",
+    "vector-search",
+    "semantic-search",
+    "multi-agent",
+    "orchestration",
+    "documentation",
+    "knowledge-base",
+    "faiss",
+    "embeddings",
+    "claude-code",
+    "plugin"
+  ],
+  "commands": [
+    "./src/plugin/commands/"
+  ],
+  "hooks": {
+    "UserPromptSubmit": "./src/plugin/hooks/user-prompt-submit.py",
+    "ResponsePost": "./src/plugin/hooks/response-post.py",
+    "ErrorHandler": "./src/plugin/hooks/error-handler.py",
+    "PluginStateChange": "./src/plugin/hooks/plugin-state-change.py",
+    "DocumentIndexing": "./src/plugin/hooks/document-indexing.py"
   },
-  "configuration": {
-    "environment_variables": [
-      {
-        "name": "ANTHROPIC_API_KEY",
-        "description": "API key for Claude Haiku model",
-        "required": true
-      },
-      {
-        "name": "RAG_CLI_CONFIG",
-        "description": "Path to custom configuration file",
-        "required": false,
-        "default": "config/default.yaml"
-      },
-      {
-        "name": "RAG_CLI_LOG_LEVEL",
-        "description": "Logging level (DEBUG, INFO, WARNING, ERROR)",
-        "required": false,
-        "default": "INFO"
+  "mcpServers": {
+    "rag-server": {
+      "command": "python",
+      "args": ["-m", "src.plugin.mcp.unified_server"],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "RAG_CLI_MODE": "claude_code"
       }
-    ],
-    "settings": {
-      "vector_store_path": "data/vectors",
-      "document_path": "data/documents",
-      "log_path": "logs",
-      "monitoring_port": 9999,
-      "auto_rag_enabled": false
     }
-  },
-  "components": {
-    "skills": [
-      {
-        "name": "rag-retrieval",
-        "description": "Query documents using semantic search",
-        "path": "src/plugin/skills/rag-retrieval",
-        "entry_point": "retrieve.py",
-        "icon": "search"
-      },
-      {
-        "name": "update-rag",
-        "description": "Synchronize RAG-CLI plugin with Claude Code installation",
-        "path": "src/plugin/skills/update-rag",
-        "entry_point": "update.py",
-        "icon": "refresh"
-      }
-    ],
-    "commands": [
-      {
-        "name": "search",
-        "description": "Search indexed documents and get AI answers",
-        "path": "src/plugin/commands/search.md",
-        "alias": [
-          "rag",
-          "query"
-        ]
-      },
-      {
-        "name": "rag:enable",
-        "description": "Enable automatic RAG enhancement",
-        "path": "src/plugin/commands/rag-enable.md"
-      },
-      {
-        "name": "rag:disable",
-        "description": "Disable automatic RAG enhancement",
-        "path": "src/plugin/commands/rag-disable.md"
-      },
-      {
-        "name": "update-rag",
-        "description": "Synchronize RAG-CLI plugin with Claude Code installation",
-        "path": "src/plugin/commands/update-rag.md",
-        "alias": [
-          "rag:update",
-          "rag-sync"
-        ]
-      }
-    ],
-    "hooks": [
-      {
-        "name": "UserPromptSubmit",
-        "description": "Enhance queries with document context",
-        "path": "src/plugin/hooks/user-prompt-submit.py",
-        "enabled": true,
-        "priority": 100
-      },
-      {
-        "name": "UpdateRagCommand",
-        "description": "Handle /update-rag command execution",
-        "path": "src/plugin/hooks/update-rag-hook.py",
-        "enabled": true,
-        "priority": 90
-      },
-      {
-        "name": "ResponsePost",
-        "description": "Add inline citations [1][2] to RAG-enhanced responses",
-        "path": "src/plugin/hooks/response-post.py",
-        "enabled": true,
-        "priority": 80
-      },
-      {
-        "name": "ErrorHandler",
-        "description": "Graceful error handling with inline warnings",
-        "path": "src/plugin/hooks/error-handler.py",
-        "enabled": true,
-        "priority": 70
-      },
-      {
-        "name": "PluginStateChange",
-        "description": "Persist settings across Claude Code restarts",
-        "path": "src/plugin/hooks/plugin-state-change.py",
-        "enabled": true,
-        "priority": 60
-      },
-      {
-        "name": "DocumentIndexing",
-        "description": "Auto-index new/modified documents into knowledge base",
-        "path": "src/plugin/hooks/document-indexing.py",
-        "enabled": false,
-        "priority": 50
-      }
-    ],
-    "mcp_servers": [
-      {
-        "name": "rag-server",
-        "description": "MCP server for RAG operations",
-        "command": "python",
-        "args": [
-          "-m",
-          "src.plugin.mcp.unified_server"
-        ],
-        "env": {
-          "PYTHONPATH": "${plugin_path}"
-        }
-      }
-    ]
-  },
-  "scripts": {
-    "install": "pip install -r requirements.txt",
-    "setup": "python scripts/setup.py",
-    "index": "python scripts/index.py --input data/documents",
-    "test": "pytest tests/",
-    "monitor": "python -m src.monitoring.tcp_server",
-    "clean": "rm -rf data/vectors/* logs/*"
-  },
-  "features": {
-    "document_processing": {
-      "supported_formats": [
-        "txt",
-        "md",
-        "pdf",
-        "docx",
-        "html"
-      ],
-      "chunk_size": 500,
-      "chunk_overlap": 50
-    },
-    "embeddings": {
-      "model": "sentence-transformers/all-MiniLM-L6-v2",
-      "dimensions": 384,
-      "cache_enabled": true
-    },
-    "retrieval": {
-      "method": "hybrid",
-      "vector_weight": 0.7,
-      "keyword_weight": 0.3,
-      "reranking": true,
-      "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    },
-    "generation": {
-      "model": "claude-haiku-4-5-20251001",
-      "max_tokens": 4096,
-      "streaming": true,
-      "temperature": 0.7
-    },
-    "monitoring": {
-      "tcp_server": true,
-      "port": 9999,
-      "metrics_enabled": true,
-      "log_rotation": true
-    }
-  },
-  "performance": {
-    "vector_search_latency": "<100ms",
-    "end_to_end_latency": "<5s",
-    "memory_usage": "<2GB",
-    "index_capacity": "1M documents"
-  },
-  "documentation": {
-    "readme": "README.md",
-    "api_docs": "docs/api.md",
-    "user_guide": "docs/user-guide.md",
-    "development": "docs/development.md"
-  },
-  "support": {
-    "issues": "https://github.com/yourusername/rag-cli/issues",
-    "discussions": "https://github.com/yourusername/rag-cli/discussions",
-    "email": "support@rag-cli.example.com"
   }
 }
