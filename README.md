@@ -33,9 +33,34 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-### Claude Code Deployment
+### Claude Code Plugin Installation
+
+#### Option 1: From Marketplace (Recommended)
+
+```bash
+# Add the RAG-CLI marketplace
+/plugin marketplace add ItMeDiaTech/rag-cli
+
+# Browse and install
+/plugin
+
+# Or install directly
+/plugin install rag-cli
+```
+
+After installation, restart Claude Code to activate the plugin.
+
+#### Option 2: Manual Installation
 
 When running as a Claude Code plugin, NO API key is required. The system automatically detects the Claude Code environment and uses its internal interface.
+
+```bash
+# Clone and install manually
+git clone https://github.com/ItMeDiaTech/rag-cli.git
+cd rag-cli
+pip install -r requirements.txt
+python scripts/sync_plugin.py
+```
 
 ### Standalone Setup (Optional)
 

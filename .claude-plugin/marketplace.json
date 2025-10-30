@@ -1,0 +1,44 @@
+{
+  "name": "rag-cli",
+  "owner": {
+    "name": "DiaTech",
+    "email": "support@rag-cli.dev"
+  },
+  "description": "RAG-CLI Marketplace - Local Retrieval-Augmented Generation plugin for Claude Code",
+  "homepage": "https://github.com/ItMeDiaTech/rag-cli",
+  "repository": "https://github.com/ItMeDiaTech/rag-cli",
+  "license": "MIT",
+  "plugins": [
+    {
+      "name": "rag-cli",
+      "source": ".",
+      "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses with multi-agent orchestration",
+      "version": "1.0.0",
+      "author": {
+        "name": "DiaTech",
+        "email": "support@rag-cli.dev"
+      },
+      "homepage": "https://github.com/ItMeDiaTech/rag-cli",
+      "repository": "https://github.com/ItMeDiaTech/rag-cli",
+      "license": "MIT",
+      "keywords": [
+        "rag",
+        "retrieval",
+        "augmented-generation",
+        "vector-search",
+        "semantic-search",
+        "multi-agent",
+        "orchestration",
+        "documentation",
+        "knowledge-base",
+        "faiss",
+        "embeddings"
+      ],
+      "category": "productivity",
+      "requirements": {
+        "claude_code_version": ">=1.0.0",
+        "python": ">=3.8"
+      }
+    }
+  ]
+}

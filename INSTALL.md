@@ -11,7 +11,23 @@ Complete installation guide for the RAG-CLI Claude Code plugin.
 
 ## Quick Install
 
-### Option 1: Using pip (Recommended)
+### Option 1: Claude Code Marketplace (Easiest)
+
+```bash
+# Add the RAG-CLI marketplace
+/plugin marketplace add ItMeDiaTech/rag-cli
+
+# Install the plugin
+/plugin install rag-cli
+```
+
+Restart Claude Code after installation. The plugin will automatically:
+- Install all hooks and commands
+- Configure MCP server
+- Prompt for optional API tokens
+- Create default configuration
+
+### Option 2: Using pip
 
 ```bash
 # Install directly from GitHub
@@ -21,7 +37,7 @@ pip install git+https://github.com/ItMeDiaTech/rag-cli.git
 python -m scripts.sync_plugin
 ```
 
-### Option 2: Manual Installation
+### Option 3: Manual Installation
 
 ```bash
 # Clone the repository

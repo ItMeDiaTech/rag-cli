@@ -4,20 +4,29 @@ This document explains how to install and use RAG-CLI as a Claude Code plugin.
 
 ## Quick Install (Claude Code Plugin System)
 
-### Method 1: Install from GitHub Marketplace
+### Method 1: Install from Marketplace (Recommended)
 
 ```bash
-# Add RAG-CLI as a plugin marketplace
+# Add the RAG-CLI marketplace
 /plugin marketplace add ItMeDiaTech/rag-cli
 
-# Browse and install
+# Browse available plugins
 /plugin
 
-# Or install directly
-/plugin install rag-cli@ItMeDiaTech/rag-cli
+# Install RAG-CLI
+/plugin install rag-cli
 ```
 
 After installation, restart Claude Code for the plugin to activate.
+
+What this does:
+- Downloads plugin from GitHub repository
+- Installs hooks to ~/.claude/hooks/rag-cli/
+- Installs commands to ~/.claude/commands/
+- Configures MCP server at ~/.claude/mcp/rag-cli.json
+- Installs skills to ~/.claude/skills/rag-cli/
+- Prompts for API tokens (optional)
+- Creates default configuration files
 
 ### Method 2: Manual Installation
 
