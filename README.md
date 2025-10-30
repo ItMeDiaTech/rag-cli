@@ -52,7 +52,7 @@ The easiest way to get RAG-CLI as a Claude Code plugin:
 
 ```bash
 # In Claude Code terminal
-/plugin marketplace add ItMeDiaTech/rag-cli
+/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
 /plugin install rag-cli
 ```
 

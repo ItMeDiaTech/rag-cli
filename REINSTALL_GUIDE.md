@@ -51,7 +51,7 @@ Open Claude Code in a fresh terminal session.
 
 ```bash
 # Add the marketplace (pulls latest from GitHub)
-/plugin marketplace add ItMeDiaTech/rag-cli
+/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
 
 # Install the plugin
 /plugin install rag-cli

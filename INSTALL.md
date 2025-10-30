@@ -15,7 +15,7 @@ Complete installation guide for the RAG-CLI Claude Code plugin.
 
 ```bash
 # Add the RAG-CLI marketplace
-/plugin marketplace add ItMeDiaTech/rag-cli
+/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
 
 # Install the plugin
 /plugin install rag-cli

@@ -15,7 +15,7 @@ Common issues and solutions when installing or using the RAG-CLI plugin.
 # Reinstall to get the latest version
 /plugin uninstall rag-cli
 /plugin marketplace remove ItMeDiaTech/rag-cli
-/plugin marketplace add ItMeDiaTech/rag-cli
+/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
 /plugin install rag-cli
 ```
 
@@ -49,7 +49,7 @@ git pull origin master
 # Reinstall plugin
 /plugin uninstall rag-cli
 /plugin marketplace remove ItMeDiaTech/rag-cli
-/plugin marketplace add ItMeDiaTech/rag-cli
+/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
 /plugin install rag-cli
 ```
 
@@ -232,7 +232,7 @@ For a completely clean installation:
 
 4. **Fresh Install**:
    ```bash
-   /plugin marketplace add ItMeDiaTech/rag-cli
+   /plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
    /plugin install rag-cli
    ```
 

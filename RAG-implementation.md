@@ -814,7 +814,7 @@ Users install your marketplace once, then access all plugins:
 
 ```bash
 # Add marketplace
-/plugin marketplace add your-org/my-marketplace
+/plugin marketplace add https://github.com/your-org/my-marketplace.git
 
 # Install specific plugin
 /plugin install rag-plugin@my-marketplace
