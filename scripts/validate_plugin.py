@@ -144,8 +144,29 @@ def validate_hooks_json() -> Tuple[bool, List[str]]:
         errors.append("hooks.json 'hooks' field must be an object")
         return False, errors
 
+    # Valid hook event types according to Claude Code
+    valid_event_types = {
+        'PreToolUse',
+        'PostToolUse',
+        'Notification',
+        'UserPromptSubmit',
+        'SessionStart',
+        'SessionEnd',
+        'Stop',
+        'SubagentStop',
+        'PreCompact'
+    }
+
     # Validate each hook event type
     for event_type, hooks_array in data['hooks'].items():
+        # Check if event type is valid
+        if event_type not in valid_event_types:
+            errors.append(
+                f"hooks.json invalid event type '{event_type}'. "
+                f"Valid types: {', '.join(sorted(valid_event_types))}"
+            )
+            continue
+
         if not isinstance(hooks_array, list):
             errors.append(f"hooks.json hooks.{event_type} must be an array")
             continue
