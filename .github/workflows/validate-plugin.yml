@@ -1,0 +1,75 @@
+name: Validate Plugin Configuration
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - '.claude-plugin/**'
+      - 'src/plugin/**'
+      - 'scripts/validate_plugin.py'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - '.claude-plugin/**'
+      - 'src/plugin/**'
+      - 'scripts/validate_plugin.py'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate Plugin Files
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run plugin validation
+        run: python scripts/validate_plugin.py
+
+      - name: Validate JSON syntax
+        run: |
+          echo "Validating plugin.json..."
+          python -m json.tool .claude-plugin/plugin.json > /dev/null
+          echo "Validating marketplace.json..."
+          python -m json.tool .claude-plugin/marketplace.json > /dev/null
+          echo "Validating hooks.json..."
+          python -m json.tool .claude-plugin/hooks.json > /dev/null
+          echo "All JSON files are valid!"
+
+      - name: Check for emojis in code
+        run: |
+          echo "Checking for emojis in source files..."
+          if grep -r -n "[\xF0-\xF7][\x80-\xBF]\{3\}" src/ scripts/ .claude-plugin/ 2>/dev/null; then
+            echo "ERROR: Emojis found in source files!"
+            exit 1
+          fi
+          echo "No emojis found - good!"
+
+      - name: Validate file structure
+        run: |
+          echo "Checking required files..."
+          files=(
+            ".claude-plugin/plugin.json"
+            ".claude-plugin/marketplace.json"
+            ".claude-plugin/hooks.json"
+            "src/plugin/commands/search.md"
+            "src/plugin/commands/rag-enable.md"
+            "src/plugin/commands/rag-disable.md"
+            "src/plugin/commands/update-rag.md"
+            "src/plugin/hooks/user-prompt-submit.py"
+            "src/plugin/hooks/response-post.py"
+            "src/plugin/mcp/unified_server.py"
+          )
+          for file in "${files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Required file missing: $file"
+              exit 1
+            fi
+          done
+          echo "All required files present!"
