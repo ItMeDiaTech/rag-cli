@@ -126,7 +126,7 @@ def initialize_resources() -> bool:
         from src.core.config import get_config
 
         config = get_config()
-        index_path = Path(config.get('vector_store', {}).get('index_path', ''))
+        index_path = Path(config.vector_store.save_path)
 
         if not index_path.exists():
             logger.warning("Vector store not found - will be created on first use")
@@ -167,9 +167,13 @@ def cleanup_resources() -> bool:
         cache_dir = project_root / "data" / "cache"
         if cache_dir.exists():
             import shutil
-            shutil.rmtree(cache_dir, ignore_errors=True)
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            logger.info("Cache cleared")
+            try:
+                shutil.rmtree(cache_dir)
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                logger.info("Cache cleared")
+            except OSError as e:
+                logger.warning(f"Failed to clear cache directory: {e}")
+                # Don't fail entirely if cache cleanup fails
 
         # Note: Don't stop monitoring services as they may be used by other sessions
 

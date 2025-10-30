@@ -40,7 +40,6 @@ if project_root is None:
     potential_paths = [
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         Path.cwd(),
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
     ]
 
     for path in potential_paths:
@@ -105,7 +104,7 @@ def initialize_resources() -> bool:
         from src.core.config import get_config
 
         config = get_config()
-        index_path = Path(config.get('vector_store', {}).get('index_path', ''))
+        index_path = Path(config.vector_store.save_path)
 
         if not index_path.exists():
             logger.info("Vector store not yet initialized - will be created on first indexing")

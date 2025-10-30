@@ -39,7 +39,6 @@ if project_root is None:
     potential_paths = [
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         Path.cwd(),
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
     ]
 
     for path in potential_paths:

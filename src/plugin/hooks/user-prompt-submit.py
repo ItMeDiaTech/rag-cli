@@ -46,8 +46,6 @@ if project_root is None:
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         # Relative to current working directory
         Path.cwd(),
-        # Development path (if exists)
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
     ]
 
     for path in potential_paths:
