@@ -91,7 +91,11 @@ def cleanup_stale_processes():
     if not PID_DIR.exists():
         return
 
-    import psutil
+    try:
+        import psutil
+    except ImportError:
+        logger.warning("psutil not installed, skipping stale process cleanup")
+        return
 
     logger.info("Checking for stale processes from previous runs...")
     cleaned = 0
@@ -616,7 +620,7 @@ def open_dashboard_in_browser(use_chrome: bool = True, wait_for_ready: bool = Tr
                         chrome_flags,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+                        creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0)
                     )
 
                     logger.info(f"Successfully opened dashboard in Chrome at {chrome_path}: {url}")
@@ -848,7 +852,7 @@ def main():
         status = get_services_status()
         for service, info in status.items():
             if isinstance(info, dict):
-                running = "✓ Running" if info.get('running') else "✗ Stopped"
+                running = "[RUNNING]" if info.get('running') else "[STOPPED]"
                 print(f"  {info.get('name', service)}: {running}")
                 if info.get('url'):
                     print(f"    URL: {info['url']}")

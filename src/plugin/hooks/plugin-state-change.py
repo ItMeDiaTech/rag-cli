@@ -20,48 +20,13 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
+# Import path resolution utilities
+from path_utils import setup_sys_path
+from event_validator import EventValidator
+
 # Add project root to path - handle multiple possible locations
 hook_file = Path(__file__).resolve()
-
-# Strategy 1: Check environment variable (most explicit)
-project_root = None
-if 'RAG_CLI_ROOT' in os.environ:
-    env_path = Path(os.environ['RAG_CLI_ROOT'])
-    if env_path.exists() and (env_path / 'src' / 'core').exists():
-        project_root = env_path
-
-# Strategy 2: Try to find project root by walking up from hook location
-if project_root is None:
-    current = hook_file.parent
-    for _ in range(10):  # Search up to 10 levels
-        if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
-            project_root = current
-            break
-        current = current.parent
-
-# Strategy 3: Check common installation locations
-if project_root is None:
-    potential_paths = [
-        Path.home() / '.claude' / 'plugins' / 'rag-cli',
-        Path.cwd(),
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
-    ]
-
-    for path in potential_paths:
-        if path.exists() and (path / 'src' / 'core').exists():
-            project_root = path
-            break
-
-# Strategy 4: Last resort - relative to hook file location
-if project_root is None:
-    project_root = hook_file.parents[3]
-    if not (project_root / 'src' / 'core').exists():
-        raise RuntimeError(
-            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory."
-        )
-
-sys.path.insert(0, str(project_root))
+project_root = setup_sys_path(hook_file)
 
 from src.monitoring.logger import get_logger
 
@@ -126,7 +91,7 @@ def initialize_resources() -> bool:
         from src.core.config import get_config
 
         config = get_config()
-        index_path = Path(config.get('vector_store', {}).get('index_path', ''))
+        index_path = Path(config.vector_store.save_path)
 
         if not index_path.exists():
             logger.warning("Vector store not found - will be created on first use")
@@ -167,9 +132,12 @@ def cleanup_resources() -> bool:
         cache_dir = project_root / "data" / "cache"
         if cache_dir.exists():
             import shutil
-            shutil.rmtree(cache_dir, ignore_errors=True)
-            cache_dir.mkdir(parents=True, exist_ok=True)
-            logger.info("Cache cleared")
+            try:
+                shutil.rmtree(cache_dir)
+                cache_dir.mkdir(parents=True, exist_ok=True)
+                logger.info("Cache cleared")
+            except OSError as e:
+                logger.warning(f"Failed to clear cache directory {cache_dir}: {e}")
 
         # Note: Don't stop monitoring services as they may be used by other sessions
 

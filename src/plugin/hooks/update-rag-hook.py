@@ -13,58 +13,14 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+# Import path resolution utilities
+from path_utils import setup_sys_path
+
 # Add project root to path - handle multiple possible locations
 # Could be in .claude/plugins/rag-cli (when synced to Claude Code)
 # or in development directory
 hook_file = Path(__file__).resolve()
-
-# Strategy 1: Check environment variable (most explicit)
-project_root = None
-if 'RAG_CLI_ROOT' in os.environ:
-    env_path = Path(os.environ['RAG_CLI_ROOT'])
-    if env_path.exists() and (env_path / 'sync_plugin.py').exists():
-        project_root = env_path
-
-# Strategy 2: Try to find project root by walking up from hook location
-if project_root is None:
-    current = hook_file.parent
-    for _ in range(10):  # Search up to 10 levels
-        # Check if this is the RAG-CLI root (has sync_plugin.py and src/core)
-        if (current / 'sync_plugin.py').exists() and (current / 'src' / 'core').exists():
-            project_root = current
-            break
-        current = current.parent
-
-# Strategy 3: Check common installation locations
-if project_root is None:
-    potential_paths = [
-        # User's home directory plugin location
-        Path.home() / '.claude' / 'plugins' / 'rag-cli',
-        # Relative to current working directory
-        Path.cwd(),
-        # Development path (if exists)
-        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
-    ]
-
-    for path in potential_paths:
-        if path.exists() and (path / 'sync_plugin.py').exists():
-            project_root = path
-            break
-
-# Strategy 4: Last resort - relative to hook file location
-if project_root is None:
-    # Assume hook is in src/plugin/hooks/, so project root is 3 levels up
-    project_root = hook_file.parents[3]
-    # Validate this actually looks like project root
-    if not (project_root / 'sync_plugin.py').exists():
-        # If validation fails, raise clear error
-        raise RuntimeError(
-            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory.\n"
-            f"Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
-        )
-
-sys.path.insert(0, str(project_root))
+project_root = setup_sys_path(hook_file, marker_file='sync_plugin.py')
 
 from src.monitoring.logger import get_logger
 from src.monitoring.service_manager import ensure_services_running
