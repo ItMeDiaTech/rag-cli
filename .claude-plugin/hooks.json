@@ -6,60 +6,29 @@
           {
             "type": "command",
             "command": "python",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/slash-command-blocker.py"]
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python",
             "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/user-prompt-submit.py"]
           }
         ]
       }
     ],
-    "ResponsePost": [
+    "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "python",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/response-post.py"]
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/session-start.py"]
           }
         ]
       }
     ],
-    "PluginStateChange": [
+    "SessionEnd": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "python",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/plugin-state-change.py"]
-          }
-        ]
-      }
-    ],
-    "FileCreated": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/document-indexing.py"]
-          }
-        ]
-      }
-    ],
-    "FileModified": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/document-indexing.py"]
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/session-end.py"]
           }
         ]
       }
