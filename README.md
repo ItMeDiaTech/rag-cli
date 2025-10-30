@@ -10,6 +10,16 @@ A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claud
 - **Claude Code Integration**: Seamless plugin for enhanced development workflow
 - **Multi-Format Support**: Process MD, PDF, DOCX, HTML, and TXT files
 - **Real-Time Monitoring**: TCP server with PowerShell interface for system observability
+- **Background File Watching**: Automatic document indexing with watchdog library (debounced events)
+- **Best Practice Hooks**: Valid Claude Code hooks with proper initialization/cleanup lifecycle
+
+## Latest Fixes (v1.2.1)
+
+Plugin hook loading errors have been resolved:
+- Replaced 4 invalid hook types with 3 valid Claude Code hooks (UserPromptSubmit, SessionStart, SessionEnd)
+- Implemented background file watching in MCP server instead of hook-based approach
+- Added proper resource initialization and cleanup via SessionStart/SessionEnd hooks
+- See MIGRATION_HOOK_FIX.md for complete migration guide and testing instructions
 
 ## Quick Start
 
