@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "rag-cli",
-      "source": ".",
+      "source": "./",
       "description": "Local RAG (Retrieval-Augmented Generation) system for enhanced Claude Code responses with multi-agent orchestration",
       "version": "1.0.0",
       "author": {
@@ -34,11 +34,7 @@
         "faiss",
         "embeddings"
       ],
-      "category": "productivity",
-      "requirements": {
-        "claude_code_version": ">=1.0.0",
-        "python": ">=3.8"
-      }
+      "category": "productivity"
     }
   ]
 }
