@@ -11,8 +11,8 @@ Uses best practice pattern: run in background thread, debounced events.
 import asyncio
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Callable
-from datetime import datetime, timedelta
+from typing import Dict, Set, Callable
+from datetime import datetime
 import fnmatch
 
 try:
@@ -23,8 +23,6 @@ except ImportError:
     WATCHDOG_AVAILABLE = False
 
 import sys
-import os
-from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).resolve().parents[3]

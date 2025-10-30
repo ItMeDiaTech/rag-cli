@@ -86,7 +86,7 @@ class ResultSynthesizer:
                 sub_query_map[sq_idx].append(result_id)
 
         logger.debug(
-            f"Collected results",
+            "Collected results",
             total=len(all_results_with_source),
             by_query=[len(results) for results in sub_query_results]
         )
@@ -97,7 +97,7 @@ class ResultSynthesizer:
         )
 
         logger.info(
-            f"Deduplication complete",
+            "Deduplication complete",
             unique=len(unique_results),
             duplicates_removed=duplicates_removed
         )
@@ -105,7 +105,7 @@ class ResultSynthesizer:
         # Step 3: Re-rank merged results
         ranked_results = self._rerank_results(unique_results, sub_queries)
 
-        logger.debug(f"Reranking complete", top_score=ranked_results[0].score if ranked_results else 0)
+        logger.debug("Reranking complete", top_score=ranked_results[0].score if ranked_results else 0)
 
         # Step 4: Select top-k results
         final_results = ranked_results[:min(top_k, self.max_merged_results)]
@@ -122,7 +122,7 @@ class ResultSynthesizer:
         )
 
         logger.info(
-            f"Synthesis complete",
+            "Synthesis complete",
             final_results=len(final_results),
             confidence=confidence
         )

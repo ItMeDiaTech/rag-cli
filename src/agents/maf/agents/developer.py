@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
 
+
 class DeveloperAgent(Agent):
     """Agent specialized in code development and implementation"""
 
@@ -277,7 +278,7 @@ class DeveloperAgent(Agent):
     def _build_refactor_prompt(self, task: Dict[str, Any], context: Dict[str, Any], memories: List[Dict]) -> str:
         """Build prompt for code refactoring"""
 
-        return f"""
+        return """
 Task: Refactor the following code for better structure and maintainability
 
 Current Code:
@@ -298,7 +299,7 @@ Please provide:
     def _build_optimization_prompt(self, task: Dict[str, Any], context: Dict[str, Any], memories: List[Dict]) -> str:
         """Build prompt for code optimization"""
 
-        return f"""
+        return """
 Task: Optimize the following code for performance
 
 Current Code:

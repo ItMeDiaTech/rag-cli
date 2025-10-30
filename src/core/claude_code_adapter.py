@@ -5,9 +5,8 @@ to work as a plugin without requiring external API keys.
 """
 
 import os
-import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -40,9 +39,9 @@ class ClaudeCodeAdapter:
         self.mode = self._detect_mode()
         self.claude_code_env = self._is_claude_code_environment()
 
-        logger.info(f"Claude Code adapter initialized",
-                   mode=self.mode.value,
-                   is_claude_code=self.claude_code_env)
+        logger.info("Claude Code adapter initialized",
+                    mode=self.mode.value,
+                    is_claude_code=self.claude_code_env)
 
     def _is_claude_code_environment(self) -> bool:
         """Detect if running in Claude Code environment.
@@ -98,9 +97,9 @@ class ClaudeCodeAdapter:
             return OperationMode.STANDALONE
 
     def format_context_for_claude(self,
-                                 documents: List[Dict[str, Any]],
-                                 query: str,
-                                 include_metadata: bool = True) -> ContextResponse:
+                                  documents: List[Dict[str, Any]],
+                                  query: str,
+                                  include_metadata: bool = True) -> ContextResponse:
         """Format retrieved documents as context for Claude.
 
         Args:
@@ -219,8 +218,8 @@ class ClaudeCodeAdapter:
         }
 
     def format_skill_response(self,
-                             retrieved_docs: List[Dict[str, Any]],
-                             query: str) -> Dict[str, Any]:
+                              retrieved_docs: List[Dict[str, Any]],
+                              query: str) -> Dict[str, Any]:
         """Format response for Claude Code skill execution.
 
         Args:
@@ -243,8 +242,8 @@ class ClaudeCodeAdapter:
         }
 
     def format_hook_enhancement(self,
-                               documents: List[Dict[str, Any]],
-                               original_query: str) -> str:
+                                documents: List[Dict[str, Any]],
+                                original_query: str) -> str:
         """Format document context for query enhancement in hooks.
 
         Args:
@@ -311,7 +310,7 @@ def is_claude_code_mode() -> bool:
 
 
 def format_for_claude(documents: List[Dict[str, Any]],
-                     query: str) -> Dict[str, Any]:
+                      query: str) -> Dict[str, Any]:
     """Convenience function to format documents for Claude.
 
     Args:

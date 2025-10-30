@@ -5,7 +5,7 @@ and other enhancements to improve retrieval quality.
 """
 
 import re
-from typing import List, Dict, Set, Optional, Tuple
+from typing import List, Dict
 from dataclasses import dataclass
 
 from src.monitoring.logger import get_logger
@@ -153,7 +153,7 @@ class QueryEnhancer:
         )
 
         logger.debug(
-            f"Enhanced query",
+            "Enhanced query",
             original_length=len(query),
             enhanced_length=len(enhanced_query),
             expansions=len(expansions),
@@ -181,7 +181,7 @@ class QueryEnhancer:
         # Remove common stop words
         stop_words = {
             'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-            'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'o', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
             'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should',
             'could', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those'
         }

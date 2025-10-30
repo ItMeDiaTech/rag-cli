@@ -4,13 +4,12 @@ This module provides efficient vector storage and similarity search
 using Facebook's FAISS library with metadata management.
 """
 
-import os
 import json
 import time
 import shutil
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
+from typing import List, Dict, Any, Optional, Tuple
+from dataclasses import dataclass
 from datetime import datetime
 import multiprocessing as mp
 
@@ -152,7 +151,7 @@ class FAISSVectorStore:
         config = get_config()
         params = config.vector_store.index_params
 
-        logger.debug(f"Creating FAISS index", index_type=self.index_type)
+        logger.debug("Creating FAISS index", index_type=self.index_type)
 
         if self.index_type == "flat":
             # Exact search with L2 distance
@@ -250,7 +249,7 @@ class FAISSVectorStore:
             index_size_mb = self.get_index_size_mb()
 
             logger.info(
-                f"Added vectors to store",
+                "Added vectors to store",
                 count=num_vectors,
                 elapsed_seconds=elapsed,
                 vectors_per_second=vectors_per_second,
@@ -313,7 +312,7 @@ class FAISSVectorStore:
             # Record metrics
             elapsed = time.time() - start_time
             logger.debug(
-                f"Vector search completed",
+                "Vector search completed",
                 top_k=top_k,
                 results=len(results),
                 elapsed_seconds=elapsed
@@ -416,7 +415,7 @@ class FAISSVectorStore:
 
             self.metadata = new_metadata
 
-            logger.info(f"Deleted vectors", count=deleted_count)
+            logger.info("Deleted vectors", count=deleted_count)
             metrics.record_count("vectors_deleted", deleted_count)
 
             if self.auto_save:
@@ -538,7 +537,7 @@ class FAISSVectorStore:
         # Clean old backups
         self._cleanup_backups(backup_dir)
 
-        logger.debug(f"Created backup", timestamp=timestamp)
+        logger.debug("Created backup", timestamp=timestamp)
 
     def _cleanup_backups(self, backup_dir: Path):
         """Remove old backups keeping only the most recent ones.
@@ -667,7 +666,7 @@ if __name__ == "__main__":
 
     # Get statistics
     stats = store.get_statistics()
-    print(f"\nVector Store Statistics:")
+    print("\nVector Store Statistics:")
     for key, value in stats.items():
         if key != "sources":
             print(f"  {key}: {value}")

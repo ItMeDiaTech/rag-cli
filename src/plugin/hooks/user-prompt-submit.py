@@ -62,8 +62,8 @@ if project_root is None:
         # If validation fails, raise clear error
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory.\n"
-            f"Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
+            "Please set RAG_CLI_ROOT environment variable to the project directory.\n"
+            "Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
         )
 
 sys.path.insert(0, str(project_root))
@@ -73,6 +73,7 @@ from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_generator
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_code_adapter import get_adapter
+from src.core.query_classifier import QueryClassification
 from src.monitoring.logger import get_logger
 from src.monitoring.service_manager import ensure_services_running
 
@@ -228,7 +229,7 @@ def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Op
 
     # Import query classifier
     try:
-        from src.core.query_classifier import get_query_classifier, QueryIntent
+        from src.core.query_classifier import get_query_classifier
     except ImportError:
         logger.warning("Query classifier not available, falling back to basic filtering")
         # Fallback to basic word count check
@@ -275,7 +276,7 @@ def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Op
 
     # Log classification results
     logger.info(
-        f"Query classified for RAG enhancement",
+        "Query classified for RAG enhancement",
         intent=classification.primary_intent.value,
         confidence=classification.confidence,
         depth=classification.technical_depth.value,
@@ -332,7 +333,7 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
                 # Emit reasoning for document selection
                 submit_event_to_server("reasoning", {
                     "reasoning": f"Selected document '{doc.source}' with score {score:.2f} (threshold: {relevance_threshold}). "
-                                f"Document matches query semantically and meets relevance threshold.",
+                    "Document matches query semantically and meets relevance threshold.",
                     "component": "user_prompt_hook",
                     "context": {
                         "document_source": doc.source,
@@ -351,14 +352,14 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
                 if len(rejected_docs) <= 2:  # Only log first 2 rejections
                     submit_event_to_server("reasoning", {
                         "reasoning": f"Rejected document '{doc.source}' with score {score:.2f} "
-                                    f"(below threshold: {relevance_threshold}).",
+                        f"(below threshold: {relevance_threshold}).",
                         "component": "user_prompt_hook",
                         "context": {"document_source": doc.source, "score": score}
                     })
 
         logger.info(f"Retrieved {len(filtered_docs)} documents for query enhancement",
-                   query_length=len(query),
-                   max_score=max([d.score for d in filtered_docs]) if filtered_docs else 0)
+                    query_length=len(query),
+                    max_score=max([d.score for d in filtered_docs]) if filtered_docs else 0)
 
         # Emit activity event
         submit_event_to_server("activity", {
@@ -447,8 +448,8 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                     skip_reason = "Non-technical query detected"
 
             logger.debug("Query enhancement skipped",
-                        reason=skip_reason,
-                        rag_enabled=settings.get("enabled", False))
+                         reason=skip_reason,
+                         rag_enabled=settings.get("enabled", False))
 
             # Emit reasoning for skipping
             reasoning_context = {
@@ -515,9 +516,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                     # Emit orchestration reasoning with formatted output
                     submit_event_to_server("reasoning", {
                         "reasoning": f"Agent orchestration used strategy: {strategy_used}. "
-                                    f"Classification: {classification.primary_intent.value if classification else 'unknown'}. "
-                                    f"Confidence: {orchestration_result.confidence:.2f}. "
-                                    f"Retrieved {len(documents)} documents.",
+                        f"Classification: {classification.primary_intent.value if classification else 'unknown'}. "
+                        f"Confidence: {orchestration_result.confidence:.2f}. "
+                        f"Retrieved {len(documents)} documents.",
                         "component": "agent_orchestrator",
                         "formatted_output": formatted_summary,
                         "context": {
@@ -529,10 +530,10 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                         }
                     })
 
-                logger.info(f"Orchestrated retrieval complete",
-                           strategy=strategy_used,
-                           documents_count=len(documents),
-                           confidence=orchestration_result.confidence)
+                logger.info("Orchestrated retrieval complete",
+                            strategy=strategy_used,
+                            documents_count=len(documents),
+                            confidence=orchestration_result.confidence)
 
             except Exception as e:
                 logger.warning(f"Agent orchestration failed, falling back to simple retrieval: {e}")
@@ -562,9 +563,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                 "documents_count": len(doc_summaries),
                 "documents": doc_summaries,
                 "reasoning": f"Enhanced query with {len(documents)} documents. "
-                            f"Orchestration Strategy: {strategy_used}. "
-                            f"Retrieved using {'agent orchestration' if use_orchestrator else 'fallback RAG'}. "
-                            f"Context injected as markdown-formatted knowledge base references."
+                f"Orchestration Strategy: {strategy_used}. "
+                f"Retrieved using {'agent orchestration' if use_orchestrator else 'fallback RAG'}. "
+                "Context injected as markdown-formatted knowledge base references."
             })
 
             # Emit activity event: context assembled
@@ -619,10 +620,10 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
             event["metadata"]["original_prompt"] = query  # Store for ResponsePost hook
 
             logger.info("Query enhanced with RAG",
-                       original_length=len(query),
-                       enhanced_length=len(enhanced_query),
-                       documents=len(documents),
-                       time_ms=retrieval_time)
+                        original_length=len(query),
+                        enhanced_length=len(enhanced_query),
+                        documents=len(documents),
+                        time_ms=retrieval_time)
 
     except Exception as e:
         logger.error(f"Hook processing failed: {e}")
@@ -630,9 +631,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     finally:
         execution_time = (time.time() - start_time) * 1000
         logger.info("Hook execution completed",
-                   hook="UserPromptSubmit",
-                   execution_time_ms=execution_time,
-                   rag_enhanced=event.get("metadata", {}).get("rag_enhanced", False))
+                    hook="UserPromptSubmit",
+                    execution_time_ms=execution_time,
+                    rag_enhanced=event.get("metadata", {}).get("rag_enhanced", False))
 
     return event
 

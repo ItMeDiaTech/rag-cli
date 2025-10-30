@@ -6,12 +6,11 @@ sync process, capturing and returning the output to Claude Code.
 """
 
 import sys
-import os
 import json
 import time
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # Import path resolution utilities
 from path_utils import setup_sys_path
@@ -66,7 +65,7 @@ def build_sync_command(args: list[str]) -> list[str]:
         '--verbose': '--verbose',
         '-v': '--verbose',
         '--force': '--force',
-        '-f': '--force',
+        '-': '--force',
         '--no-backup': '--no-backup',
         '--no-symlink': '--no-symlink',
     }
@@ -223,9 +222,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     finally:
         execution_time = (time.time() - start_time) * 1000
         logger.info("Hook execution completed",
-                   hook="UpdateRagCommand",
-                   execution_time_ms=execution_time,
-                   success=event.get('sync_result', {}).get('success', False))
+                    hook="UpdateRagCommand",
+                    execution_time_ms=execution_time,
+                    success=event.get('sync_result', {}).get('success', False))
 
     return event
 

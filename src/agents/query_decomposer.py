@@ -112,14 +112,14 @@ class QueryDecomposer:
         Returns:
             DecompositionResult with sub-queries or original query
         """
-        logger.info(f"Analyzing query for decomposition", length=len(query))
+        logger.info("Analyzing query for decomposition", length=len(query))
 
         # Step 1: Check if query is complex
         complexity_score, indicators = self._analyze_complexity(query)
         is_complex = complexity_score >= 0.6
 
         logger.debug(
-            f"Complexity analysis",
+            "Complexity analysis",
             score=complexity_score,
             is_complex=is_complex,
             indicators=indicators
@@ -148,7 +148,7 @@ class QueryDecomposer:
 
         if pattern_result and len(pattern_result) >= self.min_sub_queries:
             logger.info(
-                f"Pattern-based decomposition successful",
+                "Pattern-based decomposition successful",
                 sub_queries=len(pattern_result)
             )
             return self._create_result(
@@ -163,7 +163,7 @@ class QueryDecomposer:
             maf_result = await self._decompose_with_maf(query)
             if maf_result and len(maf_result) >= self.min_sub_queries:
                 logger.info(
-                    f"MAF-assisted decomposition successful",
+                    "MAF-assisted decomposition successful",
                     sub_queries=len(maf_result)
                 )
                 return self._create_result(
@@ -177,7 +177,7 @@ class QueryDecomposer:
         simple_result = self._simple_split(query)
         if simple_result and len(simple_result) >= self.min_sub_queries:
             logger.info(
-                f"Simple split decomposition",
+                "Simple split decomposition",
                 sub_queries=len(simple_result)
             )
             return self._create_result(

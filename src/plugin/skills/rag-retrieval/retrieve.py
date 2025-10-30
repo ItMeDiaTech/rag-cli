@@ -6,11 +6,9 @@ and generates AI-powered answers using Claude Haiku.
 """
 
 import sys
-import os
-import json
 import argparse
 import time
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 # Add project root to path
@@ -188,9 +186,9 @@ def perform_retrieval(
 
         if not filtered_docs:
             logger.warning("No documents found above threshold",
-                         threshold=threshold,
-                         max_score=max([d.score for d in documents]) if documents else 0)
-            result["answer"] = f"No relevant documents found for your query. Try lowering the threshold or using different keywords."
+                           threshold=threshold,
+                           max_score=max([d.score for d in documents]) if documents else 0)
+            result["answer"] = "No relevant documents found for your query. Try lowering the threshold or using different keywords."
             return result
 
         # Generate answer based on mode
@@ -208,7 +206,7 @@ def perform_retrieval(
                 result["message"] = formatted_response.get("message", "")
 
                 logger.info("Context formatted for Claude Code",
-                           docs_count=len(filtered_docs))
+                            docs_count=len(filtered_docs))
             else:
                 # Standalone mode - use Claude API
                 claude_start = time.time()
@@ -223,8 +221,8 @@ def perform_retrieval(
                 metrics_collector.record_latency("claude_api", claude_time)
 
                 logger.info("Answer generated successfully",
-                           answer_length=len(response["answer"]),
-                           sources_used=len(filtered_docs))
+                            answer_length=len(response["answer"]),
+                            sources_used=len(filtered_docs))
 
         # Calculate total time
         total_time = (time.time() - start_time) * 1000

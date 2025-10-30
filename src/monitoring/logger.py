@@ -11,7 +11,7 @@ import logging
 import logging.handlers
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Optional
 from functools import wraps
 import time
 import structlog
@@ -47,10 +47,10 @@ class JSONFormatter(logging.Formatter):
         # Add extra fields
         for key, value in record.__dict__.items():
             if key not in ["name", "msg", "args", "created", "filename", "funcName",
-                          "levelname", "levelno", "lineno", "module", "exc_info",
-                          "exc_text", "stack_info", "pathname", "processName",
-                          "process", "relativeCreated", "thread", "threadName",
-                          "getMessage", "message"]:
+                           "levelname", "levelno", "lineno", "module", "exc_info",
+                           "exc_text", "stack_info", "pathname", "processName",
+                           "process", "relativeCreated", "thread", "threadName",
+                           "getMessage", "message"]:
                 log_data[key] = value
 
         return json.dumps(log_data)
@@ -64,7 +64,7 @@ class TextFormatter(logging.Formatter):
         'INFO': '\033[32m',     # Green
         'WARNING': '\033[33m',  # Yellow
         'ERROR': '\033[31m',    # Red
-        'CRITICAL': '\033[35m', # Magenta
+        'CRITICAL': '\033[35m',  # Magenta
         'RESET': '\033[0m'      # Reset
     }
 
@@ -131,10 +131,10 @@ class MetricsCollectorHandler(logging.Handler):
                 method='POST'
             )
 
-            with urllib.request.urlopen(req, timeout=1) as response:
+            with urllib.request.urlopen(req, timeout=1):
                 pass  # Successfully sent
 
-        except Exception as e:
+        except Exception:
             # Silently fail - don't break logging if TCP server unavailable
             # Only log in debug mode to avoid log spam
             if __debug__:
@@ -175,7 +175,7 @@ class Logger:
                 claude_plugin_dir.exists() and
                 (claude_plugin_dir / 'src' / 'core').exists()
             )
-        except Exception as e:
+        except Exception:
             is_valid_plugin_dir = False
             claude_plugin_dir = None
 
@@ -281,7 +281,7 @@ class Logger:
             metrics_handler.setLevel(level)
             metrics_handler.setFormatter(file_formatter)
             root_logger.addHandler(metrics_handler)
-        except Exception as e:
+        except Exception:
             # Silently fail if metrics collector not available
             pass
 
@@ -373,17 +373,17 @@ def log_execution_time(func):
             result = func(*args, **kwargs)
             elapsed = time.time() - start_time
             logger.debug(f"{func.__name__} executed",
-                        function=func.__name__,
-                        elapsed_seconds=elapsed,
-                        status="success")
+                         function=func.__name__,
+                         elapsed_seconds=elapsed,
+                         status="success")
             return result
         except Exception as e:
             elapsed = time.time() - start_time
             logger.error(f"{func.__name__} failed",
-                        function=func.__name__,
-                        elapsed_seconds=elapsed,
-                        status="error",
-                        error=str(e))
+                         function=func.__name__,
+                         elapsed_seconds=elapsed,
+                         status="error",
+                         error=str(e))
             raise
 
     return wrapper
@@ -406,30 +406,30 @@ def log_api_call(service: str):
             start_time = time.time()
             request_id = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
 
-            logger.info(f"API call started",
-                       service=service,
-                       function=func.__name__,
-                       request_id=request_id)
+            logger.info("API call started",
+                        service=service,
+                        function=func.__name__,
+                        request_id=request_id)
 
             try:
                 result = func(*args, **kwargs)
                 elapsed = time.time() - start_time
-                logger.info(f"API call completed",
-                           service=service,
-                           function=func.__name__,
-                           request_id=request_id,
-                           elapsed_seconds=elapsed,
-                           status="success")
-                return result
-            except Exception as e:
-                elapsed = time.time() - start_time
-                logger.error(f"API call failed",
+                logger.info("API call completed",
                             service=service,
                             function=func.__name__,
                             request_id=request_id,
                             elapsed_seconds=elapsed,
-                            status="error",
-                            error=str(e))
+                            status="success")
+                return result
+            except Exception as e:
+                elapsed = time.time() - start_time
+                logger.error("API call failed",
+                             service=service,
+                             function=func.__name__,
+                             request_id=request_id,
+                             elapsed_seconds=elapsed,
+                             status="error",
+                             error=str(e))
                 raise
 
         return wrapper
@@ -452,9 +452,9 @@ class MetricsLogger:
             latency_ms: Latency in milliseconds
         """
         self.logger.info("latency_recorded",
-                        operation=operation,
-                        latency_ms=latency_ms,
-                        metric_type="latency")
+                         operation=operation,
+                         latency_ms=latency_ms,
+                         metric_type="latency")
 
     def record_success(self, operation: str):
         """Record successful operation.
@@ -463,8 +463,8 @@ class MetricsLogger:
             operation: Name of the operation
         """
         self.logger.info("operation_success",
-                        operation=operation,
-                        metric_type="success")
+                         operation=operation,
+                         metric_type="success")
 
     def record_failure(self, operation: str, error: str):
         """Record failed operation.
@@ -474,9 +474,9 @@ class MetricsLogger:
             error: Error message
         """
         self.logger.error("operation_failure",
-                         operation=operation,
-                         error=error,
-                         metric_type="failure")
+                          operation=operation,
+                          error=error,
+                          metric_type="failure")
 
     def record_count(self, metric: str, count: int):
         """Record a count metric.
@@ -486,9 +486,9 @@ class MetricsLogger:
             count: Count value
         """
         self.logger.info("count_recorded",
-                        metric=metric,
-                        count=count,
-                        metric_type="count")
+                         metric=metric,
+                         count=count,
+                         metric_type="count")
 
     def record_gauge(self, metric: str, value: float):
         """Record a gauge metric.
@@ -498,9 +498,9 @@ class MetricsLogger:
             value: Gauge value
         """
         self.logger.info("gauge_recorded",
-                        metric=metric,
-                        value=value,
-                        metric_type="gauge")
+                         metric=metric,
+                         value=value,
+                         metric_type="gauge")
 
 
 # Create global instances

@@ -10,10 +10,10 @@ from dataclasses import dataclass
 from datetime import datetime
 import requests_cache
 
-from .source_connectors.github import GitHubConnector, GitHubDocument
-from .source_connectors.stackoverflow import StackOverflowConnector, StackOverflowAnswer
-from .source_connectors.readthedocs import ReadTheDocsConnector, OfficialDocsConnector, Documentation
-from .content_extractors import ContentExtractor, extract_error_signature
+from .source_connectors.github import GitHubConnector
+from .source_connectors.stackoverflow import StackOverflowConnector
+from .source_connectors.readthedocs import ReadTheDocsConnector, OfficialDocsConnector
+from .content_extractors import ContentExtractor
 from .config import Config, get_config
 from src.integrations.arxiv_connector import get_arxiv_connector
 from src.integrations.tavily_connector import get_tavily_connector
@@ -502,7 +502,7 @@ class OnlineRetriever:
             Detected language or None
         """
         languages = ['python', 'javascript', 'typescript', 'java', 'go', 'rust',
-                    'c++', 'cpp', 'c#', 'csharp', 'ruby', 'php', 'swift', 'kotlin']
+                     'c++', 'cpp', 'c#', 'csharp', 'ruby', 'php', 'swift', 'kotlin']
 
         query_lower = query.lower()
 
@@ -628,7 +628,7 @@ class OnlineRetriever:
                 results.append(result)
 
             logger.info(f"Tavily search returned {len(results)} results, "
-                       f"remaining quota: {connector.get_remaining_quota()}")
+                        f"remaining quota: {connector.get_remaining_quota()}")
 
         except Exception as e:
             logger.error(f"Tavily search failed: {e}")

@@ -10,12 +10,11 @@ import logging
 import os
 import shutil
 import subprocess
-import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+
 
 @dataclass
 class ClaudeResponse:
@@ -33,6 +32,7 @@ class ClaudeResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
     raw_response: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class ClaudeSession:
     """Claude conversation session"""
@@ -41,6 +41,7 @@ class ClaudeSession:
     total_tokens: int = 0
     total_cost: float = 0.0
     created_at: datetime = field(default_factory=datetime.now)
+
 
 class ClaudeCodeCLI:
     """
@@ -494,6 +495,7 @@ class ClaudeCodeCLI:
             ),
             'active_sessions': len(self.sessions)
         }
+
 
 class MockClaudeCodeCLI(ClaudeCodeCLI):
     """Mock implementation for testing without actual Claude CLI"""
@@ -1027,7 +1029,7 @@ def monitor_performance(func):
 
         # Default response
         else:
-            return f"""
+            return """
 # Response to: {prompt[:100]}...
 
 I understand your request. Here's my analysis and solution:
@@ -1057,6 +1059,7 @@ Your request touches on important aspects that require careful consideration. He
 
 Would you like me to elaborate on any specific aspect of this solution?
 """
+
 
 class DirectClaudeCLI(MockClaudeCodeCLI):
     """
@@ -1359,6 +1362,8 @@ The architecture is designed for maintainability and future growth.
 """
 
 # Convenience function to create the appropriate client
+
+
 def create_claude_cli(config: Dict[str, Any], use_mock: bool = False) -> Union[ClaudeCodeCLI, MockClaudeCodeCLI, DirectClaudeCLI]:
     """
     Create Claude CLI client - defaults to DirectClaudeCLI for active sessions
@@ -1394,6 +1399,7 @@ def create_claude_cli(config: Dict[str, Any], use_mock: bool = False) -> Union[C
     # Default to DirectClaudeCLI
     logger.info("Using DirectClaudeCLI (recommended)")
     return DirectClaudeCLI(config)
+
 
 # Export the main classes
 __all__ = ['ClaudeCodeCLI', 'MockClaudeCodeCLI', 'DirectClaudeCLI', 'ClaudeResponse', 'ClaudeSession', 'create_claude_cli']

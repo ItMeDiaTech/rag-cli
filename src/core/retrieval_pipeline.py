@@ -13,9 +13,8 @@ ASYNC ARCHITECTURE:
 import time
 import threading
 import asyncio
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from typing import List, Dict, Any, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
+from typing import List, Dict, Any, Optional, Tuple
+from dataclasses import dataclass
 import numpy as np
 from collections import defaultdict
 
@@ -27,16 +26,17 @@ from sentence_transformers import CrossEncoder
 
 from src.core.config import get_config
 from src.core.embeddings import get_embedding_generator
-from src.core.vector_store import get_vector_store, VectorMetadata
+from src.core.vector_store import get_vector_store
 from src.core.document_processor import DocumentChunk, get_document_processor
 from src.monitoring.logger import get_logger, get_metrics_logger, log_execution_time
 from src.monitoring.tcp_server import metrics_collector
 from src.monitoring.latency_tracker import get_latency_tracker, time_operation
-from src.core.online_retriever import OnlineRetriever, OnlineRetrievalResult
+from src.core.online_retriever import OnlineRetriever
 from src.monitoring.error_tracker import get_error_tracker
 from src.core.duplicate_detector import get_duplicate_detector
 from src.core.semantic_cache import get_semantic_cache
 from src.core.hyde import get_hyde_generator
+from src.core.query_classifier import QueryClassification
 
 
 logger = get_logger(__name__)
@@ -272,7 +272,7 @@ class HybridRetriever:
 
                 if documents:
                     self._build_bm25_index_unsafe(documents, doc_ids)
-                    logger.info(f"Auto-built BM25 index", documents=len(documents))
+                    logger.info("Auto-built BM25 index", documents=len(documents))
             except Exception as e:
                 logger.warning(f"Failed to auto-build BM25 index: {e}")
 
@@ -293,7 +293,7 @@ class HybridRetriever:
             documents: List of document texts
             doc_ids: List of document IDs
         """
-        logger.info(f"Building BM25 index", documents=len(documents))
+        logger.info("Building BM25 index", documents=len(documents))
 
         # Tokenize documents for BM25
         tokenized_docs = [doc.lower().split() for doc in documents]
@@ -337,7 +337,7 @@ class HybridRetriever:
             ))
 
         elapsed = time.time() - start_time
-        logger.debug(f"Vector search completed", results=len(results), elapsed=elapsed)
+        logger.debug("Vector search completed", results=len(results), elapsed=elapsed)
         metrics.record_latency("vector_search", elapsed * 1000)
 
         return formatted_results
@@ -387,7 +387,7 @@ class HybridRetriever:
                 ))
 
         elapsed = time.time() - start_time
-        logger.debug(f"Keyword search completed", results=len(results), elapsed=elapsed)
+        logger.debug("Keyword search completed", results=len(results), elapsed=elapsed)
         metrics.record_latency("keyword_search", elapsed * 1000)
 
         return results
@@ -444,7 +444,7 @@ class HybridRetriever:
                 retrieval_method
             ))
 
-        logger.debug(f"RRF fusion completed", input_count=len(vector_results) + len(keyword_results), output_count=len(merged_results))
+        logger.debug("RRF fusion completed", input_count=len(vector_results) + len(keyword_results), output_count=len(merged_results))
 
         return merged_results
 
@@ -516,7 +516,7 @@ class HybridRetriever:
                 results.append(result)
 
         elapsed = time.time() - start_time
-        logger.info(f"Reranking completed", candidates=len(candidates), results=len(results), elapsed=elapsed)
+        logger.info("Reranking completed", candidates=len(candidates), results=len(results), elapsed=elapsed)
         metrics.record_latency("reranking", elapsed * 1000)
 
         return results
@@ -775,7 +775,7 @@ class HybridRetriever:
                         logger.debug("Semantic cache hit", similarity=similarity, top_k=top_k)
                         return cached_results[:top_k]
 
-            logger.info(f"Retrieving for query (async)", query_length=len(query), top_k=top_k)
+            logger.info("Retrieving for query (async)", query_length=len(query), top_k=top_k)
             start_time = time.time()
 
             # Apply HyDE if enabled and appropriate
@@ -787,17 +787,17 @@ class HybridRetriever:
                         hyde_result = self.hyde_generator.generate(query)
                         query = hyde_result.enhanced_query
                     logger.info("HyDE applied to query",
-                               method=hyde_result.method,
-                               confidence=hyde_result.confidence,
-                               original_length=len(original_query),
-                               enhanced_length=len(query))
+                                method=hyde_result.method,
+                                confidence=hyde_result.confidence,
+                                original_length=len(original_query),
+                                enhanced_length=len(query))
 
                     # Emit reasoning for HyDE
                     metrics_collector.record_reasoning_event(
-                        reasoning=f"Applied HyDE (Hypothetical Document Embeddings) to improve retrieval. "
-                                 f"Generated hypothetical answer using {hyde_result.method} method "
-                                 f"with {hyde_result.confidence:.0%} confidence. "
-                                 f"This technique improves accuracy by 10-15% for technical queries.",
+                        reasoning="Applied HyDE (Hypothetical Document Embeddings) to improve retrieval. "
+                        f"Generated hypothetical answer using {hyde_result.method} method "
+                        f"with {hyde_result.confidence:.0%} confidence. "
+                        "This technique improves accuracy by 10-15% for technical queries.",
                         component="retrieval_pipeline",
                         context={
                             "method": hyde_result.method,
@@ -827,13 +827,13 @@ class HybridRetriever:
             # Emit reasoning for search strategy
             hyde_info = f" HyDE {'enabled' if hyde_result else 'not applied'}."
             metrics_collector.record_reasoning_event(
-                reasoning=f"Using ASYNC hybrid search with PARALLEL vector + keyword retrieval. "
-                         f"{self.vector_weight:.0%} vector weight and "
-                         f"{self.keyword_weight:.0%} keyword weight. "
-                         f"Reranking {'enabled' if self.use_reranker else 'disabled'}. "
-                         f"{hyde_info} "
-                         f"Will retrieve {self.initial_candidates} initial candidates and rerank to top {top_k}. "
-                         f"Expected 30-40% latency reduction vs serial execution.",
+                reasoning="Using ASYNC hybrid search with PARALLEL vector + keyword retrieval. "
+                f"{self.vector_weight:.0%} vector weight and "
+                f"{self.keyword_weight:.0%} keyword weight. "
+                f"Reranking {'enabled' if self.use_reranker else 'disabled'}. "
+                f"{hyde_info} "
+                f"Will retrieve {self.initial_candidates} initial candidates and rerank to top {top_k}. "
+                "Expected 30-40% latency reduction vs serial execution.",
                 component="retrieval_pipeline",
                 context={
                     "strategy": "hybrid_async",
@@ -863,9 +863,9 @@ class HybridRetriever:
                     return_exceptions=False
                 )
 
-            logger.debug(f"Parallel search completed",
-                        vector_results=len(vector_results),
-                        keyword_results=len(keyword_results))
+            logger.debug("Parallel search completed",
+                         vector_results=len(vector_results),
+                         keyword_results=len(keyword_results))
 
             # Merge results with RRF
             with time_operation("result_fusion"):
@@ -988,7 +988,7 @@ class HybridRetriever:
             get_latency_tracker().record("retrieval_total", elapsed_ms)
 
             logger.info(
-                f"Async retrieval completed",
+                "Async retrieval completed",
                 query_length=len(query),
                 results=len(final_results),
                 elapsed_ms=elapsed_ms
@@ -1051,7 +1051,7 @@ class HybridRetriever:
         Args:
             chunks: List of document chunks to index
         """
-        logger.info(f"Indexing documents for retrieval", chunks=len(chunks))
+        logger.info("Indexing documents for retrieval", chunks=len(chunks))
 
         # Extract texts and metadata
         texts = [chunk.content for chunk in chunks]
@@ -1096,10 +1096,6 @@ if __name__ == "__main__":
     print("Testing Retrieval Pipeline...")
 
     # Initialize components
-    from src.core.embeddings import get_embedding_generator
-    from src.core.vector_store import get_vector_store
-    from src.core.document_processor import get_document_processor
-
     generator = get_embedding_generator()
     store = get_vector_store()
     processor = get_document_processor()

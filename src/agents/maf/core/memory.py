@@ -23,6 +23,7 @@ except ImportError:
     EMBEDDINGS_AVAILABLE = False
     logging.warning("sentence-transformers not available - using mock embeddings")
 
+
 @dataclass
 class Memory:
     """Individual memory entry"""
@@ -45,6 +46,7 @@ class Memory:
             'access_count': self.access_count,
             'last_accessed': self.last_accessed
         }
+
 
 class EmbeddingManager:
     """Manages text embeddings for semantic search"""
@@ -114,6 +116,7 @@ class EmbeddingManager:
 
         similarity = dot_product / (norm1[:, np.newaxis] * norm2[np.newaxis, :])
         return float(similarity[0, 0])
+
 
 class MemoryManager:
     """Manages all memory operations for the framework"""
@@ -423,7 +426,7 @@ class MemoryManager:
             if len(old_memories) > 10:
                 # Consolidate memories
                 memory_ids = [m[0] for m in old_memories]
-                contents = [m[1] for m in old_memories]
+                [m[1] for m in old_memories]
 
                 # Create summary (in production, use LLM to summarize)
                 summary = f"Consolidated {len(old_memories)} memories from before {cutoff_date}"
@@ -442,7 +445,7 @@ class MemoryManager:
                 ))
 
                 # Delete old memories
-                cursor.execute(f'''
+                cursor.execute('''
                     DELETE FROM memories
                     WHERE id IN ({','.join(['?'] * len(memory_ids))})
                 ''', memory_ids)

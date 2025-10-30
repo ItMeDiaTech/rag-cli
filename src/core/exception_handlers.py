@@ -5,7 +5,7 @@ This module provides context managers and utilities for handling different
 error types with appropriate recovery strategies.
 """
 
-from typing import Optional, Callable, Any, Type, Union, List
+from typing import Callable, Any, Type, Union
 from contextlib import contextmanager
 import logging
 
@@ -208,7 +208,7 @@ class SpecificExceptionHandler:
             if handler_info["reraise"]:
                 raise exception
             return result
-        except Exception as e:
+        except Exception:
             if handler_info["reraise"]:
                 raise exception
             raise

@@ -8,7 +8,7 @@ allowing Claude Code to interact with the document knowledge base.
 import sys
 import json
 import asyncio
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 # Add project root to path

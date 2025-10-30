@@ -7,7 +7,6 @@ an event loop may already be running (like Claude Code hooks).
 
 import asyncio
 import concurrent.futures
-import threading
 from typing import TypeVar, Coroutine, Any, Optional
 import logging
 
@@ -45,7 +44,7 @@ def safe_asyncio_run(coro: Coroutine[Any, Any, T], timeout: Optional[float] = No
     """
     try:
         # Check if there's a running event loop in current thread
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
     except RuntimeError:
         # No running loop, safe to use asyncio.run()
         try:

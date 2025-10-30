@@ -7,12 +7,11 @@ This skill can be invoked from Claude Code to run the plugin sync process.
 """
 
 import sys
-import os
 import json
 import subprocess
 import click
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass
 
 # Add project root to path
@@ -135,7 +134,7 @@ class UpdateRagSkill:
 @click.command()
 @click.option('--dry-run', is_flag=True, help='Preview changes without applying')
 @click.option('--verbose', '-v', is_flag=True, help='Verbose output')
-@click.option('--force', '-f', is_flag=True, help='Force sync (ignore timestamps)')
+@click.option('--force', '-', is_flag=True, help='Force sync (ignore timestamps)')
 @click.option('--no-backup', is_flag=True, help='Skip backup creation')
 @click.option('--no-symlink', is_flag=True, help='Use copy instead of symlinks')
 @click.option('--preview', is_flag=True, help='Preview changes (alias for --dry-run)')

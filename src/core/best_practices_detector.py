@@ -5,7 +5,7 @@ recommendations, and anti-patterns.
 """
 
 import re
-from typing import Dict, List, Set, Optional
+from typing import List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -151,7 +151,7 @@ class BestPracticesDetector:
         ]
 
         logger.debug(
-            f"Best practice detection",
+            "Best practice detection",
             is_best_practice=is_best_practice,
             type=practice_type.value if is_best_practice else None,
             confidence=total_confidence

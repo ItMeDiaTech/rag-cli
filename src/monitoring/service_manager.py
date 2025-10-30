@@ -137,7 +137,7 @@ def cleanup_stale_processes():
             logger.warning(f"Invalid PID file {pid_file}: {e}")
             try:
                 pid_file.unlink()
-            except:
+            except (FileNotFoundError, PermissionError):
                 pass
         except Exception as e:
             logger.error(f"Error cleaning up PID file {pid_file}: {e}")

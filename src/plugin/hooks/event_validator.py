@@ -5,7 +5,7 @@ This module provides JSON schema validation for hook events to prevent
 crashes on malformed input.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 import logging
 
 

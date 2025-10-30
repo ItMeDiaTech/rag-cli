@@ -8,7 +8,6 @@ import logging
 from typing import Dict, List, Optional, Tuple
 from bs4 import BeautifulSoup
 import trafilatura
-from markdownify import markdownify as md
 
 logger = logging.getLogger(__name__)
 
@@ -335,7 +334,7 @@ class ContentExtractor:
 
             # Only include if there's meaningful description
             if len(description) > 20 or any(word in description.lower() for word in
-                                           ['example', 'usage', 'sample', 'demo']):
+                                            ['example', 'usage', 'sample', 'demo']):
                 examples.append({
                     'description': description,
                     'language': language,

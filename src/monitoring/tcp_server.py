@@ -13,8 +13,7 @@ import weakref
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from collections import deque
-from io import StringIO
-from queue import Queue
+from queue import Queue, Empty, Full
 
 from flask import Flask, jsonify, request
 import psutil
@@ -27,6 +26,8 @@ logger = get_logger(__name__)
 metrics_logger = get_metrics_logger()
 
 # Global metrics storage
+
+
 class MetricsCollector:
     """Collects and stores system metrics."""
 
@@ -84,7 +85,7 @@ class MetricsCollector:
         for event in list(self.event_history)[-20:]:
             try:
                 queue.put_nowait(event)
-            except:
+            except Full:
                 pass
 
         return queue
@@ -139,7 +140,7 @@ class MetricsCollector:
                 try:
                     queue.put_nowait(event)
                     active_subscribers.append(queue_ref)  # Keep alive subscribers
-                except:
+                except (Full, AttributeError):
                     # Queue is full or broken, don't add to active list
                     pass
             # If queue is None, weak reference is dead - don't add to active list
@@ -312,7 +313,7 @@ class MonitoringServer:
         self.server_socket = None
         self.thread = None
 
-        logger.info(f"Monitoring server initialized", host=host, port=port)
+        logger.info("Monitoring server initialized", host=host, port=port)
 
     def start(self):
         """Start the monitoring server."""
@@ -585,7 +586,7 @@ def submit_event():
         # Emit the event to all subscribers
         metrics_collector.emit_event(event_type, data)
 
-        logger.debug(f"Event submitted via HTTP", event_type=event_type)
+        logger.debug("Event submitted via HTTP", event_type=event_type)
 
         return jsonify({
             "status": "success",
@@ -617,7 +618,7 @@ def stream_events():
                     event = queue.get(timeout=15)
                     yield f"data: {json.dumps(event)}\n\n"
 
-                except:
+                except Empty:
                     # Timeout - send keepalive
                     yield ": keepalive\n\n"
 

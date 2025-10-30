@@ -19,10 +19,9 @@ USAGE:
 import time
 import threading
 from collections import defaultdict
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
-from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, List, Optional, Any
 
 from src.monitoring.logger import get_logger
 
@@ -163,7 +162,7 @@ class AgentMonitor:
             self._active_traces[trace_id] = trace
 
             logger.debug(
-                f"Started agent execution trace",
+                "Started agent execution trace",
                 trace_id=trace_id,
                 agent_id=agent_id
             )
@@ -189,7 +188,7 @@ class AgentMonitor:
         """
         with self._lock:
             if trace_id not in self._active_traces:
-                logger.warning(f"Unknown trace ID", trace_id=trace_id)
+                logger.warning("Unknown trace ID", trace_id=trace_id)
                 return
 
             trace = self._active_traces.pop(trace_id)
@@ -204,7 +203,7 @@ class AgentMonitor:
             self._update_agent_metrics(trace)
 
             logger.debug(
-                f"Completed agent execution trace",
+                "Completed agent execution trace",
                 trace_id=trace_id,
                 agent_id=trace.agent_id,
                 duration=f"{trace.duration_seconds:.3f}s",
@@ -253,7 +252,7 @@ class AgentMonitor:
                 self.agent_metrics[receiver_id].messages_received += 1
 
             logger.debug(
-                f"Traced message flow",
+                "Traced message flow",
                 message_id=message_id,
                 sender=sender_id,
                 receiver=receiver_id
@@ -380,7 +379,7 @@ class AgentMonitor:
                     'type': metrics.agent_type,
                     'executions': metrics.total_executions,
                     'success_rate': (metrics.successful_executions / metrics.total_executions * 100)
-                                   if metrics.total_executions > 0 else 0,
+                    if metrics.total_executions > 0 else 0,
                     'avg_duration': metrics.avg_duration,
                     'messages_sent': metrics.messages_sent,
                     'messages_received': metrics.messages_received
@@ -495,14 +494,14 @@ if __name__ == "__main__":
 
     report = monitor.generate_report()
 
-    print(f"\nSystem Statistics:")
+    print("\nSystem Statistics:")
     print(f"  Uptime: {report['uptime_seconds']:.2f}s")
     print(f"  Total Agents: {report['total_agents']}")
     print(f"  Total Executions: {report['total_executions']}")
     print(f"  Success Rate: {report['success_rate_percent']:.1f}%")
     print(f"  Total Messages: {report['total_messages']}")
 
-    print(f"\nAgent Statistics:")
+    print("\nAgent Statistics:")
     for agent_id, stats in report['agent_statistics'].items():
         print(f"\n  {agent_id} ({stats['type']}):")
         print(f"    Executions: {stats['executions']}")

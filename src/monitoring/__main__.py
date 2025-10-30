@@ -7,7 +7,6 @@ Ensures all monitoring services are running and stays alive.
 import sys
 import time
 import signal
-from pathlib import Path
 
 from src.monitoring.logger import get_logger
 from src.monitoring.service_manager import ensure_services_running, get_services_status

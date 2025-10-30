@@ -8,8 +8,8 @@ import time
 import threading
 from typing import Dict, List, Optional, Any
 from collections import defaultdict, deque
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 import statistics
 
 from src.monitoring.logger import get_logger
@@ -62,8 +62,8 @@ class LatencyTracker:
         self.last_cleanup = time.time()
 
         logger.info("Latency tracker initialized",
-                   window_size=window_size,
-                   cleanup_interval=cleanup_interval)
+                    window_size=window_size,
+                    cleanup_interval=cleanup_interval)
 
     def record(self, operation: str, latency_ms: float):
         """Record a latency measurement.
@@ -86,7 +86,6 @@ class LatencyTracker:
         """Clean up old data (already handled by deque maxlen)."""
         # With deque(maxlen=window_size), old entries are automatically removed
         # This method is kept for future enhancements
-        pass
 
     def _calculate_percentile(self, values: List[float], percentile: float) -> float:
         """Calculate percentile from sorted values.
@@ -213,7 +212,7 @@ class LatencyTracker:
         if not stats:
             return f"No latency data for operation: {operation}"
 
-        return f"""{operation} Latency Statistics:
+        return """{operation} Latency Statistics:
   Count:  {stats.count}
   p50:    {stats.p50:.2f}ms (median)
   p75:    {stats.p75:.2f}ms

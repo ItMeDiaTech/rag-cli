@@ -108,9 +108,9 @@ class TokenManager:
         Returns:
             GitHub token or None if skipped
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("GitHub Token Configuration")
-        print("="*60)
+        print("=" * 60)
         print("\nA GitHub personal access token is used for:")
         print("  - Accessing documentation from GitHub repositories")
         print("  - Higher rate limits for GitHub API")
@@ -158,9 +158,9 @@ class TokenManager:
         Returns:
             Stack Overflow API key or None if skipped
         """
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Stack Overflow API Key Configuration")
-        print("="*60)
+        print("=" * 60)
         print("\nA Stack Overflow API key provides:")
         print("  - Higher rate limits for Stack Overflow API")
         print("  - Better performance for error resolution")
@@ -230,7 +230,7 @@ class TokenManager:
             print(f"\nError: Failed to save .env file: {e}")
 
     def update_config_yaml(self, github_token: Optional[str] = None,
-                          stackoverflow_key: Optional[str] = None):
+                           stackoverflow_key: Optional[str] = None):
         """Update config/default.yaml with tokens.
 
         Note: This is NOT recommended for production. Tokens should stay in .env.
@@ -289,7 +289,7 @@ class TokenManager:
         stackoverflow_key = self.get_stackoverflow_key()
 
         if github_token:
-            print(f"[OK] GitHub token found in .env file")
+            print("[OK] GitHub token found in .env file")
             tokens['github_token'] = github_token
         elif interactive:
             print("\n[WARNING] GitHub token not found in .env file")
@@ -298,7 +298,7 @@ class TokenManager:
                 tokens['github_token'] = github_token
 
         if stackoverflow_key:
-            print(f"[OK] Stack Overflow API key found in .env file")
+            print("[OK] Stack Overflow API key found in .env file")
             tokens['stackoverflow_key'] = stackoverflow_key
         elif interactive:
             print("\n[WARNING] Stack Overflow API key not found in .env file")
@@ -333,8 +333,8 @@ if __name__ == '__main__':
     manager = get_token_manager()
     tokens = manager.configure_tokens(interactive=True)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Token Configuration Complete")
-    print("="*60)
+    print("=" * 60)
     print(f"GitHub token configured: {'Yes' if tokens['github_token'] else 'No'}")
     print(f"Stack Overflow key configured: {'Yes' if tokens['stackoverflow_key'] else 'No'}")

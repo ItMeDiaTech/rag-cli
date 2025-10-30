@@ -16,8 +16,8 @@ import json
 import time
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, List, Set, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any
+from datetime import datetime
 
 # Set environment variable to suppress console logging in hooks
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
@@ -69,7 +69,7 @@ def load_auto_indexing_config() -> Dict[str, Any]:
             ".env"
         ],
         "debounce_ms": 5000,
-        "supported_formats": [".md", ".txt", ".rst", ".pdf", ".docx"],
+        "supported_formats": [".md", ".txt", ".rst", ".pd", ".docx"],
         "max_file_size_mb": 10
     }
 
@@ -106,7 +106,7 @@ def should_index_file(file_path: Path, config: Dict[str, Any]) -> bool:
         if file_path.stat().st_size > max_size:
             logger.warning(f"File too large to index: {file_path} ({file_path.stat().st_size / 1024 / 1024:.2f} MB)")
             return False
-    except:
+    except (OSError, PermissionError):
         return False
 
     # Check exclude patterns
@@ -194,7 +194,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         # Extract event data
         event_type = event.get('event_type', '')
         file_path_str = event.get('file_path', '')
-        project_path = event.get('project_path', '')
+        event.get('project_path', '')
 
         if not file_path_str:
             logger.warning("No file path in event")
@@ -208,7 +208,6 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
             return event
 
         # Debounce: Check if file was recently modified
-        global _pending_files
         current_time = time.time()
         debounce_interval = config.get("debounce_ms", 5000) / 1000.0  # Convert to seconds
 

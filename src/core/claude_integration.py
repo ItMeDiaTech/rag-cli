@@ -6,15 +6,12 @@ retry logic, and proper context assembly from retrieved documents.
 
 import os
 import time
-import json
-from typing import List, Dict, Any, Optional, Generator, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime
+from typing import List, Dict, Any, Optional, Tuple
+from dataclasses import dataclass
 
 try:
     import anthropic
-    from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
-    from anthropic.types import MessageStreamEvent
+    from anthropic import Anthropic
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
@@ -25,6 +22,7 @@ from src.core.config import get_config
 from src.core.retrieval_pipeline import RetrievalResult
 from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from src.core.prompt_templates import get_prompt_manager
+from src.core.query_classifier import QueryClassification
 from src.monitoring.logger import get_logger, get_metrics_logger, log_api_call
 
 
@@ -34,7 +32,6 @@ metrics = get_metrics_logger()
 
 class CostLimitExceededError(Exception):
     """Raised when cost limit is exceeded."""
-    pass
 
 
 @dataclass
@@ -117,7 +114,7 @@ class ClaudeIntegration:
         else:
             # Initialize Anthropic client for standalone mode
             self.client = Anthropic(api_key=self.api_key)
-            logger.info(f"Claude integration initialized in standalone mode", model=self.model)
+            logger.info("Claude integration initialized in standalone mode", model=self.model)
 
         # Response cache with LRU eviction (limit to 100 responses)
         self.cache = {}
@@ -189,7 +186,7 @@ class ClaudeIntegration:
         context = f"Context from {len(sources_seen)} source(s):\n\n{context}"
 
         logger.debug(
-            f"Context built with metadata",
+            "Context built with metadata",
             chunks=len(retrieval_results),
             sources=len(sources_seen),
             has_intent=classification is not None
@@ -213,7 +210,7 @@ class ClaudeIntegration:
                 prompt_dict = self.prompt_manager.format_prompt(query, context)
 
                 logger.debug("Using structured prompt template",
-                           prompt_type=prompt_dict.get("type", "unknown"))
+                             prompt_type=prompt_dict.get("type", "unknown"))
 
                 return prompt_dict["system"], prompt_dict["user"]
 
@@ -228,7 +225,7 @@ Always cite your sources using the format [Source: filename].
 If the context doesn't contain enough information, clearly state this."""
 
         # Build user message
-        user_message = f"""Context:
+        user_message = """Context:
 {context}
 
 Question: {query}
@@ -293,7 +290,7 @@ Please provide a comprehensive answer based on the context above."""
 
                 if attempt < self.max_retries:
                     logger.warning(
-                        f"API call failed, retrying",
+                        "API call failed, retrying",
                         attempt=attempt + 1,
                         max_retries=self.max_retries,
                         error=str(e)
@@ -304,7 +301,7 @@ Please provide a comprehensive answer based on the context above."""
                     if self.exponential_backoff:
                         delay *= 2  # Double the delay for next attempt
 
-        logger.error(f"All retries exhausted", error=str(last_exception))
+        logger.error("All retries exhausted", error=str(last_exception))
         raise last_exception
 
     @log_api_call("claude")
@@ -335,7 +332,7 @@ Please provide a comprehensive answer based on the context above."""
             # Format context for Claude Code
             context_response = self.adapter.format_context_for_claude(
                 documents=[{"content": r.text, "source": r.source, "score": r.score}
-                          for r in retrieval_results],
+                           for r in retrieval_results],
                 query=query
             )
 
@@ -445,7 +442,7 @@ Please provide a comprehensive answer based on the context above."""
 
             # Log metrics
             logger.info(
-                f"Response generated",
+                "Response generated",
                 query_length=len(query),
                 context_chunks=len(retrieval_results),
                 response_length=len(response_text),
@@ -458,7 +455,7 @@ Please provide a comprehensive answer based on the context above."""
             return response
 
         except Exception as e:
-            logger.error(f"Failed to generate response", error=str(e))
+            logger.error("Failed to generate response", error=str(e))
             metrics.record_failure("claude_response", str(e))
 
             return ClaudeResponse(
@@ -589,7 +586,7 @@ Please provide a comprehensive answer based on the context above."""
 
         # Log usage
         logger.debug(
-            f"Token usage tracked",
+            "Token usage tracked",
             input_tokens=token_usage.get("input", 0),
             output_tokens=token_usage.get("output", 0),
             query_cost=query_cost,
@@ -599,7 +596,7 @@ Please provide a comprehensive answer based on the context above."""
         # Warn if exceeding threshold
         if self.total_cost > self.warn_cost_threshold:
             logger.warning(
-                f"Cost threshold exceeded",
+                "Cost threshold exceeded",
                 total_cost=self.total_cost,
                 threshold=self.warn_cost_threshold,
                 remaining=self.max_cost_limit - self.total_cost
@@ -610,7 +607,7 @@ Please provide a comprehensive answer based on the context above."""
             remaining_budget = self.max_cost_limit - self.total_cost
             if remaining_budget < 0.5:  # Less than $0.50 remaining
                 logger.warning(
-                    f"Approaching cost limit",
+                    "Approaching cost limit",
                     total_cost=self.total_cost,
                     limit=self.max_cost_limit,
                     remaining=remaining_budget
@@ -662,26 +659,6 @@ def get_claude_integration(api_key: Optional[str] = None) -> ClaudeIntegration:
 # Alias for backward compatibility
 class ClaudeAssistant(ClaudeIntegration):
     """Backward compatibility alias for ClaudeIntegration."""
-    pass
-
-
-# Singleton instance
-_claude_instance: Optional[ClaudeIntegration] = None
-
-
-def get_claude_integration(api_key: Optional[str] = None) -> ClaudeIntegration:
-    """Get or create Claude integration instance.
-
-    Args:
-        api_key: Optional API key override
-
-    Returns:
-        Claude integration instance
-    """
-    global _claude_instance
-    if _claude_instance is None:
-        _claude_instance = ClaudeIntegration(api_key)
-    return _claude_instance
 
 
 if __name__ == "__main__":
@@ -689,7 +666,6 @@ if __name__ == "__main__":
     print("Testing Claude Integration...")
 
     # Set up test environment
-    import os
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print("Warning: ANTHROPIC_API_KEY not set, using mock mode")
 
@@ -725,7 +701,7 @@ if __name__ == "__main__":
         print(f"\nGenerating response for: '{query}'")
         response = claude.generate_response(query, mock_results, stream=False)
 
-        print(f"\nResponse:")
+        print("\nResponse:")
         print(response.answer)
         print(f"\nSources: {response.sources}")
         print(f"Tokens used: {response.token_usage}")
@@ -733,7 +709,7 @@ if __name__ == "__main__":
 
         # Get usage stats
         stats = claude.get_usage_stats()
-        print(f"\nUsage Statistics:")
+        print("\nUsage Statistics:")
         for key, value in stats.items():
             print(f"  {key}: {value}")
     else:

@@ -46,8 +46,8 @@ class ArXivConnector:
         self.cache_ttl = timedelta(days=30)  # Cache papers for 30 days
 
         logger.info("ArXiv connector initialized",
-                   rate_limit=f"{1/rate_limit_delay:.1f} req/sec",
-                   cache_ttl=f"{self.cache_ttl.days} days")
+                    rate_limit=f"{1 / rate_limit_delay:.1f} req/sec",
+                    cache_ttl=f"{self.cache_ttl.days} days")
 
     def _rate_limit(self):
         """Enforce rate limiting to stay under 3 requests/second."""
@@ -143,8 +143,8 @@ class ArXivConnector:
             self.cache[cache_key] = (papers, datetime.now())
 
             logger.info("ArXiv search completed",
-                       query=query,
-                       results=len(papers))
+                        query=query,
+                        results=len(papers))
 
             return papers
 

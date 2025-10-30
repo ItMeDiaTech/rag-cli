@@ -58,7 +58,7 @@ if project_root is None:
     if not (project_root / 'src' / 'core').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory."
+            "Please set RAG_CLI_ROOT environment variable to the project directory."
         )
 
 sys.path.insert(0, str(project_root))

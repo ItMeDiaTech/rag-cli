@@ -7,7 +7,6 @@ This package contains connectors for various documentation sources:
 - Official documentation sites
 """
 
-from typing import List, Dict, Any, Optional
 
 __all__ = [
     'GitHubConnector',

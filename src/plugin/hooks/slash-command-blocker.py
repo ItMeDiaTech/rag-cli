@@ -159,7 +159,7 @@ def main():
         # On fatal error, pass through original input
         try:
             print(event_json)
-        except:
+        except (UnicodeEncodeError, IOError):
             print("{}")
         sys.exit(1)
 

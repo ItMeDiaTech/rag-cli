@@ -15,9 +15,7 @@ USAGE:
     })
 """
 
-import sys
 import asyncio
-from pathlib import Path
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
@@ -79,7 +77,7 @@ class MAFConnector:
             logger.info("Embedded MAF framework initialized successfully", agents=list(self.agents_map.keys()))
         except ImportError as e:
             logger.warning(f"Embedded MAF not available - continuing with RAG-only mode: {e}",
-                          fallback="RAG-only retrieval enabled")
+                           fallback="RAG-only retrieval enabled")
             self.maf_available = False
 
     async def execute_agent(
@@ -148,7 +146,7 @@ class MAFConnector:
             )
 
             logger.info(
-                f"Embedded MAF agent execution complete",
+                "Embedded MAF agent execution complete",
                 agent=agent_name,
                 execution_time=f"{execution_time:.2f}s"
             )
@@ -157,7 +155,7 @@ class MAFConnector:
 
         except asyncio.TimeoutError:
             logger.warning(f"Embedded MAF agent '{agent_name}' timed out after {timeout}s",
-                          fallback="returning RAG-only response")
+                           fallback="returning RAG-only response")
             return MAFResult(
                 status='error',
                 content=f"Agent '{agent_name}' execution timed out after {timeout}s",
@@ -168,8 +166,8 @@ class MAFConnector:
                 timestamp=datetime.now()
             )
         except Exception as e:
-            logger.error(f"Embedded MAF agent execution failed", agent=agent_name, error=str(e),
-                        fallback="returning RAG-only response")
+            logger.error("Embedded MAF agent execution failed", agent=agent_name, error=str(e),
+                         fallback="returning RAG-only response")
             return None
 
     async def _execute_agent_task(self, agent: Any, task_description: str, task_data: Dict[str, Any]) -> str:
@@ -221,8 +219,8 @@ class MAFConnector:
                 'requirements': classification.suggested_requirements
             }
 
-            logger.debug(f"Task classification complete", workflow=classification.primary_workflow,
-                        confidence=f"{classification.confidence:.2f}")
+            logger.debug("Task classification complete", workflow=classification.primary_workflow,
+                         confidence=f"{classification.confidence:.2f}")
             return result
 
         except Exception as e:
@@ -296,7 +294,7 @@ class MAFConnector:
             return (
                 f"Plan and decompose this complex query: {task_data.get('query', '')}. "
                 f"Complexity level: {task_data.get('complexity', 'medium')}. "
-                f"Break it into executable sub-tasks for parallel processing."
+                "Break it into executable sub-tasks for parallel processing."
             )
         elif agent_name == 'developer':
             return (
@@ -359,7 +357,7 @@ class MAFConnector:
             try:
                 from src.agents.maf.core import agent
                 health['maf_version'] = getattr(agent, '__version__', '1.2.0')
-            except:
+            except Exception:
                 health['maf_version'] = '1.2.0 (embedded)'
 
         return health

@@ -4,9 +4,9 @@ Intelligent Task Classification System
 Automatically determines the appropriate workflow and agents based on task description
 """
 
-import re
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass
+
 
 @dataclass
 class TaskClassification:
@@ -19,6 +19,7 @@ class TaskClassification:
     suggested_requirements: List[str]
     needs_claude_classification: bool = False
 
+
 class IntelligentTaskClassifier:
     """Classifies tasks and determines appropriate workflows and agents"""
 
@@ -27,49 +28,49 @@ class IntelligentTaskClassifier:
         self.patterns = {
             'debug': {
                 'keywords': ['debug', 'error', 'bug', 'fix', 'problem', 'issue', 'broken', 'crash',
-                           'exception', 'fail', 'traceback', 'warning', 'vs code problems'],
+                             'exception', 'fail', 'traceback', 'warning', 'vs code problems'],
                 'workflow': 'bug_fix',
                 'agents': ['debugger', 'developer', 'tester'],
                 'requirements': ['error_analysis', 'debugging', 'testing']
             },
             'implement': {
                 'keywords': ['implement', 'create', 'build', 'develop', 'code', 'write', 'make',
-                           'add', 'new', 'feature', 'function', 'class', 'module', 'api'],
+                             'add', 'new', 'feature', 'function', 'class', 'module', 'api'],
                 'workflow': 'code_generation',
                 'agents': ['architect', 'developer', 'reviewer', 'tester', 'documenter'],
                 'requirements': ['implementation', 'design', 'testing', 'documentation']
             },
             'review': {
                 'keywords': ['review', 'check', 'analyze', 'audit', 'inspect', 'examine',
-                           'quality', 'standards', 'best practices'],
+                             'quality', 'standards', 'best practices'],
                 'workflow': 'code_review',
                 'agents': ['reviewer', 'tester'],
                 'requirements': ['code_review', 'quality_assurance']
             },
             'test': {
                 'keywords': ['test', 'testing', 'unit test', 'integration test', 'coverage',
-                           'validate', 'verification', 'qa', 'quality assurance'],
+                             'validate', 'verification', 'qa', 'quality assurance'],
                 'workflow': 'testing',
                 'agents': ['tester', 'developer'],
                 'requirements': ['testing', 'validation']
             },
             'optimize': {
                 'keywords': ['optimize', 'performance', 'speed', 'efficiency', 'improve',
-                           'refactor', 'enhance', 'faster', 'memory', 'cpu'],
+                             'refactor', 'enhance', 'faster', 'memory', 'cpu'],
                 'workflow': 'optimization',
                 'agents': ['optimizer', 'developer', 'tester', 'reviewer'],
                 'requirements': ['performance_optimization', 'refactoring']
             },
             'document': {
                 'keywords': ['document', 'docs', 'readme', 'comment', 'explain', 'description',
-                           'api doc', 'help', 'guide', 'manual'],
+                             'api doc', 'help', 'guide', 'manual'],
                 'workflow': 'documentation',
                 'agents': ['documenter', 'reviewer'],
                 'requirements': ['documentation', 'technical_writing']
             },
             'design': {
                 'keywords': ['design', 'architecture', 'plan', 'structure', 'schema',
-                           'pattern', 'framework', 'system', 'blueprint'],
+                             'pattern', 'framework', 'system', 'blueprint'],
                 'workflow': 'system_design',
                 'agents': ['architect', 'developer', 'reviewer'],
                 'requirements': ['system_design', 'architecture']
@@ -80,7 +81,7 @@ class IntelligentTaskClassifier:
         self.vscode_patterns = {
             'vscode_problems': {
                 'keywords': ['vs code', 'vscode', 'problems', 'warnings', 'errors', 'diagnostics',
-                           'problems panel', 'intellisense', 'linting'],
+                             'problems panel', 'intellisense', 'linting'],
                 'workflow': 'bug_fix',
                 'agents': ['debugger', 'developer'],
                 'requirements': ['vscode_integration', 'error_analysis']
@@ -168,7 +169,7 @@ class IntelligentTaskClassifier:
     async def get_claude_classification(self, task_description: str, claude_cli) -> Optional[TaskClassification]:
         """Use Claude to classify ambiguous tasks"""
 
-        classification_prompt = f"""
+        classification_prompt = """
 Analyze this task description and classify it into one of these categories:
 
 Task: "{task_description}"

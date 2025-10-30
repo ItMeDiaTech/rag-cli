@@ -2,11 +2,11 @@
 Tester Agent - Specialized in test creation and execution
 """
 
-import json
 import re
 from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
+
 
 class TesterAgent(Agent):
     """Agent specialized in testing and validation"""
@@ -58,7 +58,7 @@ class TesterAgent(Agent):
         language = task.get('language', 'python')
         framework = self.test_frameworks.get(language, ['generic'])[0]
 
-        prompt = f"""
+        prompt = """
 Generate comprehensive tests for the following code:
 
 Code:
@@ -119,7 +119,7 @@ Provide:
 
         self.logger.info("[%s] Running performance tests", task_id)
 
-        prompt = f"""
+        prompt = """
 Create performance tests for:
 
 Code:

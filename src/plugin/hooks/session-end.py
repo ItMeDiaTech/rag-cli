@@ -52,7 +52,7 @@ if project_root is None:
     if not (project_root / 'src' / 'core').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory."
+            "Please set RAG_CLI_ROOT environment variable to the project directory."
         )
 
 sys.path.insert(0, str(project_root))
@@ -110,7 +110,7 @@ def cleanup_cache() -> bool:
     try:
         cache_dir = project_root / "data" / "cache"
         if cache_dir.exists():
-            import shutil
+            pass
             # Remove old cache files (older than 1 hour)
             import time
             current_time = time.time()
@@ -143,7 +143,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         session_id = event.get('session_id', 'unknown')
-        logger.info(f"RAG-CLI session ending", session_id=session_id)
+        logger.info("RAG-CLI session ending", session_id=session_id)
 
         # Load and save settings
         settings = load_settings()
@@ -156,7 +156,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         # Log session summary
         logger.info(
-            f"RAG-CLI session completed",
+            "RAG-CLI session completed",
             session_id=session_id,
             cleanup_status='success'
         )

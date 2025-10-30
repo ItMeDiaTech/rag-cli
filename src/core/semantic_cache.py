@@ -9,8 +9,8 @@ import time
 import threading
 import json
 import numpy as np
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Tuple
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import OrderedDict
 from pathlib import Path
@@ -67,9 +67,9 @@ class SemanticCache:
         self.evictions = 0
 
         logger.info("Semantic cache initialized",
-                   similarity_threshold=similarity_threshold,
-                   max_size=max_size,
-                   ttl_seconds=ttl_seconds)
+                    similarity_threshold=similarity_threshold,
+                    max_size=max_size,
+                    ttl_seconds=ttl_seconds)
 
     def _compute_cosine_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:
         """Compute cosine similarity between two embeddings.
@@ -129,8 +129,8 @@ class SemanticCache:
             evicted_key, evicted_entry = self.cache.popitem(last=False)
             self.evictions += 1
             logger.debug("Evicted LRU cache entry",
-                        evicted_query=evicted_entry.query[:50],
-                        access_count=evicted_entry.access_count)
+                         evicted_query=evicted_entry.query[:50],
+                         access_count=evicted_entry.access_count)
 
     def _clean_expired(self):
         """Remove expired entries."""
@@ -179,11 +179,11 @@ class SemanticCache:
                 elapsed_ms = (time.time() - start_time) * 1000
 
                 logger.debug("Cache hit",
-                           query=query[:50],
-                           similarity=similarity,
-                           cached_query=entry.query[:50],
-                           cache_age_seconds=(datetime.now() - entry.created_at).total_seconds(),
-                           lookup_time_ms=elapsed_ms)
+                             query=query[:50],
+                             similarity=similarity,
+                             cached_query=entry.query[:50],
+                             cache_age_seconds=(datetime.now() - entry.created_at).total_seconds(),
+                             lookup_time_ms=elapsed_ms)
 
                 return (entry.result, similarity)
 
@@ -192,8 +192,8 @@ class SemanticCache:
                 elapsed_ms = (time.time() - start_time) * 1000
 
                 logger.debug("Cache miss",
-                           query=query[:50],
-                           lookup_time_ms=elapsed_ms)
+                             query=query[:50],
+                             lookup_time_ms=elapsed_ms)
 
                 return None
 
@@ -234,8 +234,8 @@ class SemanticCache:
             self.cache[cache_key] = entry
 
             logger.debug("Cache entry added",
-                       query=query[:50],
-                       cache_size=len(self.cache))
+                         query=query[:50],
+                         cache_size=len(self.cache))
 
         except Exception as e:
             logger.error(f"Cache put failed: {e}")
@@ -325,8 +325,8 @@ class SemanticCache:
                 json.dump(cache_data, f, indent=2)
 
             logger.info(f"Cache saved to {filepath}",
-                       entries=len(active_cache),
-                       expired_removed=len(self.cache) - len(active_cache))
+                        entries=len(active_cache),
+                        expired_removed=len(self.cache) - len(active_cache))
 
         except Exception as e:
             logger.error(f"Failed to save cache: {e}")
@@ -365,8 +365,8 @@ class SemanticCache:
             self._clean_expired()
 
             logger.info(f"Cache loaded from {filepath}",
-                       entries=len(self.cache),
-                       version=cache_data.get('version', 'unknown'))
+                        entries=len(self.cache),
+                        version=cache_data.get('version', 'unknown'))
 
         except Exception as e:
             logger.error(f"Failed to load cache: {e}")
@@ -416,6 +416,5 @@ def get_semantic_cache(embedding_generator=None,
 
 def clear_cache():
     """Clear the global semantic cache."""
-    global _semantic_cache
     if _semantic_cache:
         _semantic_cache.clear()

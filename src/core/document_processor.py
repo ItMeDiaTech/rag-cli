@@ -9,13 +9,12 @@ PARALLEL PROCESSING:
 - Expected speedup: 3-5x for large document collections
 """
 
-import os
 import re
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Union
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 import multiprocessing as mp
 
@@ -29,11 +28,9 @@ try:
 except ImportError:
     docx = None
 from bs4 import BeautifulSoup
-import markdown
 
 # LangChain for chunking
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.text_splitter import CharacterTextSplitter
 
 from src.core.config import get_config
 from src.monitoring.logger import get_logger, get_metrics_logger, log_execution_time
@@ -148,7 +145,7 @@ class DocumentProcessor:
         )
 
         logger.info(
-            f"Text processed",
+            "Text processed",
             doc_id=doc_id,
             chars=len(text),
             tokens=self._token_length(text)
@@ -183,7 +180,7 @@ class DocumentProcessor:
         if suffix not in self.supported_formats:
             raise ValueError(f"Unsupported format: {suffix}")
 
-        logger.info(f"Processing document", path=str(file_path), format=suffix)
+        logger.info("Processing document", path=str(file_path), format=suffix)
 
         # Load document content
         content = self._load_document(file_path)
@@ -207,7 +204,7 @@ class DocumentProcessor:
         )
 
         logger.info(
-            f"Document processed",
+            "Document processed",
             doc_id=doc_id,
             chars=len(content),
             tokens=self._token_length(content)
@@ -241,7 +238,7 @@ class DocumentProcessor:
                 return self._load_text_file(file_path)
 
         except Exception as e:
-            logger.error(f"Failed to load document", path=str(file_path), error=str(e))
+            logger.error("Failed to load document", path=str(file_path), error=str(e))
             raise
 
     def _load_text_file(self, file_path: Path) -> str:
@@ -462,7 +459,7 @@ class DocumentProcessor:
         chunks_text = splitter.split_text(document.content)
         total_chunks = len(chunks_text)
 
-        logger.info(f"Chunking document", doc_id=document.doc_id, chunks=total_chunks)
+        logger.info("Chunking document", doc_id=document.doc_id, chunks=total_chunks)
 
         # Create chunk objects
         chunks = []
@@ -500,7 +497,7 @@ class DocumentProcessor:
             chunks.append(chunk)
 
         logger.info(
-            f"Document chunked",
+            "Document chunked",
             doc_id=document.doc_id,
             chunks=len(chunks),
             avg_chars=sum(c.char_count for c in chunks) / len(chunks) if chunks else 0
@@ -581,7 +578,7 @@ class DocumentProcessor:
                 for ext in self.supported_formats:
                     files.extend(directory.glob(f"*{ext}"))
 
-        logger.info(f"Processing directory", path=str(directory), files=len(files))
+        logger.info("Processing directory", path=str(directory), files=len(files))
 
         # Process each file
         documents = []
@@ -592,18 +589,18 @@ class DocumentProcessor:
                 doc = self.process_document(file_path)
                 documents.append(doc)
             except Exception as e:
-                logger.error(f"Failed to process file", path=str(file_path), error=str(e))
+                logger.error("Failed to process file", path=str(file_path), error=str(e))
                 errors.append((str(file_path), str(e)))
 
         # Log summary
         logger.info(
-            f"Directory processing complete",
+            "Directory processing complete",
             processed=len(documents),
             errors=len(errors)
         )
 
         if errors:
-            logger.warning(f"Failed files", count=len(errors), files=[e[0] for e in errors])
+            logger.warning("Failed files", count=len(errors), files=[e[0] for e in errors])
 
         return documents
 
@@ -650,7 +647,7 @@ class DocumentProcessor:
                     files.extend(directory.glob(f"*{ext}"))
 
         if not files:
-            logger.warning(f"No files found in directory", path=str(directory))
+            logger.warning("No files found in directory", path=str(directory))
             return []
 
         # Determine number of workers
@@ -658,7 +655,7 @@ class DocumentProcessor:
             max_workers = min(mp.cpu_count(), 8)
 
         logger.info(
-            f"Processing directory in parallel",
+            "Processing directory in parallel",
             path=str(directory),
             files=len(files),
             workers=max_workers
@@ -693,7 +690,7 @@ class DocumentProcessor:
                     else:
                         errors.append((str(file_path), "Processing returned None"))
                 except Exception as e:
-                    logger.error(f"Failed to process file", path=str(file_path), error=str(e))
+                    logger.error("Failed to process file", path=str(file_path), error=str(e))
                     errors.append((str(file_path), str(e)))
 
         # Log summary
@@ -701,7 +698,7 @@ class DocumentProcessor:
         files_per_second = len(files) / elapsed if elapsed > 0 else 0
 
         logger.info(
-            f"Parallel directory processing complete",
+            "Parallel directory processing complete",
             processed=len(documents),
             errors=len(errors),
             elapsed_s=elapsed,
@@ -712,7 +709,7 @@ class DocumentProcessor:
         metrics.record_gauge("parallel_processing_speed", files_per_second)
 
         if errors:
-            logger.warning(f"Failed files", count=len(errors), files=[e[0] for e in errors[:10]])
+            logger.warning("Failed files", count=len(errors), files=[e[0] for e in errors[:10]])
 
         return documents
 
@@ -728,7 +725,7 @@ class DocumentProcessor:
         try:
             return self.process_document(file_path)
         except Exception as e:
-            logger.error(f"Error processing file", path=str(file_path), error=str(e))
+            logger.error("Error processing file", path=str(file_path), error=str(e))
             return None
 
     def process_and_chunk_directory(
@@ -757,7 +754,7 @@ class DocumentProcessor:
             all_chunks.extend(chunks)
 
         logger.info(
-            f"Processed and chunked directory",
+            "Processed and chunked directory",
             documents=len(documents),
             chunks=len(all_chunks)
         )
@@ -816,11 +813,11 @@ class DocumentProcessor:
                     all_chunks.extend(chunks)
                 except Exception as e:
                     doc = future_to_doc[future]
-                    logger.error(f"Failed to chunk document", doc_id=doc.doc_id, error=str(e))
+                    logger.error("Failed to chunk document", doc_id=doc.doc_id, error=str(e))
 
         elapsed = time.time() - start_time
         logger.info(
-            f"Parallel processing and chunking complete",
+            "Parallel processing and chunking complete",
             documents=len(documents),
             chunks=len(all_chunks),
             elapsed_s=elapsed,
@@ -884,11 +881,11 @@ class DocumentProcessor:
                     chunks = future.result()
                     all_chunks.extend(chunks)
                 except Exception as e:
-                    logger.error(f"Failed to chunk document in worker", error=str(e))
+                    logger.error("Failed to chunk document in worker", error=str(e))
 
         elapsed = time.time() - start_time
         logger.info(
-            f"Process-parallel processing and chunking complete",
+            "Process-parallel processing and chunking complete",
             documents=len(documents),
             chunks=len(all_chunks),
             elapsed_s=f"{elapsed:.2f}",

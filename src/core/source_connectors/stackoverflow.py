@@ -4,7 +4,6 @@ Fetches questions, answers, and solutions from Stack Overflow.
 """
 
 import requests
-import time
 import logging
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
@@ -91,7 +90,7 @@ class StackOverflowConnector:
             wait_seconds = (wait_until - now).total_seconds()
 
             if wait_seconds > 0:
-                logger.warning(f"Stack Overflow rate limit reached, need to wait {wait_seconds/3600:.1f} hours")
+                logger.warning(f"Stack Overflow rate limit reached, need to wait {wait_seconds / 3600:.1f} hours")
                 # Don't actually wait a full day - just raise an error
                 raise Exception("Stack Overflow daily rate limit exceeded")
 
@@ -137,7 +136,7 @@ class StackOverflowConnector:
             return None
 
     def search_questions(self, query: str, tags: Optional[List[str]] = None,
-                        max_results: int = 10, sort: str = 'relevance') -> List[Dict[str, Any]]:
+                         max_results: int = 10, sort: str = 'relevance') -> List[Dict[str, Any]]:
         """Search for questions matching query.
 
         Args:
@@ -186,7 +185,7 @@ class StackOverflowConnector:
         return []
 
     def search_with_answers(self, query: str, tags: Optional[List[str]] = None,
-                           max_results: int = 5, max_age_days: int = 730) -> List[StackOverflowAnswer]:
+                            max_results: int = 5, max_age_days: int = 730) -> List[StackOverflowAnswer]:
         """Search for questions and get their best answers.
 
         Args:
@@ -249,7 +248,7 @@ class StackOverflowConnector:
         return results
 
     def search_by_error(self, error_message: str, language: Optional[str] = None,
-                       max_results: int = 5) -> List[StackOverflowAnswer]:
+                        max_results: int = 5) -> List[StackOverflowAnswer]:
         """Search for solutions to an error message.
 
         Args:

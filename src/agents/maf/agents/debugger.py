@@ -3,11 +3,11 @@ Debugger Agent - Specialized in error analysis and bug fixing
 """
 
 import ast
-import json
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
+
 
 class DebuggerAgent(Agent):
     """Agent specialized in debugging and error fixing"""
@@ -66,7 +66,7 @@ class DebuggerAgent(Agent):
         self.logger.debug("[%s] Error classified as: %s", task_id, error_type)
 
         # Build debugging prompt
-        prompt = f"""
+        prompt = """
 Debug and fix the following code issue:
 
 Error: {error}
@@ -147,10 +147,7 @@ Please:
 
         self.logger.info("[%s] Debugging performance issues", task_id)
 
-        code = task.get('code', '')
-        performance_data = task.get('performance_data', {})
-
-        prompt = f"""
+        prompt = """
 Analyze performance issues in this code:
 
 Code:

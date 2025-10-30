@@ -1,18 +1,18 @@
 {
   "name": "rag-cli",
   "description": "RAG-CLI Retrieval-Augmented Generation Service",
-  "version": "0.1.0",
+  "version": "1.2.0",
   "type": "stdio",
   "command": "python",
   "args": [
     "-m",
-    "src.monitoring.service_manager"
+    "src.plugin.mcp.unified_server"
   ],
   "env": {
     "PYTHONUNBUFFERED": "1",
-    "RAG_AUTO_START": "true"
+    "RAG_CLI_MODE": "claude_code",
+    "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}"
   },
-  "cwd": "C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI",
   "alwaysAllowTrust": false,
   "features": {
     "autoStart": true,

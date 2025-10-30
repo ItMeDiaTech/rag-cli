@@ -219,7 +219,7 @@ class ReadTheDocsConnector:
             'typescript': f'https://www.typescriptlang.org/docs/handbook/{topic}',
             'rust': f'https://doc.rust-lang.org/std/?search={topic}',
             'go': f'https://golang.org/search?q={topic}',
-            'java': f'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/module-summary.html'
+            'java': 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/module-summary.html'
         }
 
         language = language.lower()
@@ -256,8 +256,8 @@ class ReadTheDocsConnector:
         elif 'devdocs.io' in domain:
             return 'devdocs'
         elif any(official in domain for official in ['docs.python.org', 'developer.mozilla.org',
-                                                       'doc.rust-lang.org', 'golang.org',
-                                                       'docs.oracle.com']):
+                                                     'doc.rust-lang.org', 'golang.org',
+                                                     'docs.oracle.com']):
             return 'official'
         else:
             return 'web'

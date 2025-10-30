@@ -2,11 +2,11 @@
 Reviewer Agent - Specialized in code review and quality assurance
 """
 
-import json
 import re
 from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
+
 
 class ReviewerAgent(Agent):
     """Agent specialized in code review and quality checks"""
@@ -46,7 +46,7 @@ class ReviewerAgent(Agent):
 
         self.logger.info("[%s] Reviewing code", task_id)
 
-        prompt = f"""
+        prompt = """
 Please perform a comprehensive code review:
 
 Code to Review:
@@ -97,7 +97,7 @@ Provide:
 
         self.logger.info("[%s] Performing security analysis", task_id)
 
-        prompt = f"""
+        prompt = """
 Perform a security analysis of this code:
 
 ```
@@ -193,7 +193,7 @@ Check for:
 
         # Count decision points
         complexity = 1
-        decision_keywords = ['if', 'elif', 'else', 'for', 'while', 'except', 'case', 'when']
+        decision_keywords = ['i', 'eli', 'else', 'for', 'while', 'except', 'case', 'when']
 
         for keyword in decision_keywords:
             complexity += code.count(f' {keyword} ') + code.count(f'\n{keyword} ')

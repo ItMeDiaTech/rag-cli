@@ -5,13 +5,12 @@ This script analyzes a project to detect languages, frameworks, and dependencies
 then searches for and indexes relevant documentation.
 """
 
-import os
 import sys
 import json
 import time
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from collections import defaultdict
 
@@ -24,13 +23,15 @@ from src.core.online_retriever import OnlineRetriever
 from src.core.document_processor import get_document_processor
 from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_generator
-from src.core.output import info, warning, error, success
-from src.core.web_scraper import DocumentationScraperFactory, ScrapedDocument
+from src.core.output import warning, error
+from src.core.web_scraper import DocumentationScraperFactory
 from src.monitoring.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Simple print-based output for better compatibility
+
+
 def print_header(text: str):
     """Print header text."""
     print(f"\n{'=' * 60}")
@@ -317,7 +318,6 @@ class ProjectAnalyzer:
                         break
                 except Exception as e:
                     logger.debug(f"Could not parse {app_file.name} for Flask detection: {e}")
-                    pass
 
 
 class DocumentationFetcher:

@@ -8,7 +8,6 @@ import os
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional, List
-from dataclasses import dataclass, field
 import yaml
 from pydantic import BaseModel, Field, validator
 import logging
@@ -45,7 +44,7 @@ class DocumentProcessingConfig(BaseModel):
     chunk_size: int = Field(500, ge=100, le=2000)
     chunk_overlap: int = Field(100, ge=0, le=500)
     separators: List[str] = ["\n\n", "\n", ". ", " ", ""]
-    supported_formats: List[str] = [".md", ".txt", ".pdf", ".docx", ".html"]
+    supported_formats: List[str] = [".md", ".txt", ".pd", ".docx", ".html"]
     add_contextual_headers: bool = True
     metadata_fields: List[str] = ["source", "title", "section", "timestamp", "doc_type"]
 
@@ -262,7 +261,7 @@ class SecurityConfig(BaseModel):
     validate_inputs: bool = True
     max_query_length: int = Field(1000, ge=10, le=10000)
     max_document_size_mb: int = Field(50, ge=1, le=1000)
-    allowed_file_extensions: List[str] = [".md", ".txt", ".pdf", ".docx", ".html"]
+    allowed_file_extensions: List[str] = [".md", ".txt", ".pd", ".docx", ".html"]
     sanitize_html: bool = True
     log_queries: bool = False
 
@@ -574,7 +573,7 @@ def validate_config() -> bool:
 if __name__ == "__main__":
     # Test configuration loading
     config = load_config()
-    print(f"Configuration loaded successfully")
+    print("Configuration loaded successfully")
     print(f"Model: {config.claude.model}")
     print(f"Chunk size: {config.document_processing.chunk_size}")
     print(f"Log level: {config.monitoring.log_level}")

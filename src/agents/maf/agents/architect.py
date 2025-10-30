@@ -2,9 +2,7 @@
 Architect Agent - Specialized in system design and architecture
 """
 
-import json
 from typing import Any, Dict, List
-import re
 from ..core.agent import Agent, AgentConfig
 
 
@@ -54,10 +52,7 @@ class ArchitectAgent(Agent):
 
         self.logger.info("[%s] Designing system architecture", task_id)
 
-        requirements = task.get('requirements', {})
-        constraints = task.get('constraints', {})
-
-        prompt = f"""
+        prompt = """
 Design a comprehensive system architecture for:
 
 Requirements:
@@ -97,7 +92,7 @@ Please provide:
 
         self.logger.info("[%s] Designing API", task_id)
 
-        prompt = f"""
+        prompt = """
 Design a RESTful API for:
 
 Functionality: {task.get('description', 'API design needed')}
@@ -140,10 +135,7 @@ Provide:
 
         self.logger.info("[%s] Designing database schema", task_id)
 
-        entities = task.get('entities', [])
-        relationships = task.get('relationships', [])
-
-        prompt = f"""
+        prompt = """
 Design a database schema for:
 
 Entities: {json.dumps(entities, indent=2)}
@@ -192,9 +184,7 @@ Provide:
 
         self.logger.info("[%s] Reviewing architecture", task_id)
 
-        architecture = task.get('architecture', {})
-
-        prompt = f"""
+        prompt = """
 Review the following architecture:
 
 {json.dumps(architecture, indent=2)}
@@ -323,7 +313,7 @@ Evaluate:
             'tables': tables,
             'indexes': re.findall(r'CREATE INDEX.*?;', content),
             'constraints': re.findall(r'ALTER TABLE.*?;', content),
-            'normalization': '3NF' if '3nf' in content.lower() else '2NF',
+            'normalization': '3NF' if '3n' in content.lower() else '2NF',
             'database_type': db_type
         }
 

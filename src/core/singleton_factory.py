@@ -48,7 +48,6 @@ class SingletonFactory(Generic[T], ABC):
         Returns:
             New instance of type T
         """
-        pass
 
     def get(self, *args, **kwargs) -> T:
         """Get or create singleton instance with given parameters.

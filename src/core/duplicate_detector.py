@@ -6,7 +6,7 @@ Uses content hashing to identify and filter duplicate documents before indexing.
 import hashlib
 import logging
 import json
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -87,7 +87,7 @@ class DuplicateDetector:
         return False, None
 
     def add_hash(self, content: str, title: str, source: str,
-                url: Optional[str] = None, doc_type: str = 'local') -> str:
+                 url: Optional[str] = None, doc_type: str = 'local') -> str:
         """Add content hash to registry.
 
         Args:
@@ -257,7 +257,7 @@ class DuplicateDetector:
         # Simple fuzzy matching: check if content is very similar
         # For production, could use MinHash or SimHash
         normalized = self._normalize_content(content)
-        content_length = len(normalized)
+        len(normalized)
 
         for hash_info in self.hashes.values():
             # This is a placeholder - in production would need to store

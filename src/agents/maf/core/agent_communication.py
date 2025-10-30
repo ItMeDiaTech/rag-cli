@@ -5,14 +5,13 @@ Implements MCP-inspired patterns for proper inter-agent communication and contex
 """
 
 import asyncio
-import json
 import logging
-import time
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
+
 
 class CommunicationType(Enum):
     """Types of inter-agent communication"""
@@ -27,6 +26,7 @@ class CommunicationType(Enum):
     COLLABORATION = "collaboration"
     BROADCAST = "broadcast"
 
+
 @dataclass
 class AgentContext:
     """Shared context between agents for project objectives"""
@@ -40,6 +40,7 @@ class AgentContext:
     dependencies: Dict[str, List[str]] = field(default_factory=dict)
     timeline: Dict[str, str] = field(default_factory=dict)
     success_criteria: List[str] = field(default_factory=list)
+
 
 @dataclass
 class AgentMessage:
@@ -63,6 +64,7 @@ class AgentMessage:
                 self.type = CommunicationType(self.type)
             except ValueError:
                 self.type = CommunicationType.STATUS_UPDATE
+
 
 class AgentCommunicationHub:
     """Central hub for managing inter-agent communication and context"""
@@ -159,7 +161,7 @@ class AgentCommunicationHub:
             return False
 
     async def broadcast_message(self, sender: str, subject: str, content: Any,
-                              message_type: CommunicationType = CommunicationType.BROADCAST):
+                                message_type: CommunicationType = CommunicationType.BROADCAST):
         """Broadcast a message to all active agents"""
         message = AgentMessage(
             type=message_type,
@@ -173,7 +175,7 @@ class AgentCommunicationHub:
         await self.send_message(message)
 
     async def request_assistance(self, requester: str, task_description: str,
-                               required_expertise: List[str]) -> Optional[str]:
+                                 required_expertise: List[str]) -> Optional[str]:
         """Request assistance from agents with specific expertise"""
 
         # Find suitable agents
@@ -207,7 +209,7 @@ class AgentCommunicationHub:
         return selected_agent
 
     async def share_knowledge(self, agent_id: str, knowledge_type: str,
-                            knowledge_data: Dict[str, Any]):
+                              knowledge_data: Dict[str, Any]):
         """Share knowledge that other agents can benefit from"""
 
         # Store in shared memory
@@ -232,8 +234,8 @@ class AgentCommunicationHub:
         )
 
     async def update_project_status(self, agent_id: str, phase: str,
-                                  completed_work: Dict[str, Any],
-                                  next_steps: List[str]):
+                                    completed_work: Dict[str, Any],
+                                    next_steps: List[str]):
         """Update project status and communicate progress"""
 
         self.project_context.current_phase = phase
@@ -257,7 +259,7 @@ class AgentCommunicationHub:
         )
 
     async def coordinate_task(self, task_id: str, description: str,
-                            assigned_to: str, depends_on: List[str] = None):
+                              assigned_to: str, depends_on: List[str] = None):
         """Coordinate task assignment and dependencies"""
 
         # Check if dependencies are met
@@ -325,7 +327,7 @@ class AgentCommunicationHub:
             "project_context": asdict(self.project_context),
             "shared_memory": self.shared_memory,
             "active_tasks": {tid: task for tid, task in self.active_tasks.items()
-                           if task.get("assigned_to") == agent_id or task.get("status") == "completed"},
+                             if task.get("assigned_to") == agent_id or task.get("status") == "completed"},
             "agent_expertise": self.agent_expertise,
             "recent_messages": self.message_history[-10:]  # Last 10 messages
         }
@@ -382,6 +384,8 @@ class AgentCommunicationHub:
         }
 
 # Mixin class for agents to support enhanced communication
+
+
 class CommunicativeAgent:
     """Mixin class that adds communication capabilities to agents"""
 
@@ -411,7 +415,7 @@ class CommunicativeAgent:
             await self._handle_knowledge_share(message)
 
     async def send_message(self, recipient: str, subject: str, content: Any,
-                          message_type: CommunicationType = CommunicationType.STATUS_UPDATE):
+                           message_type: CommunicationType = CommunicationType.STATUS_UPDATE):
         """Send a message to another agent"""
         if not self.communication_hub:
             return False
@@ -467,16 +471,12 @@ class CommunicativeAgent:
     # Override these methods in your agent implementation
     async def _handle_task_assignment(self, message: AgentMessage):
         """Handle task assignment - override in subclass"""
-        pass
 
     async def _handle_assistance_request(self, message: AgentMessage):
         """Handle assistance request - override in subclass"""
-        pass
 
     async def _handle_context_update(self, message: AgentMessage):
         """Handle context update - override in subclass"""
-        pass
 
     async def _handle_knowledge_share(self, message: AgentMessage):
         """Handle knowledge sharing - override in subclass"""
-        pass

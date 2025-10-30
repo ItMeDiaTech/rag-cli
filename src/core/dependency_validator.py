@@ -5,10 +5,8 @@ This module provides utilities to validate that all required dependencies
 are installed before RAG-CLI attempts to use them.
 """
 
-import sys
 import importlib
 from typing import List, Dict, Tuple, Optional
-from pathlib import Path
 
 
 class DependencyValidator:
@@ -87,7 +85,7 @@ class DependencyValidator:
                 warnings[module_name] = (
                     f"OPTIONAL: {module_name} not found ({description})\n"
                     f"  Install with: pip install {module_name} "
-                    f"(optional, for enhanced functionality)"
+                    "(optional, for enhanced functionality)"
                 )
 
         return warnings

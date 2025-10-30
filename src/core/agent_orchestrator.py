@@ -25,7 +25,7 @@ ARCHITECTURE:
 
 import time
 import asyncio
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -35,7 +35,7 @@ from src.integrations.maf_connector import get_maf_connector, MAFResult
 from src.agents.query_decomposer import get_query_decomposer, DecompositionResult
 from src.agents.result_synthesizer import get_result_synthesizer, SynthesisResult
 from src.monitoring.logger import get_logger, get_metrics_logger
-from src.monitoring.output_formatter import OutputFormatter, format_rag_pipeline, format_maf_pipeline, format_hybrid_pipeline
+from src.monitoring.output_formatter import OutputFormatter
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
@@ -112,13 +112,13 @@ class AgentOrchestrator:
         """
         start_time = time.time()
 
-        logger.info(f"Orchestrating query", query_length=len(query))
+        logger.info("Orchestrating query", query_length=len(query))
 
         # Step 1: Classify query
         classification = self.classifier.classify(query)
 
         logger.info(
-            f"Query classified",
+            "Query classified",
             intent=classification.primary_intent.value,
             confidence=classification.confidence
         )
@@ -126,15 +126,15 @@ class AgentOrchestrator:
         # Step 2: Determine routing strategy
         strategy = self._determine_strategy(classification)
 
-        logger.info(f"Routing strategy selected", strategy=strategy.value)
+        logger.info("Routing strategy selected", strategy=strategy.value)
 
         # Emit reasoning event
         from src.monitoring.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Agent orchestration: Classified as {classification.primary_intent.value} "
-                     f"with {classification.confidence:.0%} confidence. "
-                     f"Strategy: {strategy.value}. "
-                     f"MAF {'enabled' if self.enable_maf else 'disabled'}.",
+            f"with {classification.confidence:.0%} confidence. "
+            f"Strategy: {strategy.value}. "
+            f"MAF {'enabled' if self.enable_maf else 'disabled'}.",
             component="agent_orchestrator",
             context={
                 'intent': classification.primary_intent.value,
@@ -162,7 +162,7 @@ class AgentOrchestrator:
         result.execution_time = time.time() - start_time
 
         logger.info(
-            f"Orchestration complete",
+            "Orchestration complete",
             strategy=strategy.value,
             confidence=result.confidence,
             elapsed=result.execution_time
@@ -405,7 +405,7 @@ class AgentOrchestrator:
                 'score': maf_result.confidence,
                 'method': 'maf_agent'
             })
-            logger.debug(f"MAF result included", agent=maf_result.agent_name, confidence=maf_result.confidence)
+            logger.debug("MAF result included", agent=maf_result.agent_name, confidence=maf_result.confidence)
 
         # Add RAG results
         if rag_results:
@@ -425,7 +425,7 @@ class AgentOrchestrator:
                 }
                 for r in rag_results[:top_k]
             ])
-            logger.debug(f"RAG results included", count=len(rag_results), avg_confidence=rag_confidence)
+            logger.debug("RAG results included", count=len(rag_results), avg_confidence=rag_confidence)
 
         # Calculate overall confidence (weighted average)
         overall_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
@@ -441,9 +441,9 @@ class AgentOrchestrator:
         from src.monitoring.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Hybrid synthesis: Combined MAF {'analysis' if maf_result else 'unavailable'} "
-                     f"with {len(rag_results)} RAG results. "
-                     f"Overall confidence: {overall_confidence:.0%}. "
-                     f"Sources: {len(sources)} total.",
+            f"with {len(rag_results)} RAG results. "
+            f"Overall confidence: {overall_confidence:.0%}. "
+            f"Sources: {len(sources)} total.",
             component="agent_orchestrator",
             context={
                 'maf_used': maf_result is not None,
@@ -510,7 +510,7 @@ class AgentOrchestrator:
             return await self._execute_rag_only(query, top_k, use_cache, classification)
 
         logger.info(
-            f"Query decomposed",
+            "Query decomposed",
             sub_queries=len(decomposition.sub_queries),
             strategy=decomposition.strategy_used.value,
             confidence=decomposition.confidence
@@ -519,9 +519,9 @@ class AgentOrchestrator:
         # Emit reasoning event
         metrics_collector.record_reasoning_event(
             reasoning=f"Complex query decomposed into {len(decomposition.sub_queries)} sub-queries "
-                     f"using {decomposition.strategy_used.value} strategy. "
-                     f"Sub-queries will execute in parallel for 2-4x faster results. "
-                     f"Confidence: {decomposition.confidence:.0%}.",
+            f"using {decomposition.strategy_used.value} strategy. "
+            "Sub-queries will execute in parallel for 2-4x faster results. "
+            f"Confidence: {decomposition.confidence:.0%}.",
             component="agent_orchestrator",
             context={
                 'num_sub_queries': len(decomposition.sub_queries),
@@ -580,7 +580,7 @@ class AgentOrchestrator:
         )
 
         logger.info(
-            f"Synthesis complete",
+            "Synthesis complete",
             merged_results=len(synthesis.merged_results),
             duplicates_removed=synthesis.duplicates_removed,
             confidence=synthesis.confidence
@@ -589,9 +589,9 @@ class AgentOrchestrator:
         # Emit reasoning for synthesis
         metrics_collector.record_reasoning_event(
             reasoning=f"Synthesized {synthesis.total_input_results} results from {len(decomposition.sub_queries)} sub-queries. "
-                     f"Removed {synthesis.duplicates_removed} duplicates. "
-                     f"Final set: {len(synthesis.merged_results)} unique results. "
-                     f"Confidence: {synthesis.confidence:.0%}.",
+            f"Removed {synthesis.duplicates_removed} duplicates. "
+            f"Final set: {len(synthesis.merged_results)} unique results. "
+            f"Confidence: {synthesis.confidence:.0%}.",
             component="agent_orchestrator",
             context={
                 'total_input': synthesis.total_input_results,
@@ -608,7 +608,7 @@ class AgentOrchestrator:
         content_parts.append("")
 
         for sq in decomposition.sub_queries:
-            result_count = len([r for results in sub_query_results for r in results])
+            len([r for results in sub_query_results for r in results])
             content_parts.append(f"  [{sq.index + 1}] {sq.text}")
 
         content_parts.append("")

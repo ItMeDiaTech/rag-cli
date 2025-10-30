@@ -9,7 +9,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from .agent_communication import CommunicativeAgent, AgentCommunicationHub, AgentMessage, CommunicationType
+from .agent_communication import CommunicativeAgent, AgentMessage, CommunicationType
+
 
 @dataclass
 class AgentConfig:
@@ -21,6 +22,7 @@ class AgentConfig:
     timeout: int = 120
     temperature: float = 0.7
     max_tokens: int = 4000
+
 
 @dataclass
 class AgentResponse:
@@ -40,6 +42,7 @@ class AgentResponse:
             self.timestamp = datetime.now(timezone.utc).isoformat()
         if self.metadata is None:
             self.metadata = {}
+
 
 class Agent(CommunicativeAgent):
     """Base Agent class for all specialized agents"""
@@ -277,6 +280,7 @@ class Agent(CommunicativeAgent):
                 error=str(e),
                 execution_time=execution_time
             )
+
     def _can_handle_task(self, task: Dict[str, Any]) -> bool:
         """Check if agent can handle the task type"""
         task_type = task.get('type', '')

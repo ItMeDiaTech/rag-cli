@@ -6,7 +6,7 @@ Execute the retrieval script and return results only.
 
 ## Execution
 
-Run: `python scripts/retrieve.py "[USER_QUERY]"`
+Run: `python scripts/retrieve.py --query "[USER_QUERY]"`
 
 Display the output exactly as returned. Do not add any additional text before or after the output.
 

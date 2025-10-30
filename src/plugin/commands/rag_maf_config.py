@@ -92,7 +92,7 @@ class MAFConfigCommand:
         """
         try:
             config = self._load_config()
-            config["maf"]["enabled"] = True
+            config["ma"]["enabled"] = True
             config["orchestration"]["enable_maf"] = True
             self._save_config(config)
 
@@ -110,7 +110,7 @@ class MAFConfigCommand:
         """
         try:
             config = self._load_config()
-            config["maf"]["enabled"] = False
+            config["ma"]["enabled"] = False
             config["orchestration"]["enable_maf"] = False
             self._save_config(config)
 
@@ -200,7 +200,7 @@ class MAFConfigCommand:
                 return f"❌ Invalid mode '{mode}'. Use: PARALLEL or SEQUENTIAL"
 
             config = self._load_config()
-            config["maf"]["mode"] = mode.lower()
+            config["ma"]["mode"] = mode.lower()
             self._save_config(config)
 
             if mode == "PARALLEL":

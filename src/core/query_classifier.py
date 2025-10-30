@@ -5,7 +5,7 @@ for user queries to enable intelligent routing and retrieval.
 """
 
 import re
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -187,7 +187,7 @@ class QueryClassifier:
                 r'\bAI\s+model\b',
             ],
             'keywords': ['paper', 'research', 'study', 'algorithm', 'model', 'architecture',
-                        'sota', 'transformer', 'neural', 'deep learning', 'ml', 'ai'],
+                         'sota', 'transformer', 'neural', 'deep learning', 'ml', 'ai'],
             'weight': 1.2
         },
         QueryIntent.RECENT_NEWS: {
@@ -205,7 +205,7 @@ class QueryClassifier:
                 r'\bjust\s+released\b',
             ],
             'keywords': ['latest', 'new', 'recent', '2024', '2025', 'update', 'release',
-                        'version', 'announcement', 'breaking'],
+                         'version', 'announcement', 'breaking'],
             'weight': 1.2
         }
     }
@@ -317,7 +317,7 @@ class QueryClassifier:
         )
 
         logger.debug(
-            f"Classified query",
+            "Classified query",
             intent=primary_intent.value,
             confidence=confidence,
             entities=len(entities),
@@ -453,7 +453,7 @@ class QueryClassifier:
             List of keywords
         """
         # Remove common stop words
-        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were'}
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'o', 'with', 'is', 'are', 'was', 'were'}
 
         # Tokenize and filter
         words = re.findall(r'\b\w+\b', query)

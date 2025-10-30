@@ -2,11 +2,11 @@
 Documenter Agent - Specialized in documentation generation and maintenance
 """
 
-import json
 import re
 from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
+
 
 class DocumenterAgent(Agent):
     """Agent specialized in documentation creation and maintenance"""
@@ -82,9 +82,7 @@ class DocumenterAgent(Agent):
         if not code:
             code = task.get('code', '')
 
-        architecture = _context.get('results', {}).get('Architect', {})
-
-        prompt = f"""
+        prompt = """
 Generate comprehensive documentation for:
 
 Code:
@@ -135,9 +133,7 @@ Include:
 
         self.logger.info("[%s] Generating README", task_id)
 
-        project_info = task.get('project_info', {})
-
-        prompt = f"""
+        prompt = """
 Generate a comprehensive README.md file for:
 
 Project: {project_info.get('name', 'Project Name')}
@@ -194,7 +190,7 @@ Include:
             if isinstance(arch_result, dict):
                 endpoints = arch_result.get('endpoints', [])
 
-        prompt = f"""
+        prompt = """
 Generate API documentation for:
 
 Endpoints:
@@ -236,9 +232,8 @@ For each endpoint, document:
         self.logger.info("[%s] Adding code comments", task_id)
 
         code = task.get('code', '')
-        language = task.get('language', 'python')
 
-        prompt = f"""
+        prompt = """
 Add comprehensive comments to this code:
 
 ```{language}
@@ -506,7 +501,7 @@ We welcome contributions! Please see CONTRIBUTING.md for guidelines.
             'format': 'markdown',
             'content': content,
             'sections': ['Overview', 'Architecture', 'Installation', 'Usage', 'API Reference',
-                        'Configuration', 'Troubleshooting', 'Best Practices', 'Contributing'],
+                         'Configuration', 'Troubleshooting', 'Best Practices', 'Contributing'],
             'word_count': len(content.split()),
             'code_examples': 2,
             'has_toc': False,

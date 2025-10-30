@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+
 class WorkflowStatus(Enum):
     """Status of a workflow"""
     PENDING = "pending"
@@ -20,6 +21,7 @@ class WorkflowStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class ExecutionStrategy(Enum):
     """Workflow execution strategy"""
     SEQUENTIAL = "sequential"
@@ -27,6 +29,7 @@ class ExecutionStrategy(Enum):
     CONSENSUS = "consensus"
     PIPELINE = "pipeline"
     DYNAMIC = "dynamic"
+
 
 @dataclass
 class WorkflowStage:
@@ -44,6 +47,7 @@ class WorkflowStage:
             self.dependencies = []
         if self.config is None:
             self.config = {}
+
 
 @dataclass
 class WorkflowResult:
@@ -72,6 +76,7 @@ class WorkflowResult:
             'execution_time': self.execution_time,
             'metadata': self.metadata
         }
+
 
 class WorkflowOrchestrator:
     """Orchestrates multi-agent workflows"""

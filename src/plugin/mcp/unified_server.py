@@ -11,7 +11,7 @@ import json
 import os
 import asyncio
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 # Add project root to path using environment variable first, then fallback
 project_root = Path(os.getenv('RAG_CLI_ROOT', Path(__file__).resolve().parents[3]))
@@ -534,11 +534,10 @@ class UnifiedMCPServer:
 
             # Generate response if requested
             answer = None
-            synthesis_time_ms = 0
             if use_llm and documents and self.assistant:
                 synthesis_start = time.time()
                 response = self.assistant.generate_response(query, documents)
-                synthesis_time_ms = (time.time() - synthesis_start) * 1000
+                (time.time() - synthesis_start) * 1000
                 answer = response.get("answer", "")
 
             # Format results with clean output

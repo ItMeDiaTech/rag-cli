@@ -63,8 +63,8 @@ def get_rag_cli_root() -> Path:
     if not (project_root / 'src' / 'core').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory.\n"
-            f"Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
+            "Please set RAG_CLI_ROOT environment variable to the project directory.\n"
+            "Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
         )
 
     return project_root

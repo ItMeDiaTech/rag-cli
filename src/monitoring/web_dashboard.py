@@ -75,7 +75,7 @@ def api_health():
     try:
         response = requests.get('http://127.0.0.1:9999/api/health', timeout=2)
         return response.json()
-    except Exception as e:
+    except Exception:
         return jsonify({
             "status": "unhealthy",
             "timestamp": datetime.now().isoformat(),
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     # Get port from environment variable, command line, or use default
     port = int(os.environ.get('RAG_DASHBOARD_PORT',
-                             sys.argv[1] if len(sys.argv) > 1 else 5000))
+                              sys.argv[1] if len(sys.argv) > 1 else 5000))
 
     print(f"RAG-CLI Web Dashboard starting on http://localhost:{port}")
 

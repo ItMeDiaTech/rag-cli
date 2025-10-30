@@ -117,7 +117,7 @@ class GitHubConnector:
             return []
 
     def search_code(self, query: str, repo: Optional[str] = None,
-                   language: Optional[str] = None, max_results: int = 10) -> List[Dict[str, Any]]:
+                    language: Optional[str] = None, max_results: int = 10) -> List[Dict[str, Any]]:
         """Search for code matching query.
 
         Args:
@@ -329,7 +329,7 @@ class GitHubConnector:
         return False
 
     def search_issues(self, repo: str, query: str, state: str = "closed",
-                     max_results: int = 10) -> List[Dict[str, Any]]:
+                      max_results: int = 10) -> List[Dict[str, Any]]:
         """Search issues/discussions in a repository.
 
         Args:

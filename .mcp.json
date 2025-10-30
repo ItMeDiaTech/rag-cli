@@ -4,13 +4,13 @@
       "command": "python",
       "args": [
         "-m",
-        "src.monitoring.service_manager"
+        "src.plugin.mcp.unified_server"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1",
-        "RAG_AUTO_START": "true"
-      },
-      "cwd": "C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI"
+        "RAG_CLI_MODE": "claude_code",
+        "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}"
+      }
     }
   }
 }

@@ -41,7 +41,7 @@ class PromptTemplateManager:
         """Initialize prompt template manager."""
         self.templates = self._initialize_templates()
         logger.info("Prompt template manager initialized",
-                   template_count=len(self.templates))
+                    template_count=len(self.templates))
 
     def _initialize_templates(self) -> Dict[PromptType, PromptTemplate]:
         """Initialize all prompt templates.
@@ -532,15 +532,15 @@ Please provide best practices guidance based on the official documentation above
         template = self.templates.get(prompt_type, self.templates[PromptType.GENERAL_QA])
 
         logger.debug("Selected prompt template",
-                    prompt_type=prompt_type.value,
-                    auto_detected=prompt_type is None)
+                     prompt_type=prompt_type.value,
+                     auto_detected=prompt_type is None)
 
         return template
 
     def format_prompt(self,
-                     query: str,
-                     context: str,
-                     prompt_type: Optional[PromptType] = None) -> Dict[str, str]:
+                      query: str,
+                      context: str,
+                      prompt_type: Optional[PromptType] = None) -> Dict[str, str]:
         """Format a complete prompt with system and user messages.
 
         Args:

@@ -6,8 +6,7 @@ internal logging. It supports verbosity levels and formatting.
 
 import sys
 from enum import IntEnum
-from typing import Optional, Any, Dict, List
-from pathlib import Path
+from typing import Optional, Any, List
 
 
 class Verbosity(IntEnum):
@@ -137,13 +136,13 @@ class Output:
         elif self.verbosity == Verbosity.VERBOSE:
             sources = list(set(doc.source for doc in documents))
             return (f"Retrieved {count} result{'s' if count != 1 else ''} ({time_ms:.0f}ms)\n"
-                   f"  Sources: {', '.join(sources)}")
+                    f"  Sources: {', '.join(sources)}")
         else:  # DEBUG
             details = []
             for i, doc in enumerate(documents, 1):
                 details.append(f"  [{i}] {doc.source} (score: {doc.score:.3f})")
             return (f"Retrieved {count} result{'s' if count != 1 else ''} ({time_ms:.0f}ms)\n" +
-                   "\n".join(details))
+                    "\n".join(details))
 
 
 # Global instance

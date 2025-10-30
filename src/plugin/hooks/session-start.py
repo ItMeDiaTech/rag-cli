@@ -53,7 +53,7 @@ if project_root is None:
     if not (project_root / 'src' / 'core').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            f"Please set RAG_CLI_ROOT environment variable to the project directory."
+            "Please set RAG_CLI_ROOT environment variable to the project directory."
         )
 
 sys.path.insert(0, str(project_root))
@@ -147,7 +147,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         session_id = event.get('session_id', 'unknown')
-        logger.info(f"RAG-CLI session started", session_id=session_id)
+        logger.info("RAG-CLI session started", session_id=session_id)
 
         # Load settings
         settings = load_settings()

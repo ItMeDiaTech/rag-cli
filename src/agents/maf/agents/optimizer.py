@@ -2,11 +2,11 @@
 Optimizer Agent - Specialized in performance and efficiency optimization
 """
 
-import json
 import re
 from typing import Any, Dict, List
 
 from ..core.agent import Agent, AgentConfig
+
 
 class OptimizerAgent(Agent):
     """Agent specialized in code and system optimization"""
@@ -57,9 +57,7 @@ class OptimizerAgent(Agent):
                 if code_blocks and isinstance(code_blocks, list):
                     code = code_blocks[0].get('content', '')
 
-        performance_issues = task.get('performance_issues', [])
-
-        prompt = f"""
+        prompt = """
 Optimize the following code for better performance:
 
 Code:
@@ -104,9 +102,7 @@ Provide:
 
         self.logger.info("[%s] Analyzing performance", task_id)
 
-        code = task.get('code', '')
-
-        prompt = f"""
+        prompt = """
 Analyze the performance characteristics of this code:
 
 ```
@@ -151,9 +147,7 @@ Analyze:
 
         self.logger.info("[%s] Refactoring for performance", task_id)
 
-        code = task.get('code', '')
-
-        prompt = f"""
+        prompt = """
 Refactor this code for optimal performance:
 
 ```
@@ -193,10 +187,7 @@ Maintain functionality while improving performance.
 
         self.logger.info("[%s] Optimizing database", task_id)
 
-        queries = task.get('queries', [])
-        schema = task.get('schema', {})
-
-        prompt = f"""
+        prompt = """
 Optimize database performance:
 
 Queries:

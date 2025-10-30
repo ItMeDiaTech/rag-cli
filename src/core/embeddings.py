@@ -14,10 +14,8 @@ import threading
 import asyncio
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-from typing import List, Union, Optional, Tuple
-from functools import lru_cache
+from typing import List, Union, Optional
 import numpy as np
-import torch
 from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
@@ -144,7 +142,7 @@ class EmbeddingGenerator:
         self.model.max_seq_length = self.max_seq_length
 
         load_time = time.time() - start_time
-        logger.info(f"Model loaded", model=self.model_name, load_time_seconds=load_time)
+        logger.info("Model loaded", model=self.model_name, load_time_seconds=load_time)
         metrics.record_latency("model_load", load_time * 1000)
 
         # Initialize cache
@@ -155,7 +153,7 @@ class EmbeddingGenerator:
         actual_dims = len(test_embedding)
         if actual_dims != self.dimensions:
             logger.warning(
-                f"Model dimensions mismatch",
+                "Model dimensions mismatch",
                 expected=self.dimensions,
                 actual=actual_dims
             )
@@ -212,7 +210,7 @@ class EmbeddingGenerator:
         if use_cache and cached_indices:
             cache_ratio = len(cached_indices) / len(texts)
             logger.debug(
-                f"Cache hit ratio",
+                "Cache hit ratio",
                 cached=len(cached_indices),
                 total=len(texts),
                 ratio=cache_ratio
@@ -268,7 +266,7 @@ class EmbeddingGenerator:
         if not texts:
             return np.array([])
 
-        logger.debug(f"Encoding batch", batch_size=len(texts))
+        logger.debug("Encoding batch", batch_size=len(texts))
         start_time = time.time()
 
         # Process in batches
@@ -314,7 +312,7 @@ class EmbeddingGenerator:
         elapsed_time = time.time() - start_time
         texts_per_second = len(texts) / elapsed_time
         logger.info(
-            f"Batch encoding completed",
+            "Batch encoding completed",
             num_texts=len(texts),
             elapsed_seconds=elapsed_time,
             texts_per_second=texts_per_second
@@ -350,7 +348,7 @@ class EmbeddingGenerator:
         Returns:
             Document embeddings
         """
-        logger.info(f"Encoding documents", count=len(documents))
+        logger.info("Encoding documents", count=len(documents))
 
         # For large document sets, disable cache to avoid memory issues
         use_cache = len(documents) < 1000
@@ -361,7 +359,7 @@ class EmbeddingGenerator:
             use_cache=use_cache
         )
 
-        logger.info(f"Documents encoded", count=len(documents))
+        logger.info("Documents encoded", count=len(documents))
         metrics.record_count("documents_encoded", len(documents))
 
         return embeddings
@@ -519,7 +517,7 @@ class EmbeddingPool:
         elapsed = time.time() - start_time
         texts_per_second = len(texts) / elapsed
         logger.info(
-            f"Parallel encoding completed",
+            "Parallel encoding completed",
             texts=len(texts),
             workers=self.max_workers,
             elapsed_s=elapsed,
@@ -613,7 +611,6 @@ def _embedding_worker_encode(texts: List[str]) -> np.ndarray:
     Returns:
         Embeddings as numpy array
     """
-    global _worker_model
     return _worker_model.encode(
         texts,
         convert_to_numpy=True,
@@ -732,7 +729,7 @@ class ProcessEmbeddingPool:
         elapsed = time.time() - start_time
         texts_per_second = len(texts) / elapsed
         logger.info(
-            f"Process-parallel encoding completed",
+            "Process-parallel encoding completed",
             texts=len(texts),
             elapsed_seconds=f"{elapsed:.2f}",
             texts_per_second=f"{texts_per_second:.1f}"
@@ -897,7 +894,7 @@ if __name__ == "__main__":
 
     print(f"\nSimilarity scores for query: '{query}'")
     for i, (text, score) in enumerate(zip(texts, similarities)):
-        print(f"  {i+1}. {text[:50]}... - Score: {score:.4f}")
+        print(f"  {i + 1}. {text[:50]}... - Score: {score:.4f}")
 
     # Test caching
     print("\nTesting cache (should be fast):")

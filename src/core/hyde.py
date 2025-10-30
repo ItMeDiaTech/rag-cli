@@ -8,12 +8,12 @@ and technical questions.
 import re
 import time
 import hashlib
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, Tuple
 from dataclasses import dataclass
 from collections import OrderedDict
 
 from src.monitoring.logger import get_logger
-from src.core.claude_code_adapter import get_adapter, OperationMode
+from src.core.claude_code_adapter import get_adapter
 
 logger = get_logger(__name__)
 
@@ -54,13 +54,13 @@ class HyDEGenerator:
                 from anthropic import Anthropic
                 self.claude_client = Anthropic()
                 logger.info("HyDE initialized with LLM generation and caching",
-                           cache_size=cache_size, cache_ttl=cache_ttl)
+                            cache_size=cache_size, cache_ttl=cache_ttl)
             except Exception as e:
                 logger.warning(f"Failed to initialize Claude client for HyDE: {e}")
                 self.claude_client = None
         else:
             logger.info("HyDE initialized with heuristic generation and caching (Claude Code mode)",
-                       cache_size=cache_size, cache_ttl=cache_ttl)
+                        cache_size=cache_size, cache_ttl=cache_ttl)
 
     def _detect_query_type(self, query: str) -> str:
         """Detect the type of query for appropriate HyDE strategy.
@@ -100,7 +100,7 @@ class HyDEGenerator:
 
         if query_type == 'how_to':
             # Generate step-by-step format
-            hypothetical = f"""To {clean_query}, follow these steps:
+            hypothetical = """To {clean_query}, follow these steps:
 
 1. First, ensure you have the necessary requirements and dependencies installed.
 2. Configure the relevant settings and parameters for your specific use case.
@@ -112,8 +112,7 @@ The recommended approach is to {clean_query} by using the standard methods and t
 
         elif query_type == 'what_is':
             # Generate definition format
-            subject = clean_query.replace('what is ', '').replace('what are ', '')
-            hypothetical = f"""{subject.title()} is a concept/tool/method used in software development.
+            hypothetical = """{subject.title()} is a concept/tool/method used in software development.
 
 Key characteristics:
 - It provides functionality for specific use cases
@@ -124,7 +123,7 @@ Common use cases for {subject} include configuration, implementation, and integr
 
         elif query_type == 'why':
             # Generate explanation format
-            hypothetical = f"""The reason for this behavior is related to {clean_query}.
+            hypothetical = """The reason for this behavior is related to {clean_query}.
 
 This occurs because:
 - The system follows specific design principles
@@ -135,7 +134,7 @@ Understanding this helps in proper configuration and usage."""
 
         elif query_type == 'error':
             # Generate troubleshooting format
-            hypothetical = f"""When encountering this error, the typical solution involves:
+            hypothetical = """When encountering this error, the typical solution involves:
 
 1. Check the configuration files and settings
 2. Verify all dependencies are correctly installed
@@ -147,7 +146,7 @@ Common causes include misconfiguration, missing dependencies, or version incompa
 
         else:  # general
             # Generate general informational format
-            hypothetical = f"""Regarding {clean_query}:
+            hypothetical = """Regarding {clean_query}:
 
 This involves understanding the relevant concepts, configurations, and implementations.
 The standard approach includes reviewing documentation, following best practices, and
@@ -171,7 +170,7 @@ maintainability."""
 
         try:
             # Create prompt based on query type
-            prompt = f"""Generate a brief, technical answer (2-3 sentences) to this question: {query}
+            prompt = """Generate a brief, technical answer (2-3 sentences) to this question: {query}
 
 Write as if you're providing the actual answer from documentation. Be concise and technical."""
 
@@ -185,8 +184,8 @@ Write as if you're providing the actual answer from documentation. Be concise an
             hypothetical = response.content[0].text.strip()
 
             logger.debug("Generated LLM hypothetical document",
-                        query_length=len(query),
-                        doc_length=len(hypothetical))
+                         query_length=len(query),
+                         doc_length=len(hypothetical))
 
             return hypothetical
 
@@ -249,8 +248,8 @@ Write as if you're providing the actual answer from documentation. Be concise an
 
         self.cache[cache_key] = (result, time.time())
         logger.debug("HyDE result cached", cache_key=cache_key[:8],
-                    cache_size=len(self.cache),
-                    hit_rate=self.cache_hits / max(1, self.cache_hits + self.cache_misses))
+                     cache_size=len(self.cache),
+                     hit_rate=self.cache_hits / max(1, self.cache_hits + self.cache_misses))
 
     def generate(self, query: str, use_llm: bool = None) -> HyDEResult:
         """Generate hypothetical document for query with caching.
@@ -296,11 +295,11 @@ Write as if you're providing the actual answer from documentation. Be concise an
         enhanced_query = f"{query}\n\n{hypothetical}"
 
         logger.info("HyDE generation completed",
-                   query_type=query_type,
-                   method=method,
-                   confidence=confidence,
-                   original_length=len(query),
-                   enhanced_length=len(enhanced_query))
+                    query_type=query_type,
+                    method=method,
+                    confidence=confidence,
+                    original_length=len(query),
+                    enhanced_length=len(enhanced_query))
 
         result = HyDEResult(
             original_query=query,

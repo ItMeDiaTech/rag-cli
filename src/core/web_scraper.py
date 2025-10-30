@@ -4,7 +4,6 @@ This module provides functionality to crawl and extract content from
 documentation websites for offline indexing.
 """
 
-import os
 import re
 import time
 import hashlib
@@ -448,7 +447,7 @@ class WebScraper:
             # Skip common non-documentation pages
             skip_patterns = [
                 '/search', '/login', '/signup', '/download',
-                '.pdf', '.zip', '.tar', '.gz',
+                '.pd', '.zip', '.tar', '.gz',
                 '/api/v', '/api-', '/blog', '/news'
             ]
 

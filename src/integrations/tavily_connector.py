@@ -51,11 +51,11 @@ class TavilyConnector:
 
         if not self.enabled:
             logger.warning("Tavily API key not found - connector disabled. "
-                          "Set TAVILY_API_KEY environment variable to enable.")
+                           "Set TAVILY_API_KEY environment variable to enable.")
         else:
             logger.info("Tavily connector initialized",
-                       quota_limit=self.FREE_TIER_LIMIT,
-                       warn_threshold=self.WARN_THRESHOLD)
+                        quota_limit=self.FREE_TIER_LIMIT,
+                        warn_threshold=self.WARN_THRESHOLD)
 
         # Ensure quota file exists
         self._init_quota_file()
@@ -110,7 +110,7 @@ class TavilyConnector:
         if data["searches"] == self.WARN_THRESHOLD:
             remaining = self.FREE_TIER_LIMIT - data["searches"]
             logger.warning(f"Tavily quota warning: {data['searches']}/{self.FREE_TIER_LIMIT} "
-                          f"searches used. {remaining} remaining this month.")
+                           f"searches used. {remaining} remaining this month.")
 
     def _rate_limit(self):
         """Enforce rate limiting (10 requests/minute)."""
@@ -171,7 +171,7 @@ class TavilyConnector:
         if not self.is_quota_available():
             usage = self._get_usage()
             logger.warning(f"Tavily quota exceeded: {usage['searches']}/{self.FREE_TIER_LIMIT} "
-                          f"searches used this month. Falling back to other sources.")
+                           "searches used this month. Falling back to other sources.")
             return []
 
         # Rate limit
@@ -194,9 +194,9 @@ class TavilyConnector:
                 payload["exclude_domains"] = exclude_domains
 
             logger.info("Searching Tavily",
-                       query=query,
-                       max_results=max_results,
-                       remaining_quota=self.get_remaining_quota())
+                        query=query,
+                        max_results=max_results,
+                        remaining_quota=self.get_remaining_quota())
 
             # Make request
             response = requests.post(
@@ -214,9 +214,9 @@ class TavilyConnector:
             self._increment_usage()
 
             logger.info("Tavily search completed",
-                       query=query,
-                       results=len(results),
-                       remaining_quota=self.get_remaining_quota())
+                        query=query,
+                        results=len(results),
+                        remaining_quota=self.get_remaining_quota())
 
             return results
 

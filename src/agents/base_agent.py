@@ -30,8 +30,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Union, Tuple
-from queue import Queue, Empty
+from typing import Any, Dict, List, Optional, Tuple
 import threading
 
 from src.monitoring.logger import get_logger
@@ -196,7 +195,7 @@ class BaseAgent(ABC):
         self._running = False
         self._task = None
 
-        logger.info(f"Agent initialized", agent_id=self.agent_id, agent_type=self.agent_type)
+        logger.info("Agent initialized", agent_id=self.agent_id, agent_type=self.agent_type)
 
     @abstractmethod
     async def process(self, message: AgentMessage) -> AgentMessage:
@@ -214,7 +213,6 @@ class BaseAgent(ABC):
         Raises:
             AgentExecutionError: If processing fails
         """
-        pass
 
     async def send_message(
         self,
@@ -242,7 +240,7 @@ class BaseAgent(ABC):
         )
 
         logger.debug(
-            f"Agent sending message",
+            "Agent sending message",
             agent_id=self.agent_id,
             message_type=message_type.value,
             receiver=receiver_id
@@ -264,7 +262,7 @@ class BaseAgent(ABC):
         """
         if message.message_type == MessageType.CANCEL:
             self.status = AgentStatus.CANCELLED
-            logger.info(f"Agent cancelled", agent_id=self.agent_id)
+            logger.info("Agent cancelled", agent_id=self.agent_id)
             return None
 
         self.status = AgentStatus.PROCESSING
@@ -273,7 +271,7 @@ class BaseAgent(ABC):
 
         try:
             logger.debug(
-                f"Agent processing message",
+                "Agent processing message",
                 agent_id=self.agent_id,
                 message_id=message.message_id
             )
@@ -283,7 +281,7 @@ class BaseAgent(ABC):
             success = True
 
             logger.info(
-                f"Agent completed processing",
+                "Agent completed processing",
                 agent_id=self.agent_id,
                 duration_s=f"{time.time() - start_time:.3f}"
             )
@@ -293,7 +291,7 @@ class BaseAgent(ABC):
         except Exception as e:
             error_msg = str(e)
             logger.error(
-                f"Agent processing error",
+                "Agent processing error",
                 agent_id=self.agent_id,
                 error=error_msg
             )
@@ -323,11 +321,11 @@ class BaseAgent(ABC):
     async def start(self):
         """Start the agent's message processing loop."""
         if self._running:
-            logger.warning(f"Agent already running", agent_id=self.agent_id)
+            logger.warning("Agent already running", agent_id=self.agent_id)
             return
 
         self._running = True
-        logger.info(f"Agent started", agent_id=self.agent_id)
+        logger.info("Agent started", agent_id=self.agent_id)
 
         while self._running:
             try:
@@ -344,12 +342,12 @@ class BaseAgent(ABC):
                 # No message, continue loop
                 continue
             except Exception as e:
-                logger.error(f"Agent loop error", agent_id=self.agent_id, error=str(e))
+                logger.error("Agent loop error", agent_id=self.agent_id, error=str(e))
 
     async def stop(self):
         """Stop the agent's message processing loop."""
         self._running = False
-        logger.info(f"Agent stopped", agent_id=self.agent_id)
+        logger.info("Agent stopped", agent_id=self.agent_id)
 
     def get_metrics(self) -> AgentMetrics:
         """Get agent execution metrics.
@@ -400,7 +398,7 @@ class AgentCoordinator:
         self._message_bus[agent.agent_id] = asyncio.Queue()
 
         logger.info(
-            f"Agent registered",
+            "Agent registered",
             agent_id=agent.agent_id,
             agent_type=agent.agent_type
         )
@@ -414,7 +412,7 @@ class AgentCoordinator:
         if agent_id in self.agents:
             del self.agents[agent_id]
             del self._message_bus[agent_id]
-            logger.info(f"Agent unregistered", agent_id=agent_id)
+            logger.info("Agent unregistered", agent_id=agent_id)
 
     async def send_message(self, message: AgentMessage):
         """Send a message to an agent via the coordinator.
@@ -432,7 +430,7 @@ class AgentCoordinator:
             # Send to specific agent
             await self._message_bus[receiver_id].put(message)
         else:
-            logger.warning(f"Unknown receiver agent", receiver_id=receiver_id)
+            logger.warning("Unknown receiver agent", receiver_id=receiver_id)
 
     async def execute_agent(
         self,
