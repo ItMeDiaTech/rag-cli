@@ -146,14 +146,25 @@ def sync_directory_recursive(src: Path, dest: Path) -> Tuple[int, int]:
 
 
 def create_mcp_config():
-    """Create MCP server configuration if it doesn't exist."""
+    """Create MCP server configuration."""
     mcp_config_path = DEST_MCP / 'rag-cli.json'
 
-    if mcp_config_path.exists():
-        print("  + MCP config already exists")
-        return
-
+    # Always update to ensure correct path
     DEST_MCP.mkdir(parents=True, exist_ok=True)
+
+    # Determine if this is a plugin installation or development mode
+    # Plugin installation: Check if we're syncing TO the Claude plugins directory
+    is_plugin_install = (PLUGIN_DIR.exists() and
+                        PLUGIN_DIR.resolve() != PROJECT_ROOT.resolve())
+
+    if is_plugin_install:
+        # For plugin installations, use the installed plugin directory
+        rag_root = str(PLUGIN_DIR)
+        print(f"  + Using plugin installation path: {rag_root}")
+    else:
+        # For development mode, use the project root
+        rag_root = str(PROJECT_ROOT)
+        print(f"  + Using development path: {rag_root}")
 
     config = {
         "command": "python",
@@ -161,11 +172,11 @@ def create_mcp_config():
             "-m",
             "src.plugin.mcp.unified_server"
         ],
-        "cwd": str(PROJECT_ROOT),
+        "cwd": rag_root,
         "env": {
             "PYTHONUNBUFFERED": "1",
             "RAG_CLI_MODE": "claude_code",
-            "RAG_CLI_ROOT": str(PROJECT_ROOT)
+            "RAG_CLI_ROOT": rag_root
         }
     }
 
@@ -349,6 +360,20 @@ def main():
     total_copied += copied
     total_skipped += skipped
     print(f"   {copied} copied, {skipped} skipped\n")
+
+    # Sync core modules to plugin directory (needed for MCP server)
+    print("[Core] Syncing core modules to plugin directory...")
+    plugin_src_core = PLUGIN_DIR / 'src' / 'core'
+    plugin_src_monitoring = PLUGIN_DIR / 'src' / 'monitoring'
+    plugin_src_plugin = PLUGIN_DIR / 'src' / 'plugin'
+
+    core_copied, core_skipped = sync_directory_recursive(PROJECT_ROOT / 'src' / 'core', plugin_src_core)
+    mon_copied, mon_skipped = sync_directory_recursive(PROJECT_ROOT / 'src' / 'monitoring', plugin_src_monitoring)
+    plug_copied, plug_skipped = sync_directory_recursive(PROJECT_ROOT / 'src' / 'plugin', plugin_src_plugin)
+
+    total_copied += core_copied + mon_copied + plug_copied
+    total_skipped += core_skipped + mon_skipped + plug_skipped
+    print(f"   {core_copied + mon_copied + plug_copied} copied, {core_skipped + mon_skipped + plug_skipped} skipped\n")
 
     # Create MCP configuration
     print("[MCP] Setting up MCP server...")
