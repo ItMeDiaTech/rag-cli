@@ -166,6 +166,8 @@ def create_mcp_config():
         rag_root = str(PROJECT_ROOT)
         print(f"  + Using development path: {rag_root}")
 
+    # Note: The MCP config created here is for manual installations only.
+    # When installed via plugin system, the mcpServers field in plugin.json is used instead.
     config = {
         "command": "python",
         "args": [
@@ -176,7 +178,8 @@ def create_mcp_config():
         "env": {
             "PYTHONUNBUFFERED": "1",
             "RAG_CLI_MODE": "claude_code",
-            "RAG_CLI_ROOT": rag_root
+            "RAG_CLI_ROOT": rag_root,
+            "PYTHONPATH": rag_root
         }
     }
 

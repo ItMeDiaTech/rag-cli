@@ -35,7 +35,9 @@
       "args": ["-m", "src.plugin.mcp.unified_server"],
       "env": {
         "PYTHONUNBUFFERED": "1",
-        "RAG_CLI_MODE": "claude_code"
+        "RAG_CLI_MODE": "claude_code",
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}",
+        "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}"
       }
     }
   }
