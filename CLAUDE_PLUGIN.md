@@ -50,19 +50,20 @@ The plugin installs the following components to your `~/.claude/` directory:
 
 ### Hooks
 Located in `~/.claude/hooks/rag-cli/`:
-- `user-prompt-submit.py` - Automatically enhances queries with document context
-- `response-post.py` - Adds inline citations to responses
-- `error-handler.py` - Graceful error handling
-- `plugin-state-change.py` - Settings persistence
-- `document-indexing.py` - Auto-indexes new documents
+- `slash-command-blocker.py` (Priority 150) - Prevents Claude from responding to slash commands
+- `user-prompt-submit.py` (Priority 100) - Automatically enhances queries with RAG context and multi-agent orchestration
+- `response-post.py` (Priority 80) - Adds inline citations to responses
+- `error-handler.py` (Priority 70) - Graceful error handling
+- `plugin-state-change.py` (Priority 60) - Settings persistence
+- `document-indexing.py` (Priority 50) - Auto-indexes new documents
 
 ### Commands
 Located in `~/.claude/commands/`:
 - `/search` - Search indexed documents
 - `/rag-enable` - Enable automatic RAG enhancement
 - `/rag-disable` - Disable automatic RAG enhancement
+- `/rag-project` - Analyze project and index relevant documentation
 - `/update-rag` - Sync plugin files
-- `/watch-rag` - Launch monitoring dashboard
 
 ### MCP Server
 Located in `~/.claude/mcp/rag-cli.json`:

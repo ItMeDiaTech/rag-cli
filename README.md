@@ -201,8 +201,10 @@ claude:
 ### Slash Commands
 
 - `/search [query]` - Search indexed documents
-- `/rag:enable` - Enable automatic RAG enhancement
-- `/rag:disable` - Disable automatic RAG enhancement
+- `/rag-enable` - Enable automatic RAG enhancement
+- `/rag-disable` - Disable automatic RAG enhancement
+- `/rag-project` - Analyze current project and index relevant documentation
+- `/update-rag` - Synchronize RAG-CLI plugin files
 
 ### Agent Skills
 
@@ -211,9 +213,27 @@ Access the RAG retrieval skill:
 /skill rag-retrieval "Your question here"
 ```
 
-### Automatic Enhancement
+### Hooks
 
-When enabled, the UserPromptSubmit hook automatically enhances your queries with relevant context from the document knowledge base.
+RAG-CLI includes several hooks that enhance your Claude Code experience:
+
+1. **Slash Command Blocker** (Priority 150) - Prevents Claude from responding to slash commands, showing only execution status
+2. **User Prompt Submit** (Priority 100) - Automatically enhances queries with RAG context and multi-agent orchestration
+3. **Response Post** (Priority 80) - Adds inline citations to Claude responses when RAG context is used
+4. **Error Handler** (Priority 70) - Provides graceful error handling with helpful troubleshooting tips
+5. **Plugin State Change** (Priority 60) - Persists RAG settings across Claude Code restarts
+6. **Document Indexing** (Priority 50, disabled by default) - Automatically indexes new or modified documents
+
+### Multi-Agent Orchestration
+
+RAG-CLI integrates with the Multi-Agent Framework (MAF) to provide intelligent query routing:
+
+- **RAG Only**: Simple document retrieval queries
+- **MAF Only**: Pure code analysis and debugging tasks
+- **Parallel RAG+MAF**: Complex queries combining documentation and code analysis
+- **Decomposed**: Multi-part queries with intelligent sub-query distribution
+
+The orchestrator automatically selects the best strategy based on query intent, providing faster and more accurate responses.
 
 ## API Reference
 

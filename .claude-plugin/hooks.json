@@ -6,7 +6,60 @@
           {
             "type": "command",
             "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/slash-command-blocker.py"]
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
             "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/user-prompt-submit.py"]
+          }
+        ]
+      }
+    ],
+    "ResponsePost": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/response-post.py"]
+          }
+        ]
+      }
+    ],
+    "PluginStateChange": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/plugin-state-change.py"]
+          }
+        ]
+      }
+    ],
+    "FileCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/document-indexing.py"]
+          }
+        ]
+      }
+    ],
+    "FileModified": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/document-indexing.py"]
           }
         ]
       }
