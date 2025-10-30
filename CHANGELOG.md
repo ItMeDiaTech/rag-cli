@@ -5,6 +5,35 @@ All notable changes to RAG-CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-10-30
+
+### Added - MCP Integration
+- **ArXiv Connector** - Free academic paper search with rate limiting (3 req/sec)
+  - Search CS/AI papers by keywords
+  - Extract abstracts, PDFs, authors, publish dates
+  - 30-day caching for papers
+  - Zero cost, no API key needed
+- **Tavily Connector** - AI-optimized web search with quota tracking
+  - Free tier: 1,000 searches/month
+  - Quota tracking with graceful fallback
+  - Warning at 900/1000 (90% usage)
+  - Rate limited to 10 req/min
+  - Optional - works without API key
+- **RESEARCH Query Intent** - Detects academic/research queries for ArXiv routing
+- **RECENT_NEWS Query Intent** - Detects version/news queries for Tavily routing
+- **MCP-Enhanced Online Retrieval** - Intelligent routing to ArXiv and Tavily
+  - ArXiv for research/algorithm queries
+  - Tavily for latest version/breaking changes
+  - Fallback to Tavily when primary sources yield few results
+  - URL deduplication across all sources
+
+### Changed - MCP Integration
+- **Query Classifier** - Added RESEARCH and RECENT_NEWS intent patterns
+- **Online Retriever** - Integrated ArXiv and Tavily into fallback chain
+- **Retrieval Statistics** - Added Tavily quota and ArXiv cache stats
+
+---
+
 ## [1.0.0] - 2025-10-30
 
 ### Added

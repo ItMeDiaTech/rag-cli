@@ -15,6 +15,9 @@ from .source_connectors.stackoverflow import StackOverflowConnector, StackOverfl
 from .source_connectors.readthedocs import ReadTheDocsConnector, OfficialDocsConnector, Documentation
 from .content_extractors import ContentExtractor, extract_error_signature
 from .config import Config, get_config
+from src.integrations.arxiv_connector import get_arxiv_connector
+from src.integrations.tavily_connector import get_tavily_connector
+from src.core.query_classifier import QueryIntent
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +120,17 @@ class OnlineRetriever:
             )
             logger.info("Official docs connector initialized")
 
+        # ArXiv connector (always enabled - free with no API key needed)
+        self.connectors['arxiv'] = get_arxiv_connector()
+        logger.info("ArXiv connector initialized (academic papers)")
+
+        # Tavily connector (enabled if API key is set, graceful fallback otherwise)
+        self.connectors['tavily'] = get_tavily_connector()
+        if self.connectors['tavily'].enabled:
+            logger.info("Tavily connector initialized (AI-optimized web search)")
+        else:
+            logger.info("Tavily connector initialized but disabled (no API key)")
+
     def should_fetch_online(self, local_results: List[Any], query: str) -> bool:
         """Determine if online fetch is needed based on triggers.
 
@@ -160,12 +174,13 @@ class OnlineRetriever:
 
         return False
 
-    def retrieve(self, query: str, max_results: int = 5) -> List[OnlineRetrievalResult]:
-        """Retrieve documentation from online sources.
+    def retrieve(self, query: str, max_results: int = 5, query_intent: Optional[str] = None) -> List[OnlineRetrievalResult]:
+        """Retrieve documentation from online sources with MCP integration.
 
         Args:
             query: Search query
             max_results: Maximum results to return
+            query_intent: Optional query intent (RESEARCH, RECENT_NEWS, etc.)
 
         Returns:
             List of OnlineRetrievalResult objects
@@ -174,7 +189,21 @@ class OnlineRetriever:
 
         # Detect query type
         is_error = self._contains_error_pattern(query)
+        is_research = query_intent == "research" or query_intent == QueryIntent.RESEARCH
+        is_recent_news = query_intent == "recent_news" or query_intent == QueryIntent.RECENT_NEWS
         language = self._detect_language(query)
+
+        # ArXiv search for research queries (NEW - MCP)
+        if is_research and 'arxiv' in self.connectors:
+            logger.info("Using ArXiv for research query")
+            arxiv_results = self._search_arxiv(query, max_results=3)
+            all_results.extend(arxiv_results)
+
+        # Tavily search for recent/version queries (NEW - MCP)
+        if is_recent_news and 'tavily' in self.connectors:
+            logger.info("Using Tavily for recent news query")
+            tavily_results = self._search_tavily(query, max_results=3)
+            all_results.extend(tavily_results)
 
         # GitHub search
         if 'github' in self.connectors:
@@ -199,9 +228,23 @@ class OnlineRetriever:
             official_results = self._search_official_docs(query, language)
             all_results.extend(official_results)
 
+        # Fallback to Tavily for general queries if other sources yield few results
+        if len(all_results) < 3 and 'tavily' in self.connectors and not is_recent_news:
+            logger.info("Fallback to Tavily - few results from primary sources")
+            tavily_results = self._search_tavily(query, max_results=2)
+            all_results.extend(tavily_results)
+
+        # Deduplicate by URL
+        seen_urls = set()
+        unique_results = []
+        for result in all_results:
+            if result.url not in seen_urls:
+                seen_urls.add(result.url)
+                unique_results.append(result)
+
         # Sort by score and return top results
-        all_results.sort(key=lambda r: r.score, reverse=True)
-        return all_results[:max_results]
+        unique_results.sort(key=lambda r: r.score, reverse=True)
+        return unique_results[:max_results]
 
     def _search_github(self, query: str, language: Optional[str] = None) -> List[OnlineRetrievalResult]:
         """Search GitHub for documentation.
@@ -498,3 +541,96 @@ class OnlineRetriever:
                 stats['github'] = {'error': str(e)}
 
         return stats
+
+    def _search_arxiv(self, query: str, max_results: int = 3) -> List[OnlineRetrievalResult]:
+        """Search ArXiv for academic papers (NEW - MCP).
+
+        Args:
+            query: Search query
+            max_results: Maximum results to return
+
+        Returns:
+            List of results
+        """
+        results = []
+        connector = self.connectors['arxiv']
+
+        try:
+            # Search ArXiv with CS/AI categories
+            papers = connector.search(
+                query,
+                max_results=max_results,
+                categories=['cs.AI', 'cs.LG', 'cs.CL', 'cs.NE'],
+                sort_by='relevance'
+            )
+
+            # Convert to standard format
+            arxiv_results = connector.to_retrieval_results(papers)
+
+            for item in arxiv_results:
+                result = OnlineRetrievalResult(
+                    content=item['content'],
+                    title=item['title'],
+                    url=item['url'],
+                    source='arxiv',
+                    score=0.85,  # High score for academic papers
+                    metadata=item['metadata'],
+                    fetch_date=datetime.now()
+                )
+                results.append(result)
+
+            logger.info(f"ArXiv search returned {len(results)} papers")
+
+        except Exception as e:
+            logger.error(f"ArXiv search failed: {e}")
+
+        return results
+
+    def _search_tavily(self, query: str, max_results: int = 3) -> List[OnlineRetrievalResult]:
+        """Search using Tavily AI-optimized web search (NEW - MCP).
+
+        Args:
+            query: Search query
+            max_results: Maximum results to return
+
+        Returns:
+            List of results
+        """
+        results = []
+        connector = self.connectors['tavily']
+
+        # Check if connector is enabled and has quota
+        if not connector.enabled or not connector.is_quota_available():
+            logger.debug("Tavily not available - disabled or quota exceeded")
+            return results
+
+        try:
+            # Search Tavily
+            tavily_results = connector.search(
+                query,
+                max_results=max_results,
+                search_depth='basic'
+            )
+
+            # Convert to standard format
+            formatted_results = connector.to_retrieval_results(tavily_results)
+
+            for item in formatted_results:
+                result = OnlineRetrievalResult(
+                    content=item['content'],
+                    title=item['title'],
+                    url=item['url'],
+                    source='tavily',
+                    score=item['score'],
+                    metadata=item['metadata'],
+                    fetch_date=datetime.now()
+                )
+                results.append(result)
+
+            logger.info(f"Tavily search returned {len(results)} results, "
+                       f"remaining quota: {connector.get_remaining_quota()}")
+
+        except Exception as e:
+            logger.error(f"Tavily search failed: {e}")
+
+        return results

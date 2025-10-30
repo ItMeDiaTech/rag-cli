@@ -24,6 +24,8 @@ class QueryIntent(Enum):
     TECHNICAL_DOCS = "technical_docs"
     CONCEPTUAL = "conceptual"
     GENERAL_QA = "general_qa"
+    RESEARCH = "research"  # Academic papers, research, algorithms
+    RECENT_NEWS = "recent_news"  # Latest updates, version releases, recent changes
 
 
 class TechnicalDepth(Enum):
@@ -166,6 +168,45 @@ class QueryClassifier:
             ],
             'keywords': ['what is', 'what are', 'why', 'concept', 'architecture', 'design', 'theory'],
             'weight': 1.0
+        },
+        QueryIntent.RESEARCH: {
+            'patterns': [
+                r'\bpaper\b',
+                r'\bresearch\b',
+                r'\bstudy\b',
+                r'\balgorithm\b',
+                r'\bmodel\b',
+                r'\barchitecture\b',
+                r'\bstate\s+of\s+the\s+art\b',
+                r'\bstate-of-the-art\b',
+                r'\bSOTA\b',
+                r'\btransformer\b',
+                r'\bneural\s+network\b',
+                r'\bdeep\s+learning\b',
+                r'\bmachine\s+learning\b',
+                r'\bAI\s+model\b',
+            ],
+            'keywords': ['paper', 'research', 'study', 'algorithm', 'model', 'architecture',
+                        'sota', 'transformer', 'neural', 'deep learning', 'ml', 'ai'],
+            'weight': 1.2
+        },
+        QueryIntent.RECENT_NEWS: {
+            'patterns': [
+                r'\blatest\b',
+                r'\bnew\s+in\b',
+                r'\brecent\b',
+                r'\b20(24|25|26)\b',  # Recent years
+                r'\bupdates?\b',
+                r'\brelease\b',
+                r'\bversion\b',
+                r'\bwhat\'s\s+new\b',
+                r'\bbreaking\s+change\b',
+                r'\bannouncement\b',
+                r'\bjust\s+released\b',
+            ],
+            'keywords': ['latest', 'new', 'recent', '2024', '2025', 'update', 'release',
+                        'version', 'announcement', 'breaking'],
+            'weight': 1.2
         }
     }
 
