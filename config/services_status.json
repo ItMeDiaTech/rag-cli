@@ -1,12 +1,12 @@
 {
   "tcp_server": {
     "running": true,
-    "pid": 137168,
-    "started_at": "2025-10-29T23:59:10.019755"
+    "pid": 35040,
+    "started_at": "2025-10-30T00:04:42.264989"
   },
   "web_dashboard": {
     "running": true,
-    "pid": 128724,
-    "started_at": "2025-10-29T23:59:18.678712"
+    "pid": 17168,
+    "started_at": "2025-10-30T00:04:50.909672"
   }
 }

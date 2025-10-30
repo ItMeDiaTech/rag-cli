@@ -28,13 +28,7 @@
   "commands": [
     "./src/plugin/commands/"
   ],
-  "hooks": {
-    "UserPromptSubmit": "./src/plugin/hooks/user-prompt-submit.py",
-    "ResponsePost": "./src/plugin/hooks/response-post.py",
-    "ErrorHandler": "./src/plugin/hooks/error-handler.py",
-    "PluginStateChange": "./src/plugin/hooks/plugin-state-change.py",
-    "DocumentIndexing": "./src/plugin/hooks/document-indexing.py"
-  },
+  "hooks": "./.claude-plugin/hooks.json",
   "mcpServers": {
     "rag-server": {
       "command": "python",

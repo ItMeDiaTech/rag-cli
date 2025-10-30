@@ -1,0 +1,24 @@
+{
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/user-prompt-submit.py"]
+        }
+      ]
+    }
+  ],
+  "ResponsePost": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python",
+          "args": ["${CLAUDE_PLUGIN_ROOT}/src/plugin/hooks/response-post.py"]
+        }
+      ]
+    }
+  ]
+}
