@@ -1,60 +1,75 @@
 # Core Dependencies
 # =================
+# Python 3.13+ compatible versions
+# NOTE: For production deployments, use requirements-lock.txt with exact versions
+# This file uses minimum version specifiers for flexibility in development
+# Run 'pip freeze > requirements-lock.txt' after installation to lock versions
 
 # Document Processing
-langchain>=0.1.0
-langchain-community>=0.0.10
-PyPDF2>=3.0.0
-python-docx>=1.0.0
-beautifulsoup4>=4.12.0
-lxml>=5.0.0
-markdown>=3.5.0
+langchain>=0.1.0,<0.3.0
+langchain-community>=0.0.10,<0.1.0
+PyPDF2>=3.0.0,<4.0.0
+python-docx>=1.0.0,<2.0.0
+beautifulsoup4>=4.12.0,<5.0.0
+lxml>=5.0.0,<6.0.0
+markdown>=3.5.0,<4.0.0
 
 # Embeddings & Vector Store
-sentence-transformers>=2.3.1
-faiss-cpu>=1.9.0
-torch>=2.1.0
-transformers>=4.36.0
-numpy>=1.24.0
+# Updated for Python 3.13 compatibility
+sentence-transformers>=3.0.0,<4.0.0
+faiss-cpu>=1.9.0,<2.0.0
+torch>=2.2.0,<2.5.0  # 2.2+ supports Python 3.13
+transformers>=4.36.0,<5.0.0
+numpy>=1.24.0,<2.0.0  # Pin before 2.0 breaking changes
 
 # Retrieval
-rank-bm25>=0.2.2
+rank-bm25>=0.2.2,<1.0.0
 
 # Claude Integration
-anthropic>=0.18.0
-python-dotenv>=1.0.0
+anthropic>=0.18.0,<1.0.0
+python-dotenv>=1.0.0,<2.0.0
 
 # Monitoring & Logging
-flask>=3.0.0
-flask-cors>=4.0.0
-prometheus-client>=0.19.0
-structlog>=24.1.0
-psutil>=5.9.0
+flask>=3.0.0,<4.0.0
+flask-cors>=4.0.0,<5.0.0
+waitress>=3.0.0,<4.0.0
+prometheus-client>=0.19.0,<1.0.0
+structlog>=24.1.0,<25.0.0
+psutil>=5.9.0,<6.0.0
 
 # CLI Tools
-click>=8.1.0
-tqdm>=4.65.0
-rich>=13.0.0
+click>=8.1.0,<9.0.0
+tqdm>=4.65.0,<5.0.0
+rich>=13.0.0,<14.0.0
 
 # Configuration
-pyyaml>=6.0
-pydantic>=2.5.0
+pyyaml>=6.0,<7.0
+pydantic>=2.5.0,<3.0.0
 
-# Testing
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.0.0
-pytest-mock>=3.12.0
-ragas>=0.1.0
-datasets>=2.14.0
+# Testing (optional, install separately for dev)
+pytest>=7.4.0,<8.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+pytest-cov>=4.0.0,<5.0.0
+pytest-mock>=3.12.0,<4.0.0
+ragas>=0.1.0,<1.0.0
+datasets>=2.14.0,<3.0.0
 
-# Development Tools
-black>=23.0.0
-isort>=5.12.0
-flake8>=6.0.0
-mypy>=1.7.0
-pre-commit>=3.5.0
+# Development Tools (optional, install separately for dev)
+black>=23.0.0,<25.0.0
+isort>=5.12.0,<6.0.0
+flake8>=6.0.0,<8.0.0
+mypy>=1.7.0,<2.0.0
+pre-commit>=3.5.0,<4.0.0
 
 # Utilities
-aiohttp>=3.9.1
-requests>=2.31.0
+aiohttp>=3.9.1,<4.0.0
+requests>=2.31.0,<3.0.0
+tenacity>=8.2.0,<9.0.0  # Exponential backoff and retry logic
+
+# Online Documentation Retrieval
+trafilatura>=2.0.0,<3.0.0
+tree-sitter>=0.23.0,<1.0.0
+tree-sitter-python>=0.23.0,<1.0.0
+tree-sitter-javascript>=0.25.0,<1.0.0
+requests-cache>=1.2.0,<2.0.0
+markdownify>=1.2.0,<2.0.0

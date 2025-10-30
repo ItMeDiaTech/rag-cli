@@ -6,6 +6,7 @@ using the indexed document collection.
 """
 
 import sys
+import io
 import time
 from pathlib import Path
 import click
@@ -26,7 +27,13 @@ from src.core.retrieval_pipeline import get_retriever
 from src.core.claude_integration import get_claude_integration
 from src.monitoring.logger import get_logger
 
-console = Console()
+# Fix Windows console encoding issues
+if sys.platform == 'win32':
+    # Reconfigure stdout/stderr to use UTF-8 encoding
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+console = Console(force_terminal=True, legacy_windows=False)
 logger = get_logger(__name__)
 
 

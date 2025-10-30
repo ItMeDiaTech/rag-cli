@@ -159,12 +159,13 @@ def create_mcp_config():
         "command": "python",
         "args": [
             "-m",
-            "src.monitoring.service_manager"
+            "src.plugin.mcp.unified_server"
         ],
         "cwd": str(PROJECT_ROOT),
         "env": {
             "PYTHONUNBUFFERED": "1",
-            "RAG_CLI_MODE": "claude_code"
+            "RAG_CLI_MODE": "claude_code",
+            "RAG_CLI_ROOT": str(PROJECT_ROOT)
         }
     }
 
@@ -172,6 +173,107 @@ def create_mcp_config():
         json.dump(config, f, indent=2)
 
     print(f"  + Created MCP config: {mcp_config_path}")
+
+
+def initialize_config_files():
+    """Initialize RAG-CLI configuration files if they don't exist."""
+    config_dir = PROJECT_ROOT / 'config'
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize rag_settings.json
+    rag_settings_path = config_dir / 'rag_settings.json'
+    if not rag_settings_path.exists():
+        default_settings = {
+            "enabled": True,
+            "enable_agent_orchestration": True,
+            "auto_trigger_threshold": 5,
+            "context_limit": 3,
+            "relevance_threshold": 0.6,
+            "cache_queries": True,
+            "exclude_patterns": [],
+            "orchestration": {
+                "enable_maf": True,
+                "parallel_threshold_confidence": 0.7,
+                "decomposition_complexity_threshold": 0.6,
+                "maf_timeout": 30.0
+            },
+            "metadata": {
+                "last_updated": datetime.now().isoformat(),
+                "version": "2.0",
+                "description": "RAG enhancement settings with multi-agent orchestration support"
+            }
+        }
+
+        with open(rag_settings_path, 'w') as f:
+            json.dump(default_settings, f, indent=2)
+
+        print(f"  + Created RAG settings: {rag_settings_path}")
+    else:
+        print("  + RAG settings already exist")
+
+    # Initialize default.yaml if it doesn't exist
+    default_yaml_path = config_dir / 'default.yaml'
+    if not default_yaml_path.exists():
+        default_yaml_content = """# RAG-CLI Configuration
+
+# Embedding settings
+embedding:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimensions: 384
+  cache_enabled: true
+
+# Vector store settings
+vector_store:
+  type: "faiss"
+  index_type: "IndexFlatL2"
+  path: "data/vectors"
+
+# Document processing
+document_processing:
+  chunk_size: 500
+  chunk_overlap: 50
+  supported_formats:
+    - txt
+    - md
+    - pdf
+    - docx
+    - html
+
+# Retrieval settings
+retrieval:
+  method: "hybrid"
+  vector_weight: 0.7
+  keyword_weight: 0.3
+  reranking: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# Claude integration
+claude:
+  model: "claude-haiku-4-5-20251001"
+  max_tokens: 4096
+  temperature: 0.7
+  streaming: true
+
+# Monitoring
+monitoring:
+  tcp_server: true
+  port: 9999
+  metrics_enabled: true
+  log_rotation: true
+"""
+        with open(default_yaml_path, 'w') as f:
+            f.write(default_yaml_content)
+
+        print(f"  + Created default config: {default_yaml_path}")
+    else:
+        print("  + Default config already exists")
+
+    # Create data directories
+    (PROJECT_ROOT / 'data' / 'documents').mkdir(parents=True, exist_ok=True)
+    (PROJECT_ROOT / 'data' / 'vectors').mkdir(parents=True, exist_ok=True)
+    (PROJECT_ROOT / 'logs').mkdir(parents=True, exist_ok=True)
+
+    print("  + Created data and log directories")
 
 
 def main():
@@ -216,6 +318,11 @@ def main():
     # Create MCP configuration
     print("[MCP] Setting up MCP server...")
     create_mcp_config()
+    print()
+
+    # Initialize config files
+    print("[Config] Initializing configuration files...")
+    initialize_config_files()
     print()
 
     # Summary

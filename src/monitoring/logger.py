@@ -93,6 +93,54 @@ class TextFormatter(logging.Formatter):
         return message
 
 
+class MetricsCollectorHandler(logging.Handler):
+    """Custom logging handler that forwards logs to metrics collector for dashboard display.
+
+    This handler enables real-time log streaming to the web dashboard by capturing
+    log records and sending them via HTTP to the TCP server for cross-process support.
+    """
+
+    TCP_SERVER_URL = "http://localhost:9999"
+
+    def emit(self, record: logging.LogRecord):
+        """Process a log record and send it to TCP server.
+
+        Args:
+            record: Log record to process
+        """
+        try:
+            import urllib.request
+            import urllib.error
+
+            # Format the message
+            message = self.format(record)
+
+            # Send log as an event to TCP server for cross-process support
+            log_event = {
+                "event_type": "log",
+                "data": {
+                    "level": record.levelname,
+                    "message": message
+                }
+            }
+
+            req = urllib.request.Request(
+                f"{self.TCP_SERVER_URL}/api/events/submit",
+                data=json.dumps(log_event).encode('utf-8'),
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+
+            with urllib.request.urlopen(req, timeout=1) as response:
+                pass  # Successfully sent
+
+        except Exception as e:
+            # Silently fail - don't break logging if TCP server unavailable
+            # Only log in debug mode to avoid log spam
+            if __debug__:
+                pass  # Intentionally silent: TCP server may not be running
+
+
 class Logger:
     """Main logger class for RAG-CLI."""
 
@@ -145,8 +193,9 @@ class Logger:
         try:
             config = get_config()
             log_config = config.monitoring
-        except Exception:
+        except Exception as e:
             # Fallback to defaults if config not available
+            print(f"Warning: Could not load config, using defaults: {e}")
             log_config = {
                 "log_level": "INFO",
                 "log_format": "json",
@@ -179,12 +228,18 @@ class Logger:
         for handler in root_logger.handlers[:]:
             root_logger.removeHandler(handler)
 
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level)
-        console_formatter = TextFormatter()
-        console_handler.setFormatter(console_formatter)
-        root_logger.addHandler(console_handler)
+        # Check if we're running in a Claude Code hook context
+        # Hooks should NOT output logs to console (only to file)
+        is_hook_context = os.environ.get('CLAUDE_HOOK_CONTEXT') == '1'
+        suppress_console = os.environ.get('RAG_CLI_SUPPRESS_CONSOLE') == '1'
+
+        # Console handler (only add if not in hook context)
+        if not is_hook_context and not suppress_console:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setLevel(level)
+            console_formatter = TextFormatter()
+            console_handler.setFormatter(console_formatter)
+            root_logger.addHandler(console_handler)
 
         # File handler with rotation
         if hasattr(log_config, 'log_format'):
@@ -219,6 +274,16 @@ class Logger:
             )
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
+
+        # Add metrics collector handler for dashboard log streaming
+        try:
+            metrics_handler = MetricsCollectorHandler()
+            metrics_handler.setLevel(level)
+            metrics_handler.setFormatter(file_formatter)
+            root_logger.addHandler(metrics_handler)
+        except Exception as e:
+            # Silently fail if metrics collector not available
+            pass
 
         # Configure structlog
         structlog.configure(

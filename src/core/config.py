@@ -73,7 +73,7 @@ class VectorStoreConfig(BaseModel):
     index_type: str = Field("auto", pattern="^(auto|flat|hnsw|ivf)$")
     index_params: Dict[str, Any] = {}
     save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/vectors.index"))
-    metadata_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/metadata.pkl"))
+    metadata_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/metadata.json"))
     auto_save: bool = True
     backup_enabled: bool = True
     backup_count: int = Field(3, ge=0, le=10)
@@ -120,6 +120,62 @@ class RetrievalConfig(BaseModel):
         return v
 
 
+class OnlineDocsConfig(BaseModel):
+    """Online documentation retrieval configuration."""
+    enabled: bool = True
+
+    # Fallback triggers
+    triggers: Dict[str, Any] = {
+        "min_confidence_score": 0.65,
+        "min_result_count": 3,
+        "detect_error_messages": True,
+        "detect_version_keywords": True
+    }
+
+    # API Keys
+    api_keys: Dict[str, str] = {
+        "github_token": "",
+        "stackoverflow_key": ""
+    }
+
+    # Sources configuration
+    sources: Dict[str, Any] = {}
+
+    # Caching
+    cache: Dict[str, Any] = {
+        "enabled": True,
+        "ttl_hours": 24,
+        "max_size_mb": 500,
+        "backend": "sqlite",
+        "path": "./data/cache/online_docs.db"
+    }
+
+    # Content processing
+    content: Dict[str, Any] = {
+        "max_page_size_kb": 500,
+        "extract_code_blocks": True,
+        "preserve_links": True,
+        "clean_html": True,
+        "markdown_output": True
+    }
+
+    # Indexing behavior
+    indexing: Dict[str, Any] = {
+        "auto_index_online_results": True,
+        "deduplication": True,
+        "batch_size": 10,
+        "max_daily_additions": 1000
+    }
+
+    # Error tracking
+    error_tracking: Dict[str, Any] = {
+        "enabled": True,
+        "persistent_log": "./config/error_history.json",
+        "repeated_error_threshold": 3,
+        "track_solutions": True
+    }
+
+
 class ClaudeConfig(BaseModel):
     """Claude API configuration."""
     model: str = "claude-haiku-4-5-20251001"
@@ -136,6 +192,8 @@ class ClaudeConfig(BaseModel):
     system_prompt: str = ""
     track_usage: bool = True
     warn_cost_threshold: float = Field(1.0, ge=0.0)
+    max_cost_limit: float = Field(10.0, ge=0.0)  # Hard limit in USD
+    enable_cost_limiting: bool = True
 
 
 class MonitoringConfig(BaseModel):
@@ -152,6 +210,7 @@ class MonitoringConfig(BaseModel):
         "port": 9999,
         "endpoints": ["/status", "/logs", "/metrics", "/health"]
     }
+    web_dashboard_port: int = Field(5000, ge=1024, le=65535)
     track_latency: bool = True
     latency_buckets: List[float] = [0.1, 0.5, 1.0, 2.5, 5.0, 10.0]
 
@@ -211,10 +270,12 @@ class SecurityConfig(BaseModel):
 class Config(BaseModel):
     """Main configuration class."""
     system: Dict[str, Any] = {}
+    mode: Dict[str, Any] = {}
     document_processing: DocumentProcessingConfig = DocumentProcessingConfig()
     embeddings: EmbeddingsConfig = EmbeddingsConfig()
     vector_store: VectorStoreConfig = VectorStoreConfig()
     retrieval: RetrievalConfig = RetrievalConfig()
+    online_docs: OnlineDocsConfig = OnlineDocsConfig()
     claude: ClaudeConfig = ClaudeConfig()
     monitoring: MonitoringConfig = MonitoringConfig()
     plugin: PluginConfig = PluginConfig()
@@ -289,14 +350,22 @@ class ConfigManager:
         Returns:
             Dictionary of configuration data
         """
+        is_production = os.environ.get("ENV", "").lower() == "production"
+
         try:
             with open(path, 'r') as f:
                 data = yaml.safe_load(f) or {}
                 logger.debug(f"Loaded configuration from {path}")
                 return data
         except FileNotFoundError:
-            logger.warning(f"Configuration file not found: {path}, using defaults")
-            return {}
+            if is_production:
+                # Fail fast in production if config is missing
+                error_msg = f"CRITICAL: Configuration file not found in production: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+            else:
+                logger.warning(f"Configuration file not found: {path}, using defaults")
+                return {}
         except yaml.YAMLError as e:
             logger.error(f"Error parsing YAML configuration: {e}")
             raise
@@ -311,6 +380,10 @@ class ConfigManager:
             "RAG_CHUNK_SIZE": ("document_processing", "chunk_size"),
             "RAG_VECTOR_STORE": ("vector_store", "backend"),
             "RAG_TCP_PORT": ("monitoring", "tcp_server", "port"),
+            "RAG_DASHBOARD_PORT": ("monitoring", "web_dashboard_port"),
+            "RAG_ONLINE_DOCS_ENABLED": ("online_docs", "enabled"),
+            "GITHUB_TOKEN": ("online_docs", "api_keys", "github_token"),
+            "STACKOVERFLOW_API_KEY": ("online_docs", "api_keys", "stackoverflow_key"),
             "ANTHROPIC_API_KEY": None,  # Special handling
         }
 
@@ -420,6 +493,8 @@ class ConfigManager:
         if self._config is None:
             self.load()
 
+        is_production = os.environ.get("ENV", "").lower() == "production"
+
         # Configuration is already validated by Pydantic
         # Add any additional custom validation here
 
@@ -435,13 +510,21 @@ class ConfigManager:
                     dir_path.mkdir(parents=True, exist_ok=True)
                     logger.debug(f"Created directory: {dir_path}")
                 except Exception as e:
-                    logger.error(f"Cannot create required directory {dir_path}: {e}")
+                    error_msg = f"Cannot create required directory {dir_path}: {e}"
+                    logger.error(error_msg)
+                    if is_production:
+                        raise RuntimeError(error_msg)
                     return False
 
         # Check API key is set
         api_key = os.environ.get(self._config.claude.api_key_env)
         if not api_key and not self._config.development.mock_claude_api:
-            logger.warning(f"API key environment variable '{self._config.claude.api_key_env}' not set")
+            if is_production:
+                error_msg = f"CRITICAL: API key '{self._config.claude.api_key_env}' not set in production"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+            else:
+                logger.warning(f"API key environment variable '{self._config.claude.api_key_env}' not set")
 
         return True
 

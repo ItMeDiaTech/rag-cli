@@ -100,12 +100,12 @@ def format_output(result: Dict[str, Any], verbose: bool = False) -> str:
     if "sources" in result and result["sources"]:
         output.append("\n## Sources\n")
         for i, doc in enumerate(result["sources"], 1):
-            output.append(f"\n### [{i}] {doc.get('source', 'Unknown')}")
+            output.append(f"\n### [{i}] {doc.source}")
             if verbose:
-                output.append(f"**Score**: {doc.get('score', 0):.3f}")
-                output.append(f"**Content**: {doc.get('content', '')[:200]}...")
+                output.append(f"**Score**: {doc.score:.3f}")
+                output.append(f"**Content**: {doc.text[:200]}...")
             else:
-                output.append(f"*Relevance: {doc.get('score', 0):.1%}*")
+                output.append(f"*Relevance: {doc.score:.1%}*")
 
     # Add metrics if verbose
     if verbose and "metrics" in result:
@@ -177,7 +177,7 @@ def perform_retrieval(
         # Filter by threshold
         filtered_docs = [
             doc for doc in documents
-            if doc.get("score", 0) >= threshold
+            if doc.score >= threshold
         ]
 
         result["sources"] = filtered_docs
@@ -189,7 +189,7 @@ def perform_retrieval(
         if not filtered_docs:
             logger.warning("No documents found above threshold",
                          threshold=threshold,
-                         max_score=max([d.get("score", 0) for d in documents]) if documents else 0)
+                         max_score=max([d.score for d in documents]) if documents else 0)
             result["answer"] = f"No relevant documents found for your query. Try lowering the threshold or using different keywords."
             return result
 

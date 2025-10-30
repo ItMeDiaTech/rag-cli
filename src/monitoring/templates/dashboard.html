@@ -404,6 +404,212 @@
             left: 0;
             color: #ef4444;
         }
+
+        /* Plugin Activity Timeline Styles */
+        .timeline-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border-left: 3px solid #60a5fa;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .timeline-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #e2e8f0;
+        }
+
+        .timeline-desc {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .timeline-metadata {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 11px;
+        }
+
+        .timeline-tag {
+            padding: 2px 8px;
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 4px;
+            color: #60a5fa;
+        }
+
+        .timeline-timestamp {
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+
+        /* Reasoning Panel Styles */
+        .reasoning-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .reasoning-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border-left: 4px solid #a78bfa;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .reasoning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .reasoning-component {
+            font-size: 12px;
+            color: #a78bfa;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .reasoning-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+        }
+
+        .reasoning-context {
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-family: 'Courier New', monospace;
+        }
+
+        .reasoning-context-item {
+            margin-bottom: 4px;
+        }
+
+        .reasoning-context-key {
+            color: #60a5fa;
+        }
+
+        /* Query Enhancement Styles */
+        .enhancement-item {
+            padding: 15px;
+            margin-bottom: 12px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border-left: 4px solid #22c55e;
+        }
+
+        .enhancement-title {
+            font-weight: 600;
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+
+        .query-diff {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .query-box {
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .query-label {
+            color: #64748b;
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .query-text {
+            color: #cbd5e1;
+            word-break: break-word;
+        }
+
+        .doc-preview {
+            padding: 8px;
+            margin-top: 8px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 6px;
+            font-size: 11px;
+        }
+
+        .doc-preview-header {
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+
+        .doc-item {
+            padding: 6px;
+            margin-bottom: 4px;
+            background: rgba(96, 165, 250, 0.05);
+            border-left: 2px solid #60a5fa;
+            border-radius: 4px;
+        }
+
+        .doc-source {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .doc-score {
+            color: #22c55e;
+            float: right;
+        }
     </style>
 </head>
 <body>
@@ -573,6 +779,29 @@
                 <ul class="issue-list" id="issues-list" style="display: none;"></ul>
             </div>
 
+            <!-- Plugin Activity Timeline (Full Width) -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <div class="card-icon">🔄</div>
+                    <div class="card-title">Plugin Activity Timeline</div>
+                    <div style="margin-left: auto; font-size: 12px; color: #94a3b8;">Real-time</div>
+                </div>
+                <div class="timeline-container" id="activity-timeline">
+                    <div class="loading">Connecting to event stream...</div>
+                </div>
+            </div>
+
+            <!-- Plugin Reasoning Panel (Full Width) -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <div class="card-icon">💡</div>
+                    <div class="card-title">Plugin Reasoning & Decisions</div>
+                </div>
+                <div class="reasoning-container" id="reasoning-container">
+                    <div class="loading">Waiting for plugin activity...</div>
+                </div>
+            </div>
+
             <!-- Logs Card (Full Width) -->
             <div class="card full-width">
                 <div class="card-header">
@@ -582,7 +811,7 @@
                 <div class="logs-container" id="logs-container">
                     <div class="loading">Loading logs...</div>
                 </div>
-                <div class="refresh-info">Auto-refreshing every 2 seconds</div>
+                <div class="refresh-info">Real-time via Server-Sent Events</div>
             </div>
         </div>
     </div>
@@ -619,48 +848,61 @@
                 return;
             }
 
-            document.getElementById('timestamp').textContent = formatDateTime(data.timestamp);
+            document.getElementById('timestamp').textContent = formatDateTime(data.timestamp || data.last_updated || new Date().toISOString());
             document.getElementById('status-text').textContent = 'Online';
-            document.getElementById('uptime').textContent = data.uptime.formatted;
-            document.getElementById('system-status').textContent = data.status;
-            document.getElementById('total-queries').textContent = data.statistics.total_queries;
-            document.getElementById('total-errors').textContent = data.statistics.total_errors;
-            document.getElementById('total-vectors').textContent = data.statistics.total_vectors.toLocaleString();
-            document.getElementById('cache-hit-rate').textContent = data.statistics.cache_hit_rate + '%';
+            document.getElementById('uptime').textContent = (data.uptime && data.uptime.formatted) || '0s';
+            document.getElementById('system-status').textContent = data.status || 'unknown';
+            document.getElementById('total-queries').textContent = (data.statistics && data.statistics.total_queries) || 0;
+            document.getElementById('total-errors').textContent = (data.statistics && data.statistics.total_errors) || 0;
+            document.getElementById('total-vectors').textContent = ((data.statistics && data.statistics.total_vectors) || 0).toLocaleString();
+
+            // Handle cache_hit_rate which might be a number or string
+            const cacheHitRate = data.statistics && data.statistics.cache_hit_rate;
+            const cacheHitRateDisplay = typeof cacheHitRate === 'number' ? cacheHitRate.toFixed(1) : (cacheHitRate || '0');
+            document.getElementById('cache-hit-rate').textContent = cacheHitRateDisplay + '%';
 
             // Update components
-            const componentsHtml = Object.entries(data.components)
-                .map(([name, status]) => {
-                    const isHealthy = ['operational', 'ready', 'healthy'].includes(status);
-                    return `
-                        <div class="component-badge ${!isHealthy ? 'unavailable' : ''}">
-                            <div class="component-dot"></div>
-                            ${name.replace(/_/g, ' ')}
-                        </div>
-                    `;
-                })
-                .join('');
+            const components = data.components || {};
+            const componentsHtml = Object.entries(components).length > 0
+                ? Object.entries(components)
+                    .map(([name, status]) => {
+                        const isHealthy = ['operational', 'ready', 'healthy'].includes(status);
+                        return `
+                            <div class="component-badge ${!isHealthy ? 'unavailable' : ''}">
+                                <div class="component-dot"></div>
+                                ${name.replace(/_/g, ' ')}
+                            </div>
+                        `;
+                    })
+                    .join('')
+                : '<div class="loading">No components registered</div>';
             document.getElementById('components').innerHTML = componentsHtml;
         }
 
         function updateMetrics(data) {
             if (!data) return;
 
-            // Latencies
-            document.getElementById('latency-vector').textContent = data.latency.vector_search.toFixed(1);
-            document.getElementById('latency-keyword').textContent = data.latency.keyword_search.toFixed(1);
-            document.getElementById('latency-reranking').textContent = data.latency.reranking.toFixed(1);
-            document.getElementById('latency-claude').textContent = data.latency.claude_api.toFixed(1);
+            // Latencies with safe defaults
+            const latency = data.latency || {};
+            document.getElementById('latency-vector').textContent = (latency.vector_search || 0).toFixed(1);
+            document.getElementById('latency-keyword').textContent = (latency.keyword_search || 0).toFixed(1);
+            document.getElementById('latency-reranking').textContent = (latency.reranking || 0).toFixed(1);
+            document.getElementById('latency-claude').textContent = (latency.claude_api || 0).toFixed(1);
 
-            // Throughput
-            document.getElementById('queries-per-minute').textContent = data.throughput.queries_per_minute.toFixed(1);
-            document.getElementById('cache-hits').textContent = data.cache.hits;
-            document.getElementById('cache-misses').textContent = data.cache.misses;
+            // Throughput with safe defaults
+            const throughput = data.throughput || {};
+            document.getElementById('queries-per-minute').textContent = (throughput.queries_per_minute || 0).toFixed(1);
 
-            // Resources
-            const memoryMb = data.resources.memory_mb;
-            const cpuPercent = data.resources.cpu_percent;
-            const threads = data.resources.threads;
+            // Cache metrics with safe defaults
+            const cache = data.cache || {};
+            document.getElementById('cache-hits').textContent = cache.hits || 0;
+            document.getElementById('cache-misses').textContent = cache.misses || 0;
+
+            // Resources with safe defaults
+            const resources = data.resources || {};
+            const memoryMb = resources.memory_mb || 0;
+            const cpuPercent = resources.cpu_percent || 0;
+            const threads = resources.threads || 0;
 
             document.getElementById('memory').textContent = memoryMb.toFixed(1) + ' MB';
             document.getElementById('cpu').textContent = cpuPercent.toFixed(1) + '%';
@@ -754,8 +996,278 @@
         // Initial load
         refreshData();
 
-        // Set up auto-refresh
+        // Set up auto-refresh (for legacy endpoints)
         setInterval(refreshData, REFRESH_INTERVAL);
+
+        // ===== Server-Sent Events (SSE) for Real-Time Updates =====
+        let eventSource = null;
+        let activityBuffer = [];
+        let reasoningBuffer = [];
+        const MAX_ACTIVITY_ITEMS = 50;
+        const MAX_REASONING_ITEMS = 20;
+
+        function connectSSE() {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            eventSource = new EventSource(`${API_BASE}/events`);
+
+            eventSource.onopen = () => {
+                console.log('SSE connected');
+                document.getElementById('status-text').textContent = 'Live (SSE)';
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleEvent(data);
+                } catch (error) {
+                    console.error('Error parsing SSE event:', error);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE error:', error);
+                eventSource.close();
+                // Reconnect after 5 seconds
+                setTimeout(connectSSE, 5000);
+            };
+        }
+
+        function handleEvent(event) {
+            const eventType = event.event_type;
+
+            // Route event to appropriate handler
+            if (eventType === 'activity') {
+                handleActivityEvent(event);
+            } else if (eventType === 'reasoning') {
+                handleReasoningEvent(event);
+            } else if (eventType === 'query_enhancement') {
+                handleQueryEnhancementEvent(event);
+            } else if (eventType === 'log') {
+                handleLogEvent(event);
+            } else if (eventType === 'metric') {
+                // Metrics are handled by polling for now
+                console.log('Metric event:', event);
+            } else if (eventType === 'connected') {
+                console.log('SSE connection established');
+            }
+        }
+
+        function handleActivityEvent(event) {
+            const data = event.data;
+            const timestamp = new Date(event.timestamp);
+
+            // Activity icon mapping
+            const activityIcons = {
+                'query_received': '📨',
+                'search_started': '🔍',
+                'documents_retrieved': '📚',
+                'context_assembled': '🔧',
+                'retrieval_completed': '✅',
+                'query_enhanced': '⚡',
+                'default': '🔄'
+            };
+
+            const icon = activityIcons[data.activity] || activityIcons['default'];
+
+            // Create timeline item
+            const item = {
+                icon,
+                title: formatActivityTitle(data.activity),
+                description: formatActivityDescription(data),
+                metadata: data.metadata || {},
+                timestamp: timestamp.toLocaleTimeString()
+            };
+
+            // Add to buffer
+            activityBuffer.unshift(item);
+            if (activityBuffer.length > MAX_ACTIVITY_ITEMS) {
+                activityBuffer.pop();
+            }
+
+            renderActivityTimeline();
+        }
+
+        function formatActivityTitle(activity) {
+            const titles = {
+                'query_received': 'Query Received',
+                'search_started': 'Search Started',
+                'documents_retrieved': 'Documents Retrieved',
+                'context_assembled': 'Context Assembled',
+                'retrieval_completed': 'Retrieval Completed',
+                'query_enhanced': 'Query Enhanced'
+            };
+            return titles[activity] || activity.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatActivityDescription(data) {
+            const metadata = data.metadata || {};
+
+            if (data.activity === 'query_received') {
+                return `Query length: ${metadata.query_length || 0} chars, ${metadata.word_count || 0} words`;
+            } else if (data.activity === 'documents_retrieved') {
+                return `Selected ${metadata.selected || 0} from ${metadata.total_candidates || 0} candidates (max score: ${(metadata.max_score || 0).toFixed(2)})`;
+            } else if (data.activity === 'search_started') {
+                return `Hybrid search: ${((metadata.vector_weight || 0) * 100).toFixed(0)}% vector, ${((metadata.keyword_weight || 0) * 100).toFixed(0)}% keyword`;
+            } else if (data.activity === 'retrieval_completed') {
+                return `Found ${metadata.results_count || 0} documents in ${(metadata.elapsed_ms || 0).toFixed(0)}ms`;
+            } else if (data.activity === 'context_assembled') {
+                return `Enhanced query: ${metadata.original_query_length || 0} → ${metadata.enhanced_query_length || 0} chars with ${metadata.documents_count || 0} docs`;
+            }
+
+            return `Component: ${data.component}`;
+        }
+
+        function renderActivityTimeline() {
+            const container = document.getElementById('activity-timeline');
+
+            if (activityBuffer.length === 0) {
+                container.innerHTML = '<div class="loading">Waiting for activity...</div>';
+                return;
+            }
+
+            container.innerHTML = activityBuffer.map(item => `
+                <div class="timeline-item">
+                    <div class="timeline-icon">${item.icon}</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">${item.title}</div>
+                        <div class="timeline-desc">${item.description}</div>
+                        <div class="timeline-metadata">
+                            ${Object.entries(item.metadata).slice(0, 3).map(([key, val]) =>
+                                `<span class="timeline-tag">${key}: ${typeof val === 'number' ? val.toFixed(2) : val}</span>`
+                            ).join('')}
+                        </div>
+                        <div class="timeline-timestamp">${item.timestamp}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Auto-scroll to top (latest)
+            container.scrollTop = 0;
+        }
+
+        function handleReasoningEvent(event) {
+            const data = event.data;
+            const timestamp = new Date(event.timestamp);
+
+            const item = {
+                component: data.component,
+                reasoning: data.reasoning,
+                context: data.context || {},
+                timestamp: timestamp.toLocaleTimeString()
+            };
+
+            reasoningBuffer.unshift(item);
+            if (reasoningBuffer.length > MAX_REASONING_ITEMS) {
+                reasoningBuffer.pop();
+            }
+
+            renderReasoningPanel();
+        }
+
+        function renderReasoningPanel() {
+            const container = document.getElementById('reasoning-container');
+
+            if (reasoningBuffer.length === 0) {
+                container.innerHTML = '<div class="loading">Waiting for plugin decisions...</div>';
+                return;
+            }
+
+            container.innerHTML = reasoningBuffer.map(item => `
+                <div class="reasoning-item">
+                    <div class="reasoning-header">
+                        <span class="reasoning-component">${item.component}</span>
+                        <span class="timeline-timestamp">${item.timestamp}</span>
+                    </div>
+                    <div class="reasoning-text">${item.reasoning}</div>
+                    ${Object.keys(item.context).length > 0 ? `
+                        <div class="reasoning-context">
+                            ${Object.entries(item.context).map(([key, val]) => `
+                                <div class="reasoning-context-item">
+                                    <span class="reasoning-context-key">${key}:</span> ${JSON.stringify(val).slice(0, 100)}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            container.scrollTop = 0;
+        }
+
+        function handleQueryEnhancementEvent(event) {
+            const data = event.data;
+            const timestamp = new Date(event.timestamp);
+
+            const container = document.getElementById('reasoning-container');
+
+            // Create enhancement item and prepend to reasoning container
+            const enhancementHTML = `
+                <div class="enhancement-item">
+                    <div class="enhancement-title">🌟 Query Enhanced</div>
+                    <div class="query-diff">
+                        <div class="query-box">
+                            <div class="query-label">Original Query</div>
+                            <div class="query-text">${escapeHtml(data.original_query)}</div>
+                        </div>
+                        <div class="query-box">
+                            <div class="query-label">Enhanced Query (Preview)</div>
+                            <div class="query-text">${escapeHtml(data.enhanced_query.slice(0, 200))}...</div>
+                        </div>
+                    </div>
+                    <div class="reasoning-text">${data.reasoning}</div>
+                    ${data.documents && data.documents.length > 0 ? `
+                        <div class="doc-preview">
+                            <div class="doc-preview-header">📄 Retrieved Documents (${data.documents_count})</div>
+                            ${data.documents.map(doc => `
+                                <div class="doc-item">
+                                    <span class="doc-source">${doc.source}</span>
+                                    <span class="doc-score">${(doc.score * 100).toFixed(1)}%</span>
+                                    <div style="clear: both; margin-top: 4px; color: #94a3b8; font-size: 10px;">
+                                        ${escapeHtml(doc.content_preview)}...
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="timeline-timestamp">${timestamp.toLocaleTimeString()}</div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('afterbegin', enhancementHTML);
+        }
+
+        function handleLogEvent(event) {
+            // Update logs in real-time (existing logs container)
+            const logsContainer = document.getElementById('logs-container');
+            const logHTML = `
+                <div class="log-entry log-${event.data.level.toLowerCase()}">
+                    <span class="log-time">${formatTime(event.timestamp)}</span>
+                    <span class="log-level">${event.data.level}</span>
+                    <span class="log-message">${escapeHtml(event.data.message)}</span>
+                </div>
+            `;
+
+            // Prepend to logs
+            logsContainer.insertAdjacentHTML('afterbegin', logHTML);
+
+            // Limit logs
+            const logEntries = logsContainer.querySelectorAll('.log-entry');
+            if (logEntries.length > 100) {
+                logEntries[logEntries.length - 1].remove();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Connect to SSE on load
+        connectSSE();
     </script>
 </body>
 </html>

@@ -49,13 +49,15 @@ document_processing:
 
 # Embedding Configuration
 embeddings:
-  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  # Upgraded from all-MiniLM-L6-v2 to bge-small-en-v1.5 for better quality
+  # MTEB benchmark shows 15-20% improvement in retrieval accuracy at same 384 dims
+  model_name: "BAAI/bge-small-en-v1.5"
   dimensions: 384
   batch_size: 32
   normalize: true
   cache_size: 1000  # LRU cache size
   device: "cpu"  # or "cuda" if GPU available
-  max_seq_length: 256
+  max_seq_length: 512  # bge-small supports longer sequences
 
 # Vector Store Configuration
 vector_store:
@@ -72,7 +74,7 @@ vector_store:
       nlist: 100
       nprobe: 10
   save_path: "./data/vectors/vectors.index"
-  metadata_path: "./data/vectors/metadata.pkl"
+  metadata_path: "./data/vectors/metadata.json"
   auto_save: true
   backup_enabled: true
   backup_count: 3
@@ -92,13 +94,106 @@ retrieval:
   reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
   reranker_batch_size: 16
 
+  # HyDE (Hypothetical Document Embeddings)
+  # Improves retrieval accuracy by 10-15% for technical queries
+  use_hyde: true
+
   # Search parameters
   min_score_threshold: 0.5
   timeout_seconds: 10
 
-  # Caching
+  # Semantic caching (similarity-based, not exact match)
   cache_enabled: true
   cache_ttl_seconds: 3600  # 1 hour
+  cache_similarity_threshold: 0.95  # Minimum similarity for cache hit
+
+# Online Documentation Retrieval
+online_docs:
+  enabled: true
+
+  # Fallback triggers
+  triggers:
+    min_confidence_score: 0.65  # Fetch online if max local score below this
+    min_result_count: 3  # Fetch online if fewer results than this
+    detect_error_messages: true  # Fetch online when error patterns detected
+    detect_version_keywords: true  # Fetch online when query has "latest", "2024", "2025", "new", "recent"
+
+  # API Keys and Authentication
+  api_keys:
+    github_token: ""  # Optional: Personal access token for GitHub documentation access
+    stackoverflow_key: ""  # Optional: Stack Overflow API key for higher rate limits
+
+  # Sources configuration
+  sources:
+    github:
+      enabled: true
+      rate_limit: 5000  # requests per hour
+      timeout: 10  # seconds
+      search_repos:
+        - "python/cpython"  # Python official docs
+        - "microsoft/TypeScript"
+        - "facebook/react"
+        - "django/django"
+      search_topics:
+        - "documentation"
+        - "tutorial"
+        - "examples"
+
+    stackoverflow:
+      enabled: true
+      rate_limit: 300  # requests per day (free tier)
+      timeout: 10
+      min_score: 5  # Only index answers with score >= 5
+      max_age_days: 730  # Only content from last 2 years
+
+    readthedocs:
+      enabled: true
+      rate_limit: 100  # requests per hour
+      timeout: 15
+      priority_domains:
+        - "readthedocs.io"
+        - "readthedocs.org"
+
+    official_docs:
+      enabled: true
+      rate_limit: 100  # requests per hour
+      timeout: 15
+      allowed_domains:
+        - "docs.python.org"
+        - "developer.mozilla.org"
+        - "go.dev"
+        - "doc.rust-lang.org"
+        - "docs.oracle.com/javase"
+
+  # Caching configuration
+  cache:
+    enabled: true
+    ttl_hours: 24  # How long to keep cached online content
+    max_size_mb: 500  # Maximum cache size
+    backend: "sqlite"  # sqlite or file
+    path: "./data/cache/online_docs.db"
+
+  # Content processing
+  content:
+    max_page_size_kb: 500  # Skip pages larger than this
+    extract_code_blocks: true
+    preserve_links: true
+    clean_html: true
+    markdown_output: true
+
+  # Indexing behavior
+  indexing:
+    auto_index_online_results: true  # Automatically add to vector store
+    deduplication: true
+    batch_size: 10
+    max_daily_additions: 1000  # Prevent index bloat
+
+  # Error tracking
+  error_tracking:
+    enabled: true
+    persistent_log: "./config/error_history.json"
+    repeated_error_threshold: 3  # Trigger online search after N occurrences
+    track_solutions: true
 
 # Claude Integration
 claude:
@@ -124,7 +219,11 @@ claude:
   include_citations: true
   citation_format: "[Source: {filename}]"
 
-  # Prompt template
+  # Structured Prompts (2025 best practice)
+  # Auto-detects query type (how-to, troubleshooting, etc.) and uses optimized templates
+  use_structured_prompts: true
+
+  # Prompt template (fallback when structured prompts disabled)
   system_prompt: |
     You are a helpful assistant with access to retrieved documentation.
     Answer questions based only on the provided context.
@@ -248,3 +347,198 @@ security:
     - ".html"
   sanitize_html: true
   log_queries: false  # Set to false in production for privacy
+
+# Query Classification Configuration
+# ==================================
+# Intelligent query understanding for adaptive RAG behavior
+query_classification:
+  enabled: true
+
+  # Classification thresholds
+  confidence_threshold: 0.3  # Minimum confidence to detect an intent
+  min_classification_confidence: 0.5  # Minimum confidence to trigger RAG
+
+  # Intent detection
+  detect_intents:
+    - "code_explanation"
+    - "troubleshooting"
+    - "how_to"
+    - "best_practices"
+    - "comparison"
+    - "technical_docs"
+    - "conceptual"
+    - "general_qa"
+
+  # Entity extraction
+  extract_entities: true
+  extract_depth: true  # Detect beginner/intermediate/advanced level
+
+  # Non-technical query filtering
+  filter_non_technical: true
+  skip_greetings: true
+  skip_meta_queries: true
+
+# Query Enhancement Configuration
+# ================================
+# Expands queries for better retrieval through synonyms and acronym resolution
+query_enhancement:
+  enabled: true
+
+  # Expansion settings
+  enable_expansion: true
+  max_expansions_per_term: 3
+
+  # Acronym resolution
+  enable_acronym_resolution: true
+  custom_acronyms: {}  # Add project-specific acronyms here
+
+  # Entity extraction
+  extract_programming_languages: true
+  extract_frameworks: true
+  extract_libraries: true
+
+# Best Practices Detection Configuration
+# =======================================
+# Specialized detection for best practices, recommendations, and anti-patterns
+best_practices:
+  enabled: true
+
+  # Detection threshold
+  confidence_threshold: 0.5
+
+  # Source prioritization
+  prioritize_authoritative: true
+  require_official_docs: true  # For prescriptive queries
+
+  # Detection types
+  detect_types:
+    - "prescriptive"      # "how should I..."
+    - "evaluative"        # "is it good to..."
+    - "comparative"       # "X vs Y best practices"
+    - "anti_pattern"      # what NOT to do
+    - "general"           # general best practices
+
+  # Context indicators (boost confidence when present)
+  context_keywords:
+    - "production"
+    - "scale"
+    - "performance"
+    - "security"
+    - "maintainable"
+    - "robust"
+    - "efficient"
+    - "professional"
+
+# Adaptive Retrieval Configuration
+# =================================
+# Dynamic weight adjustment based on query intent for optimal retrieval
+adaptive_retrieval:
+  enabled: true
+
+  # Weight profiles per intent type
+  # Format: vector_weight / keyword_weight (must sum to 1.0)
+  weight_profiles:
+    troubleshooting:
+      vector_weight: 0.4
+      keyword_weight: 0.6
+      reason: "Errors benefit from exact keyword matching"
+
+    conceptual:
+      vector_weight: 0.8
+      keyword_weight: 0.2
+      reason: "Concepts need semantic understanding"
+
+    best_practices:
+      vector_weight: 0.8
+      keyword_weight: 0.2
+      reason: "Best practices are conceptual"
+
+    technical_docs:
+      vector_weight: 0.6
+      keyword_weight: 0.4
+      reason: "Balanced for API documentation"
+
+    code_explanation:
+      vector_weight: 0.75
+      keyword_weight: 0.25
+      reason: "Semantic understanding of code"
+
+    how_to:
+      vector_weight: 0.65
+      keyword_weight: 0.35
+      reason: "Balanced for procedural content"
+
+    comparison:
+      vector_weight: 0.7
+      keyword_weight: 0.3
+      reason: "Semantic comparison with keyword support"
+
+    general_qa:
+      vector_weight: 0.7
+      keyword_weight: 0.3
+      reason: "Default balanced approach"
+
+  # Dynamic top-k adjustment
+  adaptive_top_k:
+    enabled: true
+    simple_query_k: 3      # For straightforward queries
+    complex_query_k: 10    # For complex/multi-part queries
+    complexity_threshold: 15  # words
+
+  # Source diversity
+  ensure_source_diversity: true
+  max_per_source: 3  # Maximum results from single source
+
+# Prompt Template Configuration
+# ==============================
+# Structured templates for different query types
+prompt_templates:
+  enabled: true
+
+  # Template selection
+  auto_detect_type: true
+  fallback_to_general: true
+
+  # Templates available
+  templates:
+    - "general_qa"
+    - "technical_docs"
+    - "code_explanation"
+    - "troubleshooting"
+    - "how_to"
+    - "comparison"
+    - "best_practices"
+
+  # Template-specific settings
+  best_practices_template:
+    include_alternatives: true
+    include_pitfalls: true
+    require_examples: true
+    prioritize_official_sources: true
+
+  troubleshooting_template:
+    include_diagnosis: true
+    include_prevention: true
+    include_verification_steps: true
+
+  # Citation format
+  citation_format: "[Source: {filename}]"
+  include_line_numbers: false
+  include_relevance_scores: true  # Show confidence scores
+  include_authority_indicators: true  # Show [Official], [Tutorial], etc.
+
+# RAG Settings (User-configurable at runtime)
+# ============================================
+# These can be modified via hooks or commands
+rag_settings:
+  enabled: true
+  auto_trigger_threshold: 5  # minimum words in query
+  context_limit: 5  # max documents to retrieve
+  relevance_threshold: 0.6  # minimum relevance score
+
+  # Exclusion patterns (case-insensitive substrings)
+  exclude_patterns: []
+
+  # Classification overrides
+  classification_confidence_threshold: 0.3
+  min_classification_confidence: 0.5

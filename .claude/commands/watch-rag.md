@@ -1,37 +1,50 @@
 # Watch RAG System
 
-Launch the RAG-CLI monitoring dashboard in Windows Terminal for real-time system monitoring.
+Launch the RAG-CLI real-time monitoring dashboard in Chrome browser with live plugin activity tracking.
 
 ## Task
 
-Execute the following steps:
+Execute the following steps in order:
 
-1. **Check if monitoring server is running** on port 9999
-   - Use PowerShell command: `Test-NetConnection -ComputerName localhost -Port 9999 -ErrorAction SilentlyContinue`
-   - If the connection succeeds (TcpTestSucceeded = True), the server is already running
-   - If it fails, you'll need to start the server
+1. **Check if monitoring services are running**
+   - Check TCP server on port 9999: `Test-NetConnection -ComputerName localhost -Port 9999 -ErrorAction SilentlyContinue`
+   - Check web dashboard on port 5000: `Test-NetConnection -ComputerName localhost -Port 5000 -ErrorAction SilentlyContinue`
 
-2. **Start monitoring server if not running**
-   - If server is not running, start it with: `python -m src.monitoring.tcp_server`
-   - Run this command in the background using PowerShell
-   - Wait 2-3 seconds for the server to initialize
-   - You can use: `Start-Process python -ArgumentList "-m src.monitoring.tcp_server" -WindowStyle Hidden`
+2. **Start monitoring services if not running**
+   - If TCP server (port 9999) is not running:
+     - Start it: `Start-Process python -ArgumentList "-m src.monitoring.tcp_server" -WindowStyle Hidden`
+     - Wait 2 seconds for initialization
+   - If web dashboard (port 5000) is not running:
+     - Start it: `Start-Process python -ArgumentList "-m src.monitoring.web_dashboard" -WindowStyle Hidden`
+     - Wait 2 seconds for initialization
 
-3. **Launch Windows Terminal with monitoring dashboard**
-   - Execute: `wt.exe -d "." pwsh -NoExit -Command ".\scripts\monitor.ps1 WATCH"`
-   - This opens a new Windows Terminal window with the PowerShell WATCH dashboard
-   - The dashboard updates every 5 seconds showing:
-     - Performance metrics (latencies for vector search, keyword search, reranking, Claude API)
-     - Throughput (queries per minute, cache hit rate)
-     - Resource usage (memory in MB, CPU percentage)
-     - Recent activity logs (last 5 entries)
+3. **Open Chrome browser with real-time dashboard**
+   - Use Python to open the dashboard in Chrome: `python -c "from src.monitoring.service_manager import open_dashboard_in_browser; open_dashboard_in_browser()"`
+   - This will:
+     - Find Chrome on the system (Windows/Mac/Linux paths)
+     - Open Chrome with security flags for local development (`--disable-web-security` for CORS)
+     - Navigate to http://localhost:5000
+     - Display the real-time monitoring dashboard with:
+       - **Plugin Activity Timeline**: Live stream of query processing steps
+       - **Plugin Reasoning Panel**: Decision explanations and document selection logic
+       - **Query Enhancement Display**: Before/after query comparison with retrieved docs
+       - **Performance Metrics**: Latencies, throughput, cache stats
+       - **Real-time Logs**: SSE-powered instant log streaming
 
-4. **Confirm and provide feedback to user**
-   - After launching, confirm to the user that:
-     - The monitoring server is running on port 9999
-     - Windows Terminal is launching with the WATCH dashboard
-     - They can press Ctrl+C in the terminal to stop watching
-     - The monitoring data refreshes every 5 seconds
+4. **Verify dashboard is live**
+   - Confirm Chrome opened to http://localhost:5000
+   - Check that the dashboard shows "Live (SSE)" status in the header
+   - Verify event stream is connected (look for "Real-time" badges)
+
+5. **Provide user feedback**
+   - Confirm to the user that:
+     - ✅ Monitoring server is running on port 9999
+     - ✅ Web dashboard is running on port 5000
+     - ✅ Chrome opened to http://localhost:5000
+     - 📊 Real-time dashboard is streaming events via Server-Sent Events
+     - 🔄 Plugin activity will appear instantly when RAG queries are processed
+     - 💡 Plugin reasoning and decisions are visible in real-time
+     - 🌐 If Chrome didn't open, they can manually navigate to http://localhost:5000
 
 ## Important Notes
 

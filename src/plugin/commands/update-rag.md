@@ -1,143 +1,139 @@
-# /update-rag - Update RAG-CLI Plugin
+# Update RAG Plugin
 
-Execute the RAG-CLI plugin synchronization script to update all plugin files.
+Synchronize RAG-CLI plugin files from the development directory to the Claude Code configuration directory.
 
 ## Task
 
-Run the following command to synchronize the plugin:
+Execute the RAG-CLI plugin sync operation to update all plugin components in the Claude Code configuration:
 
-```bash
-python scripts/sync_plugin.py
+1. **Prepare for sync**
+   - Verify current working directory is RAG-CLI project root
+   - Ensure the development files are ready to sync
+   - Check if sync should be run in dry-run mode (if user specified `--dry-run`)
+
+2. **Execute sync_plugin.py**
+   - Run the sync script: `python sync_plugin.py`
+   - Accept command-line arguments if provided:
+     - `--dry-run`: Preview changes without applying them
+     - `--verbose`: Show detailed sync information
+     - `--force`: Force sync even if timestamps match
+     - `--no-backup`: Skip backup creation before sync
+
+3. **Report sync results**
+   - Display the sync summary showing:
+     - New files copied
+     - Updated files
+     - Deleted obsolete files
+     - Any errors encountered
+   - Confirm successful sync or report issues
+
+## What Gets Synced
+
+The sync operation updates the following in `~/.claude/`:
+
+### Plugin Components
+- **Commands**: `src/plugin/commands/*.md` → `.claude/commands/`
+- **Hooks**: `src/plugin/hooks/*.py` → `.claude/plugins/rag-cli/hooks/`
+- **Skills**: `src/plugin/skills/` → `.claude/plugins/rag-cli/skills/`
+- **MCP Configs**: `src/plugin/mcp/*.json` → `.claude/plugins/rag-cli/mcp/`
+
+### Core Code
+- **Core modules**: `src/core/` → `.claude/plugins/rag-cli/src/core/`
+- **Monitoring**: `src/monitoring/` → `.claude/plugins/rag-cli/src/monitoring/`
+
+### Data
+- **Documents**: `data/documents/` → `.claude/plugins/rag-cli/data/documents/`
+- **Vectors**: `data/vectors/` → `.claude/plugins/rag-cli/data/vectors/`
+
+### Configuration
+- `requirements.txt`
+- `README.md`
+- `plugin.json`
+
+## Usage Examples
+
+### Standard sync
 ```
-
-This will:
-1. Copy all slash commands to ~/.claude/commands/
-2. Copy all hooks to ~/.claude/hooks/rag-cli/
-3. Copy all skills to ~/.claude/skills/rag-cli/
-4. Create/update MCP server configuration
-5. Report what was updated
-
-After the sync completes, inform the user that they should restart Claude Code for changes to take effect.
-
----
-
-## Description
-
-The `/update-rag` command automatically runs the plugin synchronization process, updating your Claude Code RAG-CLI plugin with the latest implementation files from your development directory.
-
-## What It Does
-
-When you run this command:
-
-1. **Backs up** the current plugin (with timestamp)
-2. **Syncs plugin files** (commands, hooks, skills, mcp)
-3. **Updates core modules** via symlinks (if possible)
-4. **Cleans up** obsolete files
-5. **Reports changes** showing what was updated
-
-## Use Cases
-
-- **After code changes**: You've modified RAG-CLI source files and want to update the plugin
-- **Before testing**: Ensure your plugin has the latest code
-- **After pulling updates**: You've pulled new changes from git
-- **Daily workflow**: Keep plugin in sync with development
-
-## Examples
-
-```
-# Standard update
 /update-rag
+```
 
-# Update with detailed output
-/update-rag --verbose
-
-# Preview changes without applying
+### Preview changes without applying
+```
 /update-rag --dry-run
+```
 
-# Force update (ignore file timestamps)
+### Verbose output with detailed logging
+```
+/update-rag --verbose
+```
+
+### Force sync (ignore timestamps)
+```
 /update-rag --force
 ```
 
-## Sync Details
+### Sync without creating backup
+```
+/update-rag --no-backup
+```
 
-The command synchronizes:
+## Important Notes
 
-- **Commands**: Slash commands in `~/.claude/commands/`
-- **Hooks**: Query interceptors in plugin hooks directory
-- **Skills**: RAG retrieval skills and tools
-- **MCP Server**: Model Context Protocol server
-- **Core Code**: Symlinks to `src/core/` and `src/monitoring/`
-- **Documentation**: README and plugin configuration
+- **Automatic Backup**: By default, creates a timestamped backup of the plugin directory before syncing
+- **Smart Merge**: Preserves runtime files like logs, cached state, and vector indexes
+- **Cleanup**: Removes obsolete files that no longer exist in the source
+- **Validation**: Verifies critical files are present after sync
+- **Working Directory**: Must be run from the RAG-CLI project root
 
-## Options
+## Preserved Files
 
-- `--dry-run` - Preview changes without applying them
-- `--verbose` - Show detailed output of all operations
-- `--force` - Force sync ignoring file timestamps
-- `--no-backup` - Skip backup creation
-- `--no-symlink` - Use copy mode instead of symlinks
+The sync preserves these runtime files in `.claude/plugins/rag-cli/`:
+- `logs/` directory
+- `data/vectors/` (existing indexes)
+- `*.log` files
+- `*state.json` files
+- `__pycache__/` directories
 
-## Advanced
+## Typical Output
 
-### Windows Admin Required for Symlinks
+```
+============================================================
+SYNC SUMMARY
+============================================================
 
-If you see "admin required" error:
-1. Run Claude Code with administrator privileges, or
-2. Use `--no-symlink` flag to copy files instead
+New files (3):
+  + commands/update-rag.md
+  + hooks/user-prompt-submit.py
+  + src/core/query_classifier.py
 
-### Restore from Backup
+Updated files (12):
+  ~ src/core/retrieval_pipeline.py
+  ~ src/monitoring/tcp_server.py
+  ~ src/monitoring/web_dashboard.py
+  ~ hooks/update-rag-hook.py
+  ~ src/core/claude_integration.py
+  ... and 7 more
 
-If something goes wrong:
-1. Find the backup in `~/.claude/plugins/rag-cli_backup_TIMESTAMP/`
-2. Restore manually if needed
-3. Run `/update-rag` again
+Deleted files (1):
+  - commands/obsolete-command.md
 
-## Performance
-
-- **First sync**: 2-5 seconds
-- **Typical sync**: 500ms - 1 second
-- **Network impact**: None (local only)
-- **Background**: Non-blocking operation
+Total changes: 16
+============================================================
+```
 
 ## Troubleshooting
 
-### Command Not Found
+**Sync fails with "Source directory not found"**
+- Ensure you're running from the RAG-CLI project root
+- Check that `src/plugin/` directory exists
 
-Make sure your RAG-CLI project is properly installed:
-```bash
-cd path/to/RAG-CLI
-pip install -e .
-```
+**Sync fails with "Claude directory not found"**
+- Verify `~/.claude/` exists
+- Ensure Claude Code is properly installed
 
-### Sync Fails
+**Permission errors**
+- On Windows, ensure no files are locked by running processes
+- Close monitoring dashboard and TCP server before syncing
 
-1. Check file permissions: `ls -la ~/.claude/plugins/rag-cli`
-2. Verify Claude directory exists: `ls ~/.claude`
-3. Try with `--verbose` flag for details
-4. Check logs: `tail ~/.claude/plugins/rag-cli/logs/rag-cli.log`
-
-### Changes Not Appearing
-
-After sync:
-1. Close and reopen Claude Code
-2. Reload the plugin in Claude Code
-3. Restart Claude Code if using symlinks
-
-## Related Commands
-
-- `/rag:enable` - Enable automatic RAG enhancement
-- `/rag:disable` - Disable automatic RAG enhancement
-- `/search` - Manually search indexed documents
-
-## See Also
-
-- [PLUGIN_SYNC_README.md](../../PLUGIN_SYNC_README.md) - Complete sync guide
-- [CLAUDE.md](../../CLAUDE.md) - Project configuration
-- [README.md](../../README.md) - Project overview
-
-## Notes
-
-- Sync preserves your runtime configuration and logs
-- Safe to run frequently without data loss
-- Automatic backups created with each sync
-- Changes are applied immediately after sync completes
+**Want to undo a sync**
+- Restore from the timestamped backup: `~/.claude/plugins/rag-cli_backup_YYYYMMDD_HHMMSS/`

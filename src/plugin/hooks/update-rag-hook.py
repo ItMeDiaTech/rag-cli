@@ -8,6 +8,7 @@ sync process, capturing and returning the output to Claude Code.
 import sys
 import os
 import json
+import time
 import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -17,20 +18,51 @@ from typing import Dict, Any, Optional
 # or in development directory
 hook_file = Path(__file__).resolve()
 
-# Try to find project root: walk up from hook location
+# Strategy 1: Check environment variable (most explicit)
 project_root = None
-current = hook_file.parent
+if 'RAG_CLI_ROOT' in os.environ:
+    env_path = Path(os.environ['RAG_CLI_ROOT'])
+    if env_path.exists() and (env_path / 'sync_plugin.py').exists():
+        project_root = env_path
 
-for _ in range(10):  # Search up to 10 levels
-    # Check if this is the RAG-CLI root (has sync_plugin.py)
-    if (current / 'sync_plugin.py').exists():
-        project_root = current
-        break
-    current = current.parent
-
-# Fallback to hook's parent.parent.parent if not found
+# Strategy 2: Try to find project root by walking up from hook location
 if project_root is None:
+    current = hook_file.parent
+    for _ in range(10):  # Search up to 10 levels
+        # Check if this is the RAG-CLI root (has sync_plugin.py and src/core)
+        if (current / 'sync_plugin.py').exists() and (current / 'src' / 'core').exists():
+            project_root = current
+            break
+        current = current.parent
+
+# Strategy 3: Check common installation locations
+if project_root is None:
+    potential_paths = [
+        # User's home directory plugin location
+        Path.home() / '.claude' / 'plugins' / 'rag-cli',
+        # Relative to current working directory
+        Path.cwd(),
+        # Development path (if exists)
+        Path.home() / 'Pictures' / 'DiaTech' / 'Programs' / 'DocHub' / 'development' / 'RAG-CLI',
+    ]
+
+    for path in potential_paths:
+        if path.exists() and (path / 'sync_plugin.py').exists():
+            project_root = path
+            break
+
+# Strategy 4: Last resort - relative to hook file location
+if project_root is None:
+    # Assume hook is in src/plugin/hooks/, so project root is 3 levels up
     project_root = hook_file.parents[3]
+    # Validate this actually looks like project root
+    if not (project_root / 'sync_plugin.py').exists():
+        # If validation fails, raise clear error
+        raise RuntimeError(
+            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
+            f"Please set RAG_CLI_ROOT environment variable to the project directory.\n"
+            f"Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
+        )
 
 sys.path.insert(0, str(project_root))
 
@@ -164,9 +196,9 @@ def format_output(result: Dict[str, Any]) -> str:
     output = []
 
     if result['success']:
-        output.append("✓ Plugin sync completed successfully!\n")
+        output.append("SUCCESS: Plugin sync completed successfully!\n")
     else:
-        output.append("✗ Plugin sync failed!\n")
+        output.append("FAILED: Plugin sync failed!\n")
 
     # Add stdout
     if result['stdout']:
@@ -188,6 +220,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Modified event with command output
     """
+    start_time = time.time()
+    logger.info("Hook execution started", hook="UpdateRagCommand")
+
     try:
         # Ensure monitoring services are running (auto-start if needed)
         try:
@@ -199,6 +234,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         # Check if this is an /update-rag command
         if not prompt.strip().startswith('/update-rag'):
+            logger.debug("Not an /update-rag command, skipping")
             return event
 
         logger.info(f"Processing /update-rag command: {prompt}")
@@ -228,6 +264,12 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Hook processing failed: {e}")
         event['error'] = str(e)
         event['executed'] = False
+    finally:
+        execution_time = (time.time() - start_time) * 1000
+        logger.info("Hook execution completed",
+                   hook="UpdateRagCommand",
+                   execution_time_ms=execution_time,
+                   success=event.get('sync_result', {}).get('success', False))
 
     return event
 

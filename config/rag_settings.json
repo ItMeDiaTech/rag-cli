@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "enable_agent_orchestration": true,
+  "auto_trigger_threshold": 5,
+  "context_limit": 3,
+  "relevance_threshold": 0.6,
+  "cache_queries": true,
+  "exclude_patterns": [],
+  "orchestration": {
+    "enable_maf": true,
+    "parallel_threshold_confidence": 0.7,
+    "decomposition_complexity_threshold": 0.6,
+    "maf_timeout": 30.0
+  },
+  "metadata": {
+    "last_updated": "2025-10-29T00:00:00Z",
+    "version": "2.0",
+    "description": "RAG enhancement settings with multi-agent orchestration support"
+  }
+}

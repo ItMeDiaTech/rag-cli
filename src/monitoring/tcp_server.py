@@ -9,10 +9,12 @@ import json
 import time
 import threading
 import socket
+import weakref
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from collections import deque
 from io import StringIO
+from queue import Queue
 
 from flask import Flask, jsonify, request
 import psutil
@@ -57,6 +59,140 @@ class MetricsCollector:
             "claude": "unknown"
         }
 
+        # Event streaming support (SSE) with weak references to prevent memory leaks
+        self.event_subscribers = []  # List of weak references to queues for SSE clients
+        self.event_history = deque(maxlen=100)  # Recent events for new subscribers
+
+        # New event categories
+        self.activity_events = deque(maxlen=100)
+        self.reasoning_events = deque(maxlen=100)
+        self.query_enhancement_events = deque(maxlen=100)
+
+    def subscribe_to_events(self) -> Queue:
+        """Subscribe to real-time events. Returns a queue for SSE streaming.
+
+        Uses weak references to automatically clean up dead subscribers.
+
+        Returns:
+            Queue that will receive events
+        """
+        queue = Queue(maxsize=100)
+        # Store weak reference to prevent memory leaks
+        self.event_subscribers.append(weakref.ref(queue))
+
+        # Send recent event history to new subscriber
+        for event in list(self.event_history)[-20:]:
+            try:
+                queue.put_nowait(event)
+            except:
+                pass
+
+        return queue
+
+    def unsubscribe_from_events(self, queue: Queue):
+        """Unsubscribe from events.
+
+        Args:
+            queue: Queue to remove from subscribers
+        """
+        # Find and remove weak reference to this queue
+        self.event_subscribers = [ref for ref in self.event_subscribers
+                                  if ref() is not None and ref() != queue]
+
+    def emit_event(self, event_type: str, data: Dict[str, Any]):
+        """Emit an event to all subscribers.
+
+        Args:
+            event_type: Type of event (activity, reasoning, metric, log)
+            data: Event data
+        """
+        event = {
+            "timestamp": datetime.now().isoformat(),
+            "event_type": event_type,
+            "data": data
+        }
+
+        # Store in history
+        self.event_history.append(event)
+
+        # Store in appropriate category
+        if event_type.startswith("activity"):
+            self.activity_events.append(event)
+        elif event_type.startswith("reasoning"):
+            self.reasoning_events.append(event)
+        elif event_type.startswith("query_enhancement"):
+            self.query_enhancement_events.append(event)
+        elif event_type == "log":
+            # Add log events to log buffer for /api/logs endpoint
+            log_entry = {
+                "timestamp": event["timestamp"],
+                "level": data.get("level", "INFO"),
+                "message": data.get("message", "")
+            }
+            self.log_buffer.append(log_entry)
+
+        # Send to all subscribers and clean up dead ones
+        active_subscribers = []
+        for queue_ref in self.event_subscribers:
+            queue = queue_ref()  # Dereference weak reference
+            if queue is not None:
+                try:
+                    queue.put_nowait(event)
+                    active_subscribers.append(queue_ref)  # Keep alive subscribers
+                except:
+                    # Queue is full or broken, don't add to active list
+                    pass
+            # If queue is None, weak reference is dead - don't add to active list
+
+        # Update subscriber list with only active ones (automatic cleanup)
+        self.event_subscribers = active_subscribers
+
+    def record_activity_event(self, activity: str, component: str, metadata: Optional[Dict] = None):
+        """Record a plugin activity event.
+
+        Args:
+            activity: Activity description (e.g., 'query_received', 'documents_retrieved')
+            component: Component name (e.g., 'user_prompt_hook', 'retrieval_pipeline')
+            metadata: Optional additional metadata
+        """
+        self.emit_event("activity", {
+            "activity": activity,
+            "component": component,
+            "metadata": metadata or {}
+        })
+
+    def record_reasoning_event(self, reasoning: str, component: str, context: Optional[Dict] = None):
+        """Record a reasoning/decision event.
+
+        Args:
+            reasoning: Explanation of decision/reasoning
+            component: Component that made the decision
+            context: Optional context data
+        """
+        self.emit_event("reasoning", {
+            "reasoning": reasoning,
+            "component": component,
+            "context": context or {}
+        })
+
+    def record_query_enhancement(self, original_query: str, enhanced_query: str,
+                                 documents: List[Dict], reasoning: str):
+        """Record query enhancement details.
+
+        Args:
+            original_query: Original user query
+            enhanced_query: Enhanced query with context
+            documents: Retrieved documents
+            reasoning: Explanation of enhancement strategy
+        """
+        self.emit_event("query_enhancement", {
+            "original_query": original_query,
+            "enhanced_query": enhanced_query,
+            "documents_count": len(documents),
+            "documents": documents[:3],  # First 3 docs for preview
+            "reasoning": reasoning
+        })
+
     def record_latency(self, operation: str, latency_ms: float):
         """Record latency metric."""
         entry = {
@@ -65,6 +201,13 @@ class MetricsCollector:
             "latency_ms": latency_ms
         }
         self.latency_metrics.append(entry)
+
+        # Emit event for real-time monitoring
+        self.emit_event("metric", {
+            "metric_type": "latency",
+            "operation": operation,
+            "value": latency_ms
+        })
 
     def record_query(self):
         """Record a query."""
@@ -89,6 +232,12 @@ class MetricsCollector:
             "message": message
         }
         self.log_buffer.append(entry)
+
+        # Emit event for real-time log streaming
+        self.emit_event("log", {
+            "level": level,
+            "message": message
+        })
 
     def get_uptime(self) -> float:
         """Get server uptime in seconds."""
@@ -248,8 +397,8 @@ class MonitoringServer:
             error_response = json.dumps({"error": str(e)})
             try:
                 client_socket.sendall(error_response.encode())
-            except:
-                pass
+            except (socket.error, BrokenPipeError, ConnectionResetError) as send_error:
+                logger.debug(f"Failed to send error response to {address}: {send_error}")
         finally:
             client_socket.close()
 
@@ -278,48 +427,79 @@ class MonitoringServer:
     def _get_status(self) -> str:
         """Get system status."""
         from src.core.vector_store import get_vector_store
+        from datetime import datetime
 
         try:
             vector_store = get_vector_store()
             total_vectors = vector_store.index.ntotal
-        except:
+        except (AttributeError, RuntimeError, Exception) as e:
+            logger.debug(f"Could not retrieve vector count: {e}")
             total_vectors = 0
+
+        uptime_seconds = metrics_collector.get_uptime()
+
+        # Format uptime as human-readable string
+        hours = int(uptime_seconds // 3600)
+        minutes = int((uptime_seconds % 3600) // 60)
+        seconds = int(uptime_seconds % 60)
+
+        if hours > 0:
+            uptime_formatted = f"{hours}h {minutes}m {seconds}s"
+        elif minutes > 0:
+            uptime_formatted = f"{minutes}m {seconds}s"
+        else:
+            uptime_formatted = f"{seconds}s"
 
         status = {
             "version": "0.1.0",
-            "uptime": f"{metrics_collector.get_uptime():.0f} seconds",
+            "uptime": {
+                "seconds": uptime_seconds,
+                "formatted": uptime_formatted
+            },
             "status": "operational",
+            "last_updated": datetime.now().isoformat(),
             "components": metrics_collector.component_status,
             "statistics": {
                 "total_documents": 0,  # Would need to track this
                 "total_vectors": total_vectors,
                 "total_queries": metrics_collector.query_count,
                 "total_errors": metrics_collector.error_count,
-                "cache_hit_rate": f"{metrics_collector.get_cache_hit_rate():.1f}"
+                "cache_hit_rate": metrics_collector.get_cache_hit_rate()
             }
         }
 
         return json.dumps(status, indent=2)
 
-    def _get_logs(self) -> str:
-        """Get recent logs."""
-        logs = []
+    def _get_logs(self) -> list:
+        """Get recent logs as list of dictionaries for dashboard display.
 
-        for entry in list(metrics_collector.log_buffer)[-20:]:  # Last 20 logs
-            log_line = f"[{entry['timestamp']}] {entry['level']:8} | {entry['message']}"
-            logs.append(log_line)
-
-        return "\n".join(logs)
+        Returns:
+            List of log entries with timestamp, level, and message fields
+        """
+        # Return last 20 logs from buffer in reverse order (newest first)
+        return list(metrics_collector.log_buffer)[-20:]
 
     def _get_metrics(self) -> str:
         """Get performance metrics."""
+        # Calculate cache metrics
+        cache_hits = metrics_collector.cache_hits
+        cache_misses = metrics_collector.cache_misses
+        cache_total = cache_hits + cache_misses
+        cache_hit_rate = metrics_collector.get_cache_hit_rate()
+
         metrics = {
             "latency": metrics_collector.get_latest_latencies(),
             "throughput": {
                 "queries_per_minute": metrics_collector.query_count * 60 / max(1, metrics_collector.get_uptime()),
                 "docs_per_minute": 0  # Would need to track this
             },
-            "cache_hit_rate": metrics_collector.get_cache_hit_rate(),
+            "cache": {
+                "hits": cache_hits,
+                "misses": cache_misses,
+                "total": cache_total,
+                "hit_rate": cache_hit_rate
+            },
+            "cache_hit_rate": cache_hit_rate,  # Keep for backward compatibility
             "resources": metrics_collector.get_resource_usage()
         }
 
@@ -358,33 +538,184 @@ class MonitoringServer:
 app = Flask(__name__)
 
 
-@app.route('/status')
+@app.route('/api/status')
 def flask_status():
     """Flask endpoint for status."""
     server = get_monitoring_server()
     return jsonify(json.loads(server._get_status()))
 
 
-@app.route('/metrics')
+@app.route('/api/metrics')
 def flask_metrics():
     """Flask endpoint for metrics."""
     server = get_monitoring_server()
     return jsonify(json.loads(server._get_metrics()))
 
 
-@app.route('/health')
+@app.route('/api/health')
 def flask_health():
     """Flask endpoint for health."""
     server = get_monitoring_server()
     return jsonify(json.loads(server._get_health()))
 
 
-@app.route('/logs')
+@app.route('/api/logs')
 def flask_logs():
     """Flask endpoint for logs."""
     server = get_monitoring_server()
     logs = server._get_logs()
     return jsonify({"logs": logs})
+
+
+@app.route('/api/events/submit', methods=['POST'])
+def submit_event():
+    """Accept event submissions from external processes (hooks, etc.)."""
+    try:
+        event_data = request.get_json()
+
+        if not event_data:
+            return jsonify({"error": "No event data provided"}), 400
+
+        event_type = event_data.get('event_type')
+        data = event_data.get('data', {})
+
+        if not event_type:
+            return jsonify({"error": "event_type is required"}), 400
+
+        # Emit the event to all subscribers
+        metrics_collector.emit_event(event_type, data)
+
+        logger.debug(f"Event submitted via HTTP", event_type=event_type)
+
+        return jsonify({
+            "status": "success",
+            "event_type": event_type,
+            "timestamp": datetime.now().isoformat()
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Error submitting event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/events/stream')
+def stream_events():
+    """Server-Sent Events endpoint for real-time event streaming."""
+    from flask import Response, stream_with_context
+
+    def generate():
+        # Subscribe to events
+        queue = metrics_collector.subscribe_to_events()
+
+        try:
+            # Send initial connection confirmation
+            yield f"data: {json.dumps({'event_type': 'connected', 'message': 'SSE stream connected'})}\n\n"
+
+            while True:
+                try:
+                    # Wait for events with timeout for keepalive
+                    event = queue.get(timeout=15)
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                except:
+                    # Timeout - send keepalive
+                    yield ": keepalive\n\n"
+
+        except GeneratorExit:
+            # Client disconnected
+            metrics_collector.unsubscribe_from_events(queue)
+            logger.debug("SSE client disconnected")
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive'
+        }
+    )
+
+
+@app.route('/api/events/history')
+def get_event_history():
+    """Get recent event history."""
+    category = request.args.get('category', 'all')
+    limit = int(request.args.get('limit', 50))
+
+    if category == 'activity':
+        events = list(metrics_collector.activity_events)[-limit:]
+    elif category == 'reasoning':
+        events = list(metrics_collector.reasoning_events)[-limit:]
+    elif category == 'query_enhancement':
+        events = list(metrics_collector.query_enhancement_events)[-limit:]
+    else:
+        events = list(metrics_collector.event_history)[-limit:]
+
+    return jsonify({
+        "category": category,
+        "count": len(events),
+        "events": events
+    })
+
+
+@app.route('/api/latency')
+def get_latency_stats():
+    """Get latency statistics with percentiles."""
+    try:
+        from src.monitoring.latency_tracker import get_latency_tracker
+
+        tracker = get_latency_tracker()
+        summary = tracker.get_summary()
+
+        return jsonify(summary)
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to get latency statistics"
+        }), 500
+
+
+@app.route('/api/latency/<operation>')
+def get_operation_latency(operation: str):
+    """Get latency statistics for a specific operation."""
+    try:
+        from src.monitoring.latency_tracker import get_latency_tracker
+
+        tracker = get_latency_tracker()
+        stats = tracker.get_stats(operation)
+
+        if stats:
+            return jsonify({
+                "operation": stats.operation,
+                "count": stats.count,
+                "percentiles": {
+                    "p50": round(stats.p50, 2),
+                    "p75": round(stats.p75, 2),
+                    "p90": round(stats.p90, 2),
+                    "p95": round(stats.p95, 2),
+                    "p99": round(stats.p99, 2)
+                },
+                "stats": {
+                    "min": round(stats.min, 2),
+                    "max": round(stats.max, 2),
+                    "mean": round(stats.mean, 2),
+                    "std_dev": round(stats.std_dev, 2)
+                },
+                "timestamp": stats.timestamp.isoformat()
+            })
+        else:
+            return jsonify({
+                "error": "Not found",
+                "message": f"No latency data for operation: {operation}"
+            }), 404
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "message": "Failed to get operation latency"
+        }), 500
 
 
 # Singleton server instance
@@ -410,16 +741,18 @@ def get_monitoring_server(host: str = "127.0.0.1", port: int = 9999) -> Monitori
 
 
 def start_monitoring_server():
-    """Start the monitoring server."""
+    """Start the monitoring server with environment variable support."""
     config = get_config()
 
     if config.monitoring.tcp_server.get("enabled", True):
         host = config.monitoring.tcp_server.get("host", "127.0.0.1")
-        port = config.monitoring.tcp_server.get("port", 9999)
+        # Allow port override from environment variable
+        port = int(os.environ.get("RAG_TCP_PORT", config.monitoring.tcp_server.get("port", 9999)))
 
         server = get_monitoring_server(host, port)
         server.start()
 
+        logger.info(f"Monitoring server started on {host}:{port}")
         return server
     else:
         logger.info("Monitoring server disabled in configuration")
@@ -429,14 +762,18 @@ def start_monitoring_server():
 if __name__ == "__main__":
     import sys
 
-    # Start Flask HTTP server instead of raw TCP
-    print("Starting RAG-CLI Monitoring Server (HTTP)...")
+    # Use Flask development server for SSE streaming support
+    # NOTE: Waitress and other production WSGI servers buffer responses
+    # and cannot stream Server-Sent Events (SSE) in real-time
+    print("Starting RAG-CLI Monitoring Server (HTTP - SSE Streaming Mode)...")
     print("Server running on http://localhost:9999")
-    print("Endpoints: /status, /metrics, /health, /logs")
+    print("Endpoints: /api/status, /api/metrics, /api/health, /api/logs, /api/events/stream")
+    print("Using Flask development server (required for SSE streaming)...")
     print("Press Ctrl+C to stop...")
 
     try:
-        app.run(host="127.0.0.1", port=9999, debug=False, use_reloader=False)
+        # Use Flask dev server with threading for SSE support
+        app.run(host="0.0.0.0", port=9999, debug=False, threaded=True)
     except KeyboardInterrupt:
         print("\nShutting down...")
         sys.exit(0)

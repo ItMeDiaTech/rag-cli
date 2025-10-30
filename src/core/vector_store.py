@@ -5,16 +5,18 @@ using Facebook's FAISS library with metadata management.
 """
 
 import os
-import pickle
+import json
 import time
 import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import dataclass, asdict
 from datetime import datetime
+import multiprocessing as mp
 
 import numpy as np
 import faiss
+import threading
 
 from src.core.config import get_config
 from src.monitoring.logger import get_logger, get_metrics_logger, log_execution_time
@@ -33,6 +35,27 @@ class VectorMetadata:
     timestamp: datetime
     metadata: Dict[str, Any]
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to JSON-serializable dictionary."""
+        return {
+            'id': self.id,
+            'text': self.text,
+            'source': self.source,
+            'timestamp': self.timestamp.isoformat(),
+            'metadata': self.metadata
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'VectorMetadata':
+        """Create from dictionary."""
+        return cls(
+            id=data['id'],
+            text=data['text'],
+            source=data['source'],
+            timestamp=datetime.fromisoformat(data['timestamp']),
+            metadata=data.get('metadata', {})
+        )
+
 
 class FAISSVectorStore:
     """FAISS-based vector store with metadata management."""
@@ -42,7 +65,8 @@ class FAISSVectorStore:
         dimension: int = 384,
         index_type: str = "auto",
         save_path: Optional[str] = None,
-        metadata_path: Optional[str] = None
+        metadata_path: Optional[str] = None,
+        use_multiprocessing: bool = False
     ):
         """Initialize FAISS vector store.
 
@@ -51,6 +75,16 @@ class FAISSVectorStore:
             index_type: Type of index (auto, flat, hnsw, ivf)
             save_path: Path to save index
             metadata_path: Path to save metadata
+            use_multiprocessing: Use multiprocessing.Lock instead of threading.Lock
+                                 WARNING: FAISS is NOT process-safe for concurrent writes.
+                                 Only use this with external coordination (e.g., queue-based).
+
+        IMPORTANT MULTIPROCESSING NOTE:
+        FAISS indexes are NOT inherently process-safe for concurrent writes. If you need
+        multi-process writes, use one of these patterns:
+        1. Single writer process with queue (recommended)
+        2. File-based locking with explicit synchronization
+        3. Separate indexes per process, then merge
         """
         config = get_config()
         self.dimension = dimension
@@ -60,16 +94,33 @@ class FAISSVectorStore:
         self.auto_save = config.vector_store.auto_save
         self.backup_enabled = config.vector_store.backup_enabled
         self.backup_count = config.vector_store.backup_count
+        self.use_multiprocessing = use_multiprocessing
 
         # Initialize index and metadata
         self.index = self._create_index()
         self.metadata: List[VectorMetadata] = []
         self.id_counter = 0
 
+        # Lock configuration: thread-safe (default) or process-aware
+        if use_multiprocessing:
+            # Multiprocessing locks for cross-process coordination
+            # NOTE: This doesn't make FAISS operations process-safe, just the Python-level coordination
+            self._lock_manager = mp.Manager()
+            self._lock = self._lock_manager.RLock()
+            self._readers_lock = self._lock_manager.Lock()
+            logger.info("Vector store using multiprocessing locks (coordination only)")
+        else:
+            # Standard thread-safe locks (default)
+            self._lock = threading.RLock()  # Reentrant lock for flexibility
+            self._readers_lock = threading.Lock()
+
+        self._readers = 0
+
         logger.info(
             "Vector store initialized",
             dimension=dimension,
-            index_type=self.index_type
+            index_type=self.index_type,
+            multiprocessing_locks=use_multiprocessing
         )
 
     def _determine_index_type(self, estimated_vectors: int = 10000) -> str:
@@ -81,7 +132,11 @@ class FAISSVectorStore:
         Returns:
             Recommended index type
         """
-        if estimated_vectors < 100000:
+        # Updated thresholds based on 2024-2025 best practices:
+        # - Flat: < 10K vectors (exact search, simple)
+        # - HNSW: 10K-1M vectors (fast approximate search, 95%+ recall)
+        # - IVF: > 1M vectors (scalable but requires training)
+        if estimated_vectors < 10000:
             return "flat"
         elif estimated_vectors < 1000000:
             return "hnsw"
@@ -139,7 +194,7 @@ class FAISSVectorStore:
         metadata: Optional[List[Dict[str, Any]]] = None,
         sources: Optional[List[str]] = None
     ) -> List[str]:
-        """Add vectors with metadata to the store.
+        """Add vectors with metadata to the store (thread-safe).
 
         Args:
             embeddings: Vector embeddings to add
@@ -150,61 +205,67 @@ class FAISSVectorStore:
         Returns:
             List of generated IDs
         """
-        if len(embeddings) != len(texts):
-            raise ValueError("Number of embeddings must match number of texts")
+        with self._lock:  # Exclusive write lock for FAISS operations
+            if len(embeddings) != len(texts):
+                raise ValueError("Number of embeddings must match number of texts")
 
-        # Ensure embeddings are float32
-        embeddings = np.array(embeddings, dtype=np.float32)
+            # Ensure embeddings are float32
+            embeddings = np.array(embeddings, dtype=np.float32)
 
-        # Handle single vector
-        if len(embeddings.shape) == 1:
-            embeddings = embeddings.reshape(1, -1)
+            # Handle single vector
+            if len(embeddings.shape) == 1:
+                embeddings = embeddings.reshape(1, -1)
 
-        num_vectors = len(embeddings)
-        start_time = time.time()
+            num_vectors = len(embeddings)
+            start_time = time.time()
 
-        # Generate IDs
-        ids = []
-        for i in range(num_vectors):
-            vector_id = f"vec_{self.id_counter:08d}"
-            ids.append(vector_id)
-            self.id_counter += 1
+            # Generate IDs
+            ids = []
+            for i in range(num_vectors):
+                vector_id = f"vec_{self.id_counter:08d}"
+                ids.append(vector_id)
+                self.id_counter += 1
 
-        # Add to index
-        if self.index_type == "ivf" and not self.index.is_trained:
-            logger.info("Training IVF index")
-            self.index.train(embeddings)
+            # Add to index
+            if self.index_type == "ivf" and not self.index.is_trained:
+                logger.info("Training IVF index")
+                self.index.train(embeddings)
 
-        self.index.add(embeddings)
+            self.index.add(embeddings)
 
-        # Store metadata
-        for i in range(num_vectors):
-            meta = VectorMetadata(
-                id=ids[i],
-                text=texts[i],
-                source=sources[i] if sources else "unknown",
-                timestamp=datetime.now(),
-                metadata=metadata[i] if metadata else {}
+            # Store metadata
+            for i in range(num_vectors):
+                meta = VectorMetadata(
+                    id=ids[i],
+                    text=texts[i],
+                    source=sources[i] if sources else "unknown",
+                    timestamp=datetime.now(),
+                    metadata=metadata[i] if metadata else {}
+                )
+                self.metadata.append(meta)
+
+            # Record metrics
+            elapsed = time.time() - start_time
+            vectors_per_second = num_vectors / elapsed
+            index_size_mb = self.get_index_size_mb()
+
+            logger.info(
+                f"Added vectors to store",
+                count=num_vectors,
+                elapsed_seconds=elapsed,
+                vectors_per_second=vectors_per_second,
+                total_vectors=self.index.ntotal,
+                index_size_mb=f"{index_size_mb:.1f}"
             )
-            self.metadata.append(meta)
+            metrics.record_count("vectors_added", num_vectors)
+            metrics.record_gauge("total_vectors", self.index.ntotal)
+            metrics.record_gauge("index_size_mb", index_size_mb)
 
-        # Record metrics
-        elapsed = time.time() - start_time
-        vectors_per_second = num_vectors / elapsed
-        logger.info(
-            f"Added vectors to store",
-            count=num_vectors,
-            elapsed_seconds=elapsed,
-            vectors_per_second=vectors_per_second
-        )
-        metrics.record_count("vectors_added", num_vectors)
-        metrics.record_gauge("total_vectors", self.index.ntotal)
+            # Auto-save if enabled
+            if self.auto_save:
+                self.save()
 
-        # Auto-save if enabled
-        if self.auto_save:
-            self.save()
-
-        return ids
+            return ids
 
     @log_execution_time
     def search(
@@ -213,7 +274,7 @@ class FAISSVectorStore:
         top_k: int = 5,
         threshold: Optional[float] = None
     ) -> List[Tuple[VectorMetadata, float]]:
-        """Search for similar vectors.
+        """Search for similar vectors (thread-safe).
 
         Args:
             query_embedding: Query vector
@@ -223,42 +284,43 @@ class FAISSVectorStore:
         Returns:
             List of (metadata, score) tuples
         """
-        if self.index.ntotal == 0:
-            logger.warning("Search called on empty index")
-            return []
+        with self._lock:  # Shared read lock for FAISS search operations
+            if self.index.ntotal == 0:
+                logger.warning("Search called on empty index")
+                return []
 
-        # Ensure query is float32 and 2D
-        query_embedding = np.array(query_embedding, dtype=np.float32)
-        if len(query_embedding.shape) == 1:
-            query_embedding = query_embedding.reshape(1, -1)
+            # Ensure query is float32 and 2D
+            query_embedding = np.array(query_embedding, dtype=np.float32)
+            if len(query_embedding.shape) == 1:
+                query_embedding = query_embedding.reshape(1, -1)
 
-        start_time = time.time()
+            start_time = time.time()
 
-        # Search
-        distances, indices = self.index.search(query_embedding, min(top_k, self.index.ntotal))
+            # Search
+            distances, indices = self.index.search(query_embedding, min(top_k, self.index.ntotal))
 
-        # Get results with metadata
-        results = []
-        for dist, idx in zip(distances[0], indices[0]):
-            if idx >= 0 and idx < len(self.metadata):
-                # Convert L2 distance to similarity score
-                score = 1.0 / (1.0 + dist) if dist >= 0 else 0.0
+            # Get results with metadata
+            results = []
+            for dist, idx in zip(distances[0], indices[0]):
+                if idx >= 0 and idx < len(self.metadata):
+                    # Convert L2 distance to similarity score
+                    score = 1.0 / (1.0 + dist) if dist >= 0 else 0.0
 
-                # Apply threshold if specified
-                if threshold is None or score >= threshold:
-                    results.append((self.metadata[idx], score))
+                    # Apply threshold if specified
+                    if threshold is None or score >= threshold:
+                        results.append((self.metadata[idx], score))
 
-        # Record metrics
-        elapsed = time.time() - start_time
-        logger.debug(
-            f"Vector search completed",
-            top_k=top_k,
-            results=len(results),
-            elapsed_seconds=elapsed
-        )
-        metrics.record_latency("vector_search", elapsed * 1000)
+            # Record metrics
+            elapsed = time.time() - start_time
+            logger.debug(
+                f"Vector search completed",
+                top_k=top_k,
+                results=len(results),
+                elapsed_seconds=elapsed
+            )
+            metrics.record_latency("vector_search", elapsed * 1000)
 
-        return results
+            return results
 
     def get_by_id(self, vector_id: str) -> Optional[VectorMetadata]:
         """Get metadata by vector ID.
@@ -273,6 +335,40 @@ class FAISSVectorStore:
             if meta.id == vector_id:
                 return meta
         return None
+
+    def get_index_size_mb(self) -> float:
+        """Get current FAISS index size in MB.
+
+        Returns:
+            Index size in megabytes
+        """
+        if self.index is None or self.index.ntotal == 0:
+            return 0.0
+
+        # FAISS index size = ntotal * dimension * 4 bytes (float32)
+        # Add overhead for HNSW/IVF structures (approximately 20% extra)
+        base_size_bytes = self.index.ntotal * self.dimension * 4
+
+        if self.index_type == "hnsw":
+            # HNSW has graph structure overhead
+            size_bytes = base_size_bytes * 1.2
+        elif self.index_type == "ivf":
+            # IVF has clustering overhead
+            size_bytes = base_size_bytes * 1.15
+        else:
+            size_bytes = base_size_bytes
+
+        size_mb = size_bytes / (1024 * 1024)
+
+        # Log warning if approaching memory limits
+        if size_mb > 1500:  # Approaching 2GB target limit
+            logger.warning(
+                f"FAISS index size {size_mb:.1f}MB approaching 2GB memory limit",
+                vectors=self.index.ntotal,
+                dimension=self.dimension
+            )
+
+        return size_mb
 
     def delete(self, vector_ids: List[str]) -> int:
         """Delete vectors by ID (rebuilds index).
@@ -350,9 +446,10 @@ class FAISSVectorStore:
             # Save index
             faiss.write_index(self.index, index_path)
 
-            # Save metadata
-            with open(meta_path, 'wb') as f:
-                pickle.dump(self.metadata, f)
+            # Save metadata as JSON
+            with open(meta_path, 'w', encoding='utf-8') as f:
+                metadata_dicts = [m.to_dict() for m in self.metadata]
+                json.dump(metadata_dicts, f, indent=2, ensure_ascii=False)
 
             logger.info(
                 "Vector store saved",
@@ -389,9 +486,10 @@ class FAISSVectorStore:
             # Load index
             self.index = faiss.read_index(index_path)
 
-            # Load metadata
-            with open(meta_path, 'rb') as f:
-                self.metadata = pickle.load(f)
+            # Load metadata from JSON
+            with open(meta_path, 'r', encoding='utf-8') as f:
+                metadata_dicts = json.load(f)
+                self.metadata = [VectorMetadata.from_dict(d) for d in metadata_dicts]
 
             # Update ID counter
             if self.metadata:
@@ -501,29 +599,38 @@ class FAISSVectorStore:
 
 # Singleton instance
 _vector_store: Optional[FAISSVectorStore] = None
+_vector_store_lock = threading.Lock()
 
 
 def get_vector_store(
     dimension: int = 384,
-    index_type: str = "auto"
+    index_type: str = "auto",
+    use_multiprocessing: bool = False
 ) -> FAISSVectorStore:
-    """Get or create the global vector store.
+    """Get or create the global vector store (thread-safe).
 
     Args:
         dimension: Vector dimension
         index_type: Type of index to use
+        use_multiprocessing: Use multiprocessing locks (see FAISSVectorStore docstring)
 
     Returns:
         Vector store instance
+
+    NOTE: For multiprocessing scenarios, consider using separate vector stores per
+    process or a queue-based single-writer architecture instead of shared store.
     """
     global _vector_store
 
+    # Double-check locking pattern for thread safety
     if _vector_store is None:
-        _vector_store = FAISSVectorStore(dimension, index_type)
+        with _vector_store_lock:
+            if _vector_store is None:
+                _vector_store = FAISSVectorStore(dimension, index_type, use_multiprocessing=use_multiprocessing)
 
-        # Try to load existing index
-        if Path(_vector_store.save_path).exists():
-            _vector_store.load()
+                # Try to load existing index
+                if Path(_vector_store.save_path).exists():
+                    _vector_store.load()
 
     return _vector_store
 

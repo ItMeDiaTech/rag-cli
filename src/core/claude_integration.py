@@ -24,11 +24,17 @@ except ImportError:
 from src.core.config import get_config
 from src.core.retrieval_pipeline import RetrievalResult
 from src.core.claude_code_adapter import get_adapter, is_claude_code_mode
+from src.core.prompt_templates import get_prompt_manager
 from src.monitoring.logger import get_logger, get_metrics_logger, log_api_call
 
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
+
+
+class CostLimitExceededError(Exception):
+    """Raised when cost limit is exceeded."""
+    pass
 
 
 @dataclass
@@ -74,9 +80,21 @@ class ClaudeIntegration:
         self.citation_format = config.claude.citation_format
         self.system_prompt = config.claude.system_prompt
 
+        # Prompt templates
+        try:
+            self.prompt_manager = get_prompt_manager()
+            self.use_structured_prompts = getattr(config.claude, 'use_structured_prompts', True)
+            logger.info("Structured prompt templates enabled")
+        except Exception as e:
+            logger.warning(f"Failed to initialize prompt manager: {e}")
+            self.prompt_manager = None
+            self.use_structured_prompts = False
+
         # Cost tracking
         self.track_usage = config.claude.track_usage
         self.warn_cost_threshold = config.claude.warn_cost_threshold
+        self.max_cost_limit = config.claude.max_cost_limit
+        self.enable_cost_limiting = config.claude.enable_cost_limiting
         self.total_tokens_used = {"input": 0, "output": 0}
         self.total_cost = 0.0
 
@@ -101,16 +119,25 @@ class ClaudeIntegration:
             self.client = Anthropic(api_key=self.api_key)
             logger.info(f"Claude integration initialized in standalone mode", model=self.model)
 
-        # Response cache (simple in-memory cache)
+        # Response cache with LRU eviction (limit to 100 responses)
         self.cache = {}
+        self.cache_access_order = []
+        self.cache_max_size = 100
         self.cache_hits = 0
         self.cache_misses = 0
 
-    def _build_context(self, retrieval_results: List[RetrievalResult]) -> str:
-        """Build context from retrieval results.
+    def _build_context(
+        self,
+        retrieval_results: List[RetrievalResult],
+        classification: Optional['QueryClassification'] = None,
+        include_metadata: bool = True
+    ) -> str:
+        """Build context from retrieval results with optional intent metadata.
 
         Args:
             retrieval_results: Retrieved document chunks
+            classification: Optional query classification for metadata
+            include_metadata: Whether to include confidence and authority indicators
 
         Returns:
             Formatted context string
@@ -121,6 +148,16 @@ class ClaudeIntegration:
         context_parts = []
         sources_seen = set()
 
+        # Add intent metadata if available
+        if classification and include_metadata:
+            intent_info = f"Query Intent: {classification.primary_intent.value} (confidence: {classification.confidence:.2f})\n"
+            if classification.technical_depth:
+                intent_info += f"Technical Depth: {classification.technical_depth.value}\n"
+            if classification.entities:
+                entities_str = ", ".join([e.name for e in classification.entities])
+                intent_info += f"Detected Technologies: {entities_str}\n"
+            context_parts.append(intent_info)
+
         for i, result in enumerate(retrieval_results, 1):
             # Format each chunk with source
             source_name = os.path.basename(result.source) if result.source else f"Document {i}"
@@ -128,29 +165,63 @@ class ClaudeIntegration:
             # Track unique sources
             sources_seen.add(source_name)
 
-            # Add chunk to context
-            context_parts.append(f"[{i}] From {source_name}:\n{result.text}\n")
+            # Determine source authority
+            authority_indicator = ""
+            if include_metadata and result.metadata:
+                doc_type = result.metadata.get('doc_type', '').lower()
+                if 'official' in doc_type:
+                    authority_indicator = " [Official Documentation]"
+                elif 'tutorial' in doc_type:
+                    authority_indicator = " [Tutorial]"
+                elif 'community' in doc_type:
+                    authority_indicator = " [Community]"
+
+            # Build chunk entry with confidence score and authority
+            chunk_header = f"[{i}] From {source_name}{authority_indicator}"
+            if include_metadata and result.score:
+                chunk_header += f" (relevance: {result.score:.2f})"
+
+            context_parts.append(f"{chunk_header}:\n{result.text}\n")
 
         context = "\n".join(context_parts)
 
         # Add source summary
         context = f"Context from {len(sources_seen)} source(s):\n\n{context}"
 
-        logger.debug(f"Context built", chunks=len(retrieval_results), sources=len(sources_seen))
+        logger.debug(
+            f"Context built with metadata",
+            chunks=len(retrieval_results),
+            sources=len(sources_seen),
+            has_intent=classification is not None
+        )
 
         return context
 
     def _build_prompt(self, query: str, context: str) -> str:
-        """Build the complete prompt for Claude.
+        """Build the complete prompt for Claude using structured templates.
 
         Args:
             query: User's question
             context: Retrieved context
 
         Returns:
-            Complete prompt
+            Tuple of (system_prompt, user_message)
         """
-        # Use configured system prompt or default
+        # Use structured prompts if available
+        if self.use_structured_prompts and self.prompt_manager:
+            try:
+                prompt_dict = self.prompt_manager.format_prompt(query, context)
+
+                logger.debug("Using structured prompt template",
+                           prompt_type=prompt_dict.get("type", "unknown"))
+
+                return prompt_dict["system"], prompt_dict["user"]
+
+            except Exception as e:
+                logger.warning(f"Failed to use structured prompt, falling back to basic: {e}")
+                # Fall through to basic prompt
+
+        # Fallback to basic prompt (backward compatibility)
         system_prompt = self.system_prompt or """You are a helpful assistant with access to retrieved documentation.
 Answer questions based only on the provided context.
 Always cite your sources using the format [Source: filename].
@@ -242,15 +313,17 @@ Please provide a comprehensive answer based on the context above."""
         query: str,
         retrieval_results: List[RetrievalResult],
         stream: Optional[bool] = None,
-        use_cache: bool = True
+        use_cache: bool = True,
+        classification: Optional['QueryClassification'] = None
     ) -> ClaudeResponse:
-        """Generate response using Claude API.
+        """Generate response using Claude API with optional intent metadata.
 
         Args:
             query: User's question
             retrieval_results: Retrieved context chunks
             stream: Whether to stream response
             use_cache: Whether to use response cache
+            classification: Optional query classification for context metadata
 
         Returns:
             Claude's response with metadata
@@ -280,7 +353,7 @@ Please provide a comprehensive answer based on the context above."""
             logger.warning("No Claude client available - returning context only")
 
             # Fall back to context-only response
-            context = self._build_context(retrieval_results)
+            context = self._build_context(retrieval_results, classification=classification)
             return ClaudeResponse(
                 answer=f"### Retrieved Context\n\n{context}\n\n### Note\nClaude API is not configured. The above context has been retrieved for your query: {query}",
                 sources=[os.path.basename(r.source) for r in retrieval_results if r.source],
@@ -294,6 +367,11 @@ Please provide a comprehensive answer based on the context above."""
         cache_key = f"{query}:{len(retrieval_results)}"
         if use_cache and cache_key in self.cache:
             self.cache_hits += 1
+            # Update LRU order
+            if cache_key in self.cache_access_order:
+                self.cache_access_order.remove(cache_key)
+            self.cache_access_order.append(cache_key)
+
             logger.debug("Response cache hit", query_length=len(query))
             metrics.record_success("response_cache_hit")
             cached_response = self.cache[cache_key]
@@ -301,10 +379,17 @@ Please provide a comprehensive answer based on the context above."""
             return cached_response
 
         self.cache_misses += 1
+
+        # Check cost limit before making API call
+        if self.enable_cost_limiting and self.total_cost >= self.max_cost_limit:
+            error_msg = f"Cost limit exceeded: ${self.total_cost:.2f} / ${self.max_cost_limit:.2f}"
+            logger.error(error_msg)
+            raise CostLimitExceededError(error_msg)
+
         start_time = time.time()
 
-        # Build context and prompt
-        context = self._build_context(retrieval_results)
+        # Build context and prompt with optional classification metadata
+        context = self._build_context(retrieval_results, classification=classification)
         system_prompt, user_message = self._build_prompt(query, context)
 
         # Determine if streaming
@@ -341,9 +426,22 @@ Please provide a comprehensive answer based on the context above."""
                 cached=False
             )
 
-            # Cache response
+            # Cache response with LRU eviction
             if use_cache:
+                # Evict if at capacity
+                if len(self.cache) >= self.cache_max_size and cache_key not in self.cache:
+                    if self.cache_access_order:
+                        lru_key = self.cache_access_order.pop(0)
+                        if lru_key in self.cache:
+                            del self.cache[lru_key]
+                        logger.debug("Evicted from response cache", key=lru_key[:50])
+
                 self.cache[cache_key] = response
+
+                # Update LRU order
+                if cache_key in self.cache_access_order:
+                    self.cache_access_order.remove(cache_key)
+                self.cache_access_order.append(cache_key)
 
             # Log metrics
             logger.info(
@@ -503,8 +601,20 @@ Please provide a comprehensive answer based on the context above."""
             logger.warning(
                 f"Cost threshold exceeded",
                 total_cost=self.total_cost,
-                threshold=self.warn_cost_threshold
+                threshold=self.warn_cost_threshold,
+                remaining=self.max_cost_limit - self.total_cost
             )
+
+        # Check if approaching hard limit
+        if self.enable_cost_limiting:
+            remaining_budget = self.max_cost_limit - self.total_cost
+            if remaining_budget < 0.5:  # Less than $0.50 remaining
+                logger.warning(
+                    f"Approaching cost limit",
+                    total_cost=self.total_cost,
+                    limit=self.max_cost_limit,
+                    remaining=remaining_budget
+                )
 
     def get_usage_stats(self) -> Dict[str, Any]:
         """Get usage statistics.
@@ -524,6 +634,7 @@ Please provide a comprehensive answer based on the context above."""
     def clear_cache(self):
         """Clear response cache."""
         self.cache.clear()
+        self.cache_access_order.clear()
         logger.info("Response cache cleared")
 
 

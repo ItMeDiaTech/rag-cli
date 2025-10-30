@@ -208,8 +208,8 @@ def test_retrieval_pipeline():
         print(f"  - Found {len(results)} results")
 
         for i, result in enumerate(results[:2], 1):
-            print(f"  - Result {i}: {result.get('content', '')[:50]}...")
-            print(f"    Score: {result.get('score', 0):.3f}")
+            print(f"  - Result {i}: {result.text[:50]}...")
+            print(f"    Score: {result.score:.3f}")
 
         return True
     except Exception as e:

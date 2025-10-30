@@ -127,10 +127,15 @@ class ClaudeCodeAdapter:
         context_parts.append("### Retrieved Context from Knowledge Base\n")
 
         for i, doc in enumerate(documents, 1):
-            # Extract document info
-            content = doc.get('content', '')
-            source = doc.get('source', '') or doc.get('metadata', {}).get('source', f'Document {i}')
-            score = doc.get('score', 0.0)
+            # Extract document info - handle both dict and object formats
+            if isinstance(doc, dict):
+                content = doc.get('content') or doc.get('text', '')
+                source = doc.get('source', f'Document {i}')
+                score = doc.get('score', 0.0)
+            else:
+                content = doc.text
+                source = doc.source or doc.metadata.get('source', f'Document {i}')
+                score = doc.score
 
             sources.add(source)
 
@@ -150,12 +155,15 @@ class ClaudeCodeAdapter:
         formatted_context = "\n".join(context_parts)
 
         # Prepare metadata
+        def get_score(d):
+            return d.get('score', 0.0) if isinstance(d, dict) else d.score
+
         metadata = {
             "query": query,
             "documents_found": len(documents),
             "unique_sources": len(sources),
             "mode": self.mode.value,
-            "average_score": sum(d.get('score', 0) for d in documents) / len(documents) if documents else 0
+            "average_score": sum(get_score(d) for d in documents) / len(documents) if documents else 0
         }
 
         return ContextResponse(
@@ -257,9 +265,9 @@ class ClaudeCodeAdapter:
 
         # Add documents
         for i, doc in enumerate(documents, 1):
-            content = doc.get('content', '')
-            source = doc.get('source', '') or doc.get('metadata', {}).get('source', 'Unknown')
-            score = doc.get('score', 0.0)
+            content = doc.text
+            source = doc.source or doc.metadata.get('source', 'Unknown')
+            score = doc.score
 
             # Truncate long content for enhancement
             if len(content) > 500:
