@@ -13,8 +13,8 @@ import sys
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
-from src.core.embeddings import EmbeddingModel, get_embedding_model
-from src.core.vector_store import VectorStore, get_vector_store
+from src.core.embeddings import EmbeddingGenerator, get_embedding_generator
+from src.core.vector_store import FAISSVectorStore, get_vector_store
 from src.core.document_processor import DocumentProcessor
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_integration import ClaudeAssistant
@@ -29,7 +29,7 @@ class TestEmbeddings:
         mock_model = MagicMock()
         mock_transformer.return_value = mock_model
 
-        model = EmbeddingModel(Mock())
+        model = EmbeddingGenerator(Mock())
 
         mock_transformer.assert_called_once()
         assert model.model == mock_model
@@ -41,7 +41,7 @@ class TestEmbeddings:
         mock_model.encode.return_value = np.array([0.1, 0.2, 0.3])
         mock_transformer.return_value = mock_model
 
-        model = EmbeddingModel(Mock())
+        model = EmbeddingGenerator(Mock())
         embedding = model.encode("test text")
 
         assert isinstance(embedding, np.ndarray)
@@ -55,7 +55,7 @@ class TestEmbeddings:
         mock_model.encode.return_value = np.array([[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]])
         mock_transformer.return_value = mock_model
 
-        model = EmbeddingModel(Mock())
+        model = EmbeddingGenerator(Mock())
         embeddings = model.encode_batch(["text1", "text2", "text3"])
 
         assert isinstance(embeddings, np.ndarray)
@@ -73,7 +73,7 @@ class TestEmbeddings:
         config.embeddings.cache_enabled = True
         config.embeddings.cache_size = 100
 
-        model = EmbeddingModel(config)
+        model = EmbeddingGenerator(config)
 
         # Encode same text twice
         embedding1 = model.encode("test text")
@@ -100,7 +100,7 @@ class TestVectorStore:
         config.vector_store.index_type = "flat"
         config.embeddings.model_dim = 384
 
-        store = VectorStore(config)
+        store = FAISSVectorStore(config)
 
         assert store.index is not None
         assert store.index.d == 384  # Dimension
@@ -112,7 +112,7 @@ class TestVectorStore:
         config.vector_store.index_type = "flat"
         config.embeddings.model_dim = 3
 
-        store = VectorStore(config)
+        store = FAISSVectorStore(config)
 
         documents = [
             {"id": "1", "content": "doc1", "metadata": {"source": "file1.txt"}},
@@ -133,7 +133,7 @@ class TestVectorStore:
         config.vector_store.index_type = "flat"
         config.embeddings.model_dim = 3
 
-        store = VectorStore(config)
+        store = FAISSVectorStore(config)
 
         # Add some documents
         documents = [
