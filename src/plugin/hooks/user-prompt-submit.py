@@ -30,6 +30,7 @@ project_root = setup_sys_path(hook_file)
 from src.core.config import get_config
 from src.core.vector_store import get_vector_store
 from src.core.embeddings import get_embedding_generator
+from src.core.async_utils import safe_asyncio_run
 from src.core.retrieval_pipeline import HybridRetriever
 from src.core.claude_code_adapter import get_adapter
 from src.monitoring.logger import get_logger
@@ -462,12 +463,15 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                 # Initialize orchestrator
                 orchestrator = AgentOrchestrator()
 
-                # Run async orchestration
-                orchestration_result = asyncio.run(orchestrator.orchestrate(
-                    query=query,
-                    top_k=settings.get("context_limit", 3),
-                    use_cache=True
-                ))
+                # Run async orchestration (safe for hooks in Claude Code)
+                orchestration_result = safe_asyncio_run(
+                    orchestrator.orchestrate(
+                        query=query,
+                        top_k=settings.get("context_limit", 3),
+                        use_cache=True
+                    ),
+                    timeout=settings.get("orchestrator_timeout", 30)
+                )
 
                 # Extract documents from orchestration result
                 if orchestration_result.rag_results:

@@ -30,7 +30,15 @@ metrics = get_metrics_logger()
 
 
 class EmbeddingCache:
-    """LRU cache for embedding results to avoid recomputation."""
+    """LRU cache for embedding results using OrderedDict (O(1) operations).
+
+    Uses OrderedDict for efficient cache management:
+    - Cache hit: O(1) dictionary lookup + O(1) move_to_end()
+    - Cache miss: O(1) insertion
+    - Eviction: O(1) popitem()
+
+    Previous implementation used list.remove() which was O(n).
+    """
 
     def __init__(self, cache_size: int = 1000):
         """Initialize embedding cache with LRU eviction.
@@ -38,9 +46,9 @@ class EmbeddingCache:
         Args:
             cache_size: Maximum number of cached embeddings
         """
+        from collections import OrderedDict
         self.cache_size = max(1, cache_size)  # Ensure at least size 1
-        self._cache = {}
-        self._access_order = []
+        self._cache = OrderedDict()  # Maintains insertion order for LRU
 
     def get(self, text: str) -> Optional[np.ndarray]:
         """Get embedding from cache.
@@ -52,9 +60,8 @@ class EmbeddingCache:
             Cached embedding or None if not found
         """
         if text in self._cache:
-            # Move to end (most recently used)
-            self._access_order.remove(text)
-            self._access_order.append(text)
+            # Move to end (most recently used) - O(1) operation
+            self._cache.move_to_end(text)
             logger.debug("Cache hit for embedding", text_length=len(text))
             return self._cache[text]
         return None
@@ -67,31 +74,45 @@ class EmbeddingCache:
             embedding: Computed embedding
         """
         if text in self._cache:
-            # Already in cache, just update access order
-            self._access_order.remove(text)
-            self._access_order.append(text)
+            # Already in cache, just update access order and value
+            self._cache[text] = embedding
+            self._cache.move_to_end(text)  # O(1) operation
             return
 
-        # Evict if at capacity
+        # Evict least recently used if at capacity - O(1) popitem()
         while len(self._cache) >= self.cache_size:
-            # Remove least recently used
-            if self._access_order:
-                lru_text = self._access_order.pop(0)
-                if lru_text in self._cache:
-                    del self._cache[lru_text]
-                logger.debug("Evicted from embedding cache", text_length=len(lru_text))
-            else:
-                # Safety check - should never happen
-                break
+            # Remove first item (oldest/least recently used)
+            lru_text, _ = self._cache.popitem(last=False)
+            logger.debug("Evicted from embedding cache", text_length=len(lru_text))
 
+        # Add new item
         self._cache[text] = embedding
-        self._access_order.append(text)
+        logger.debug("Added to embedding cache", text_length=len(text), cache_size=len(self._cache))
 
     def clear(self):
         """Clear the cache."""
         self._cache.clear()
-        self._access_order.clear()
         logger.info("Embedding cache cleared")
+
+    def size(self) -> int:
+        """Get current cache size.
+
+        Returns:
+            Number of items in cache
+        """
+        return len(self._cache)
+
+    def info(self) -> dict:
+        """Get cache statistics.
+
+        Returns:
+            Dictionary with cache info
+        """
+        return {
+            "max_size": self.cache_size,
+            "current_size": len(self._cache),
+            "utilization": len(self._cache) / self.cache_size if self.cache_size > 0 else 0,
+        }
 
 
 class EmbeddingGenerator:
