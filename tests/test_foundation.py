@@ -74,9 +74,9 @@ class TestConfiguration:
         config = Config(temp_config_file)
 
         assert config.embeddings.model_name == "test-model"
-        assert config.embeddings.model_dim == 384
+        assert config.embeddings.dimensions == 384
         assert config.vector_store.type == "faiss"
-        assert config.retrieval.top_k == 5
+        assert config.retrieval.final_results == 5
         assert config.claude.model == "test-claude"
         assert config.monitoring.tcp_server["enabled"] is True
 

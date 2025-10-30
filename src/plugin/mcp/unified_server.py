@@ -659,9 +659,9 @@ class UnifiedMCPServer:
                 "vector_store_path": str(vector_store_path),
                 "configuration": {
                     "embedding_model": self.config.embeddings.model_name,
-                    "embedding_dimensions": self.config.embeddings.model_dim,
-                    "retrieval_top_k": self.config.retrieval.top_k,
-                    "hybrid_ratio": self.config.retrieval.hybrid_ratio
+                    "embedding_dimensions": self.config.embeddings.dimensions,
+                    "retrieval_top_k": self.config.retrieval.final_results,
+                    "hybrid_ratio": self.config.retrieval.vector_weight
                 }
             }
 
@@ -698,8 +698,8 @@ class UnifiedMCPServer:
                 # Return current configuration
                 config_dict = {
                     "retrieval": {
-                        "top_k": self.config.retrieval.top_k,
-                        "hybrid_ratio": self.config.retrieval.hybrid_ratio
+                        "top_k": self.config.retrieval.final_results,
+                        "hybrid_ratio": self.config.retrieval.vector_weight
                     },
                     "claude": {
                         "model": self.config.claude.model,
@@ -721,9 +721,9 @@ class UnifiedMCPServer:
 
             # Update configuration
             if setting == "retrieval.top_k":
-                self.config.retrieval.top_k = int(value)
+                self.config.retrieval.final_results = int(value)
             elif setting == "retrieval.hybrid_ratio":
-                self.config.retrieval.hybrid_ratio = float(value)
+                self.config.retrieval.vector_weight = float(value)
             elif setting == "claude.max_tokens":
                 self.config.claude.max_tokens = int(value)
             else:

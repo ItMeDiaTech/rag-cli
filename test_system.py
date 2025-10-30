@@ -48,8 +48,8 @@ def test_configuration():
 
         print(f"[OK] Config loaded")
         print(f"  - Embedding model: {config.embeddings.model_name}")
-        print(f"  - Vector dimensions: {config.embeddings.model_dim}")
-        print(f"  - Retrieval top_k: {config.retrieval.top_k}")
+        print(f"  - Vector dimensions: {config.embeddings.dimensions}")
+        print(f"  - Retrieval top_k: {config.retrieval.final_results}")
 
         return True
     except Exception as e:
@@ -148,7 +148,7 @@ def test_vector_store():
         ]
 
         # Create random embeddings for testing (normally from embedding model)
-        dim = config.embeddings.model_dim
+        dim = config.embeddings.dimensions
         test_embeddings = np.random.randn(3, dim).astype(np.float32)
 
         # Add to store
@@ -272,7 +272,7 @@ def run_performance_test():
 
         # Test vector search speed
         store = VectorStore(config)
-        dim = config.embeddings.model_dim
+        dim = config.embeddings.dimensions
 
         # Add 1000 random vectors
         docs = [{"id": str(i), "content": f"Doc {i}", "metadata": {}} for i in range(1000)]
