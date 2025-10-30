@@ -18,7 +18,7 @@ markdown>=3.5.0,<4.0.0
 # Updated for Python 3.13 compatibility
 sentence-transformers>=3.0.0,<4.0.0
 faiss-cpu>=1.9.0,<2.0.0
-torch>=2.2.0,<2.5.0  # 2.2+ supports Python 3.13
+torch>=2.6.0  # 2.6+ supports Python 3.13, compatible with latest sentence-transformers
 transformers>=4.36.0,<5.0.0
 numpy>=1.24.0,<2.0.0  # Pin before 2.0 breaking changes
 

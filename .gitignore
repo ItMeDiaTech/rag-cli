@@ -107,6 +107,7 @@ config/error_config.json
 config/error_history.json
 config/hook_config.json
 config/services_status.json
+config/rag_settings.json
 requirements-lock.txt
 .env.example
 .github-exclude

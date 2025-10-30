@@ -23,6 +23,7 @@ from src.monitoring.service_manager import (
     get_services_status,
     open_dashboard_in_browser
 )
+from src.monitoring.output_formatter import OutputFormatter
 
 logger = get_logger(__name__)
 
@@ -523,25 +524,45 @@ class UnifiedMCPServer:
             }
 
         try:
+            import time
+            formatter = OutputFormatter(verbose=False)
+
             # Perform search
+            search_start = time.time()
             documents = self.retriever.search(query, top_k=top_k)
+            search_time_ms = (time.time() - search_start) * 1000
 
             # Generate response if requested
             answer = None
+            synthesis_time_ms = 0
             if use_llm and documents and self.assistant:
+                synthesis_start = time.time()
                 response = self.assistant.generate_response(query, documents)
+                synthesis_time_ms = (time.time() - synthesis_start) * 1000
                 answer = response.get("answer", "")
 
-            # Format results
-            result_text = f"Query: {query}\n\n"
+            # Format results with clean output
+            result_text = formatter.format_header("RAG Search Results", 1)
+            result_text += formatter.format_search_results(
+                num_results=len(documents),
+                search_time_ms=search_time_ms
+            )
 
             if answer:
-                result_text += f"Answer:\n{answer}\n\n"
+                result_text += formatter.format_header("Response", 2)
+                result_text += f"{answer}\n\n"
+                result_text += formatter.format_synthesis(
+                    num_sources=len(documents)
+                )
 
-            result_text += f"Found {len(documents)} relevant documents:\n\n"
+            # Add document previews
+            result_text += formatter.format_header("Retrieved Documents", 2)
             for i, doc in enumerate(documents, 1):
-                result_text += f"{i}. {doc.get('source', 'Unknown')} (score: {doc.get('score', 0):.3f})\n"
-                result_text += f"   {doc.get('content', '')[:200]}...\n\n"
+                result_text += formatter.format_document_preview(
+                    title=f"{i}. {doc.get('source', 'Unknown')} (score: {doc.get('score', 0):.3f})",
+                    content=doc.get('content', ''),
+                    max_length=200
+                )
 
             return {
                 "jsonrpc": "2.0",
