@@ -322,8 +322,8 @@ Please provide step-by-step instructions based on the guides above."""
 2. [Step 2]
 
 ## Tips & Warnings
-⚠️ [Warning]
-💡 [Tip]
+  [WARNING] [Warning]
+[TIP] [Tip]
 
 ## Next Steps
 - [Next step 1]

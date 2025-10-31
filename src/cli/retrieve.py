@@ -211,7 +211,7 @@ def main(
             sources = list(set(Path(r.source).name for r in results))
             console.print("\n[cyan]Sources:[/cyan]")
             for source in sources:
-                console.print(f"  • {source}")
+                console.print(f"  * {source}")
 
     # Handle interactive or single query mode
     if interactive or (not query):

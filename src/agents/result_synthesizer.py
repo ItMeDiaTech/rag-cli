@@ -9,10 +9,10 @@ SYNTHESIS STRATEGIES:
 4. Coherent Ordering: Organize results in logical sequence
 
 EXAMPLE:
-Sub-query 1: "How to implement FastAPI" → 5 results
-Sub-query 2: "FastAPI async database" → 5 results
-Sub-query 3: "FastAPI CORS" → 5 results
-→ Synthesized: 10 unique results (5 duplicates removed, reranked)
+Sub-query 1: "How to implement FastAPI" -> 5 results
+Sub-query 2: "FastAPI async database" -> 5 results
+Sub-query 3: "FastAPI CORS" -> 5 results
+-> Synthesized: 10 unique results (5 duplicates removed, reranked)
 """
 
 import asyncio
@@ -34,7 +34,7 @@ class SynthesisResult:
     merged_results: List[RetrievalResult]
     total_input_results: int
     duplicates_removed: int
-    sub_query_map: Dict[int, List[int]]  # SubQuery index → result indices
+    sub_query_map: Dict[int, List[int]]  # SubQuery index -> result indices
     confidence: float
     metadata: Dict[str, Any]
 
@@ -330,7 +330,7 @@ class ResultSynthesizer:
 
         for sq in sub_queries:
             result_count = len(synthesis_result.sub_query_map.get(sq.index, []))
-            lines.append(f"  [{sq.index + 1}] {sq.text} → {result_count} results")
+            lines.append(f"  [{sq.index + 1}] {sq.text} -> {result_count} results")
 
         lines.append("")
         lines.append(f"Total results collected: {synthesis_result.total_input_results}")

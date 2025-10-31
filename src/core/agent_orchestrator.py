@@ -11,9 +11,9 @@ ARCHITECTURE:
        ├─────► Intent Classification
        │
        ├─────► Route Decision
-       │       ├─ Simple query → RAG only
-       │       ├─ Error query → RAG || MAF Debugger
-       │       └─ Complex query → Query Decomposer
+       │       ├─ Simple query -> RAG only
+       │       ├─ Error query -> RAG || MAF Debugger
+       │       └─ Complex query -> Query Decomposer
        │
        ├─────► Parallel Execution
        │       ├─ RAG retrieval (async)
@@ -97,10 +97,10 @@ class AgentOrchestrator:
         """Orchestrate query processing with intelligent routing.
 
         ROUTING LOGIC:
-        1. TROUBLESHOOTING intent → Parallel RAG + MAF Debugger
-        2. Complex query → Query decomposition (future Phase 3)
-        3. Simple query → RAG only
-        4. MAF unavailable → RAG fallback
+        1. TROUBLESHOOTING intent -> Parallel RAG + MAF Debugger
+        2. Complex query -> Query decomposition (future Phase 3)
+        3. Simple query -> RAG only
+        4. MAF unavailable -> RAG fallback
 
         Args:
             query: User query
@@ -185,10 +185,10 @@ class AgentOrchestrator:
         # TROUBLESHOOTING queries benefit from MAF Debugger
         if intent == QueryIntent.TROUBLESHOOTING and self.enable_maf:
             if classification.confidence >= self.parallel_threshold_confidence:
-                logger.debug("High-confidence troubleshooting query → Parallel RAG + MAF")
+                logger.debug("High-confidence troubleshooting query -> Parallel RAG + MAF")
                 return RoutingStrategy.PARALLEL_RAG_MAF
             else:
-                logger.debug("Low-confidence troubleshooting → RAG only")
+                logger.debug("Low-confidence troubleshooting -> RAG only")
                 return RoutingStrategy.RAG_ONLY
 
         # Complex queries use decomposition (Phase 3 - IMPLEMENTED)
@@ -200,7 +200,7 @@ class AgentOrchestrator:
         )
 
         if is_complex and self.enable_maf:
-            logger.debug("Complex query detected → Query decomposition")
+            logger.debug("Complex query detected -> Query decomposition")
             return RoutingStrategy.DECOMPOSED
 
         # Default to RAG only
@@ -569,7 +569,7 @@ class AgentOrchestrator:
 
         # Log sub-query results
         for i, (sq, results) in enumerate(zip(decomposition.sub_queries, sub_query_results)):
-            logger.debug(f"Sub-query {i}: '{sq.text}' → {len(results)} results")
+            logger.debug(f"Sub-query {i}: '{sq.text}' -> {len(results)} results")
 
         # Step 3: Synthesize results
         logger.info("Synthesizing results from sub-queries")
@@ -705,9 +705,9 @@ async def test_orchestrator():
 
     # Test queries with different intents
     test_queries = [
-        ("How to implement vector search in Python?", "Simple query → RAG only"),
-        ("ValueError: invalid literal for int() with base 10: 'abc'", "Error query → Parallel RAG + MAF"),
-        ("What are best practices for RAG systems?", "Best practices → RAG only")
+        ("How to implement vector search in Python?", "Simple query -> RAG only"),
+        ("ValueError: invalid literal for int() with base 10: 'abc'", "Error query -> Parallel RAG + MAF"),
+        ("What are best practices for RAG systems?", "Best practices -> RAG only")
     ]
 
     for query, description in test_queries:

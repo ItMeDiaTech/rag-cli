@@ -69,13 +69,13 @@ class OutputFormatter:
         """
         # Status indicator
         indicators = {
-            StageStatus.PENDING: "⏳",
-            StageStatus.IN_PROGRESS: "🔄",
-            StageStatus.COMPLETED: "✓",
-            StageStatus.FAILED: "✗",
-            StageStatus.SKIPPED: "→"
+            StageStatus.PENDING: "[*]",
+            StageStatus.IN_PROGRESS: "[*]",
+            StageStatus.COMPLETED: "[*]",
+            StageStatus.FAILED: "[*]",
+            StageStatus.SKIPPED: "->"
         }
-        indicator = indicators.get(stage.status, "•")
+        indicator = indicators.get(stage.status, "*")
 
         # Format base status line
         parts = [f"{indicator} **{stage.name}**"]
@@ -263,7 +263,7 @@ class OutputFormatter:
         Returns:
             Formatted error string
         """
-        output = "\n✗ **Error**\n"
+        output = "\n[*] **Error**\n"
         output += f"{error}\n"
 
         if details and self.verbose:

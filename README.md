@@ -496,11 +496,11 @@ RAG-CLI/
 
 ### Data Flow
 
-1. **Document Processing**: Documents → Chunks (400-500 tokens) → Metadata extraction
-2. **Embedding Generation**: Chunks → sentence-transformers → 384-dim vectors
-3. **Vector Storage**: Embeddings → FAISS index → Persistent storage
-4. **Retrieval**: Query → Hybrid search → Reranking → Top-K results
-5. **Response Generation**: Context + Query → Claude Haiku → AI response
+1. **Document Processing**: Documents -> Chunks (400-500 tokens) -> Metadata extraction
+2. **Embedding Generation**: Chunks -> sentence-transformers -> 384-dim vectors
+3. **Vector Storage**: Embeddings -> FAISS index -> Persistent storage
+4. **Retrieval**: Query -> Hybrid search -> Reranking -> Top-K results
+5. **Response Generation**: Context + Query -> Claude Haiku -> AI response
 
 ## Configuration
 
@@ -792,7 +792,7 @@ RAG-CLI uses a centralized constants module (`core.constants`) for all tunable p
 - **Performance**: Batch sizes, worker counts, cache sizes
 - **Search**: Top-K limits, hybrid search weights, query length limits
 - **Processing**: Chunk sizes, overlap ratios, file size limits
-- **Thresholds**: Vector store index transitions (Flat → HNSW → IVF)
+- **Thresholds**: Vector store index transitions (Flat -> HNSW -> IVF)
 - **Timeouts**: HTTP, embedding generation, search operations
 
 This design makes it easy to tune performance without modifying code throughout the codebase.

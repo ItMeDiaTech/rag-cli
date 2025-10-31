@@ -62,7 +62,7 @@ The hook script receives query information via stdin as JSON and can modify the 
 
 ## RAG architecture and technology stack
 
-A production RAG system for CLI environments requires careful technology choices balancing performance, cost, and ease of deployment. The architecture follows this flow: User Query → Query Embedding → Vector Search → Top-K Retrieval → Context Assembly → LLM Prompting → Answer Generation → Validation → Response.
+A production RAG system for CLI environments requires careful technology choices balancing performance, cost, and ease of deployment. The architecture follows this flow: User Query -> Query Embedding -> Vector Search -> Top-K Retrieval -> Context Assembly -> LLM Prompting -> Answer Generation -> Validation -> Response.
 
 **For vector databases in CLI applications, FAISS and Chroma excel for local development** (free, fast, no network latency), while Qdrant Cloud or Pinecone work best for production deployments under 10M vectors. Performance benchmarks on 1M vectors show Zilliz Cloud averaging 50-60ms latency at $45-75/month, Pinecone at 70-80ms for $70/month, and Qdrant at 75-85ms for $30-50/month. FAISS running locally typically achieves under 10ms latency with zero cost but lacks persistence by default. **For CLI plugins, start with FAISS for development and prototype testing, then migrate to Qdrant Cloud for production** due to its excellent Python SDK, resource-based pricing, and self-hosting option.
 

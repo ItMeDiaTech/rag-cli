@@ -68,7 +68,7 @@ class MAFConfigCommand:
             status = [
                 "## MAF Configuration Status",
                 "",
-                f"**Status**: {'✅ Enabled' if maf_config.get('enabled') else '❌ Disabled'}",
+                f"**Status**: {'ENABLED' if maf_config.get('enabled') else 'DISABLED'}",
                 f"**Mode**: {maf_config.get('mode', 'parallel').upper()}",
                 f"**Fallback to RAG**: {'Yes' if maf_config.get('fallback_to_rag') else 'No'}",
                 f"**Notifications**: {'Enabled' if maf_config.get('show_notifications') else 'Disabled'}",
@@ -97,11 +97,11 @@ class MAFConfigCommand:
             config["orchestration"]["enable_maf"] = True
             self._save_config(config)
 
-            return "✅ **MAF enabled successfully**\n\nParallel RAG + MAF execution is now active.\n- All 7 agents: debugger, developer, reviewer, tester, architect, documenter, optimizer\n- Execution mode: PARALLEL (simultaneous RAG + MAF)\n- Fallback to RAG-only if MAF unavailable: Yes"
+            return "SUCCESS: **MAF enabled successfully**\n\nParallel RAG + MAF execution is now active.\n- All 7 agents: debugger, developer, reviewer, tester, architect, documenter, optimizer\n- Execution mode: PARALLEL (simultaneous RAG + MAF)\n- Fallback to RAG-only if MAF unavailable: Yes"
 
         except Exception as e:
             logger.error(f"Failed to enable MAF: {e}")
-            return f"❌ Error enabling MAF: {e}"
+            return f"ERROR: Error enabling MAF: {e}"
 
     def _disable_maf(self) -> str:
         """Disable MAF features.
@@ -115,11 +115,11 @@ class MAFConfigCommand:
             config["orchestration"]["enable_maf"] = False
             self._save_config(config)
 
-            return "✅ **MAF disabled**\n\nFalling back to RAG-only retrieval mode.\n- Vector search + keyword search (BM25)\n- Semantic caching enabled\n- Online retrieval fallback (GitHub, StackOverflow, ArXiv, Tavily)"
+            return "SUCCESS: **MAF disabled**\n\nFalling back to RAG-only retrieval mode.\n- Vector search + keyword search (BM25)\n- Semantic caching enabled\n- Online retrieval fallback (GitHub, StackOverflow, ArXiv, Tavily)"
 
         except Exception as e:
             logger.error(f"Failed to disable MAF: {e}")
-            return f"❌ Error disabling MAF: {e}"
+            return f"ERROR: Error disabling MAF: {e}"
 
     async def _test_connection(self) -> str:
         """Test MAF connector health.
@@ -133,7 +133,7 @@ class MAFConfigCommand:
             result = [
                 "## MAF Connector Health Check",
                 "",
-                f"**Overall Status**: {'✅ Healthy' if health['status'] == 'healthy' else '❌ Unavailable'}",
+                f"**Overall Status**: {'HEALTHY' if health['status'] == 'healthy' else 'UNAVAILABLE'}",
                 f"**MAF Type**: {health.get('maf_type', 'embedded')}",
                 f"**Location**: {health.get('maf_location', 'src/agents/maf/')}",
                 f"**Version**: {health.get('maf_version', '1.2.0')}",
@@ -144,13 +144,13 @@ class MAFConfigCommand:
                 result.append("")
                 result.append("**Agents Ready**:")
                 for agent in health['available_agents']:
-                    result.append(f"  - ✅ {agent}")
+                    result.append(f"  - {agent}")
 
             return "\n".join(result)
 
         except Exception as e:
             logger.error(f"Health check failed: {e}")
-            return f"❌ Health check failed: {e}"
+            return f"ERROR: Health check failed: {e}"
 
     def _list_agents(self) -> str:
         """List available MAF agents.
@@ -161,7 +161,7 @@ class MAFConfigCommand:
         agents = self.maf.get_available_agents()
 
         if not agents:
-            return "❌ No MAF agents available. Embedded MAF framework may not be initialized."
+            return "ERROR: No MAF agents available. Embedded MAF framework may not be initialized."
 
         descriptions = {
             'debugger': 'Error analysis and troubleshooting',
@@ -198,20 +198,20 @@ class MAFConfigCommand:
         try:
             mode = mode.upper()
             if mode not in ["PARALLEL", "SEQUENTIAL"]:
-                return f"❌ Invalid mode '{mode}'. Use: PARALLEL or SEQUENTIAL"
+                return f"ERROR: Invalid mode '{mode}'. Use: PARALLEL or SEQUENTIAL"
 
             config = self._load_config()
             config["maf"]["mode"] = mode.lower()
             self._save_config(config)
 
             if mode == "PARALLEL":
-                return "✅ **Execution mode set to PARALLEL**\n\nRAG and MAF agents will execute simultaneously for maximum coverage and comprehensiveness."
+                return "SUCCESS: **Execution mode set to PARALLEL**\n\nRAG and MAF agents will execute simultaneously for maximum coverage and comprehensiveness."
             else:
-                return "✅ **Execution mode set to SEQUENTIAL**\n\nRAG executes first, then MAF agents run on results. Slower but more resource-efficient."
+                return "SUCCESS: **Execution mode set to SEQUENTIAL**\n\nRAG executes first, then MAF agents run on results. Slower but more resource-efficient."
 
         except Exception as e:
             logger.error(f"Failed to set mode: {e}")
-            return f"❌ Error setting mode: {e}"
+            return f"ERROR: Error setting mode: {e}"
 
     def _load_config(self) -> dict:
         """Load RAG settings configuration.

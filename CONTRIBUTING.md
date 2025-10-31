@@ -275,4 +275,4 @@ Your contributions help make RAG-CLI better for everyone. We appreciate your eff
 ---
 
 For questions, open a GitHub Discussion or Issue.
-Happy contributing! 🚀
+Happy contributing! [LAUNCH]

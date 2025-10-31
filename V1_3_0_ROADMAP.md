@@ -54,7 +54,7 @@ v1.3.0 focuses on user experience enhancements, advanced features, test coverage
 
 ### 2. Knowledge Sharing & Memory (Priority: HIGH)
 
-#### 2.1 RAG ↔ MAF Memory Synchronization
+#### 2.1 RAG <-> MAF Memory Synchronization
 **Objective**: Enable agents to learn from RAG results and vice versa
 
 **Implementation**:
@@ -65,8 +65,8 @@ v1.3.0 focuses on user experience enhancements, advanced features, test coverage
 
 **Key Components**:
 ```
-RAG Retrieved Docs ──→ Agent Memory (semantic understanding)
-Agent Insights ──────→ RAG Cache (for faster retrieval)
+RAG Retrieved Docs ──-> Agent Memory (semantic understanding)
+Agent Insights ──────-> RAG Cache (for faster retrieval)
 ```
 
 **Acceptance Criteria**:
@@ -290,12 +290,12 @@ class CustomAgent(BaseAgent):
 
 | Metric | Target | Current | Status |
 |--------|--------|---------|--------|
-| Test Coverage | 80%+ | 13% | ⚠️ |
-| Memory Footprint | -40% | - | 📋 |
-| Latency (RAG+MAF) | <5.5s | 5.0s | ✅ |
-| Agent Success Rate | >90% | - | 📋 |
-| Documentation Score | 95+ | 90 | ✅ |
-| User Satisfaction | 4.5/5 | New | 📋 |
+| Test Coverage | 80%+ | 13% | [WARNING] |
+| Memory Footprint | -40% | - | [*] |
+| Latency (RAG+MAF) | <5.5s | 5.0s | [OK] |
+| Agent Success Rate | >90% | - | [*] |
+| Documentation Score | 95+ | 90 | [OK] |
+| User Satisfaction | 4.5/5 | New | [*] |
 
 ## Dependencies & Risks
 
@@ -321,7 +321,7 @@ class CustomAgent(BaseAgent):
 | 1-2 | Planning | Detailed design, prototype key features |
 | 2-3 | Unit Testing | Core module tests (60-70% coverage) |
 | 3-4 | Memory Optimization | Profile, optimize, validate |
-| 4-5 | Knowledge Sharing | RAG↔MAF sync implementation |
+| 4-5 | Knowledge Sharing | RAG<->MAF sync implementation |
 | 5-6 | UI/UX | Agent selection, interactive refinement |
 | 6-7 | Advanced Features | Custom agents, multi-model |
 | 7-8 | Polish | Performance tests, documentation, cleanup |

@@ -149,14 +149,13 @@ python scripts/retrieve.py "test"
 - **Docs**: https://github.com/ItMeDiaTech/rag-cli/wiki
 
 ## Key Features
-
-✅ Local-first architecture
-✅ Embedded Multi-Agent Framework
-✅ Parallel execution (RAG + MAF)
-✅ Graceful fallback handling
-✅ Comprehensive monitoring
-✅ Claude Code integration
-✅ Zero API cost in Claude Code mode
+  [OK] Local-first architecture
+  [OK] Embedded Multi-Agent Framework
+  [OK] Parallel execution (RAG + MAF)
+  [OK] Graceful fallback handling
+  [OK] Comprehensive monitoring
+  [OK] Claude Code integration
+  [OK] Zero API cost in Claude Code mode
 
 ---
 

@@ -11,7 +11,7 @@ These hooks are active and execute as part of the plugin lifecycle.
 ### 1. slash-command-blocker.py
 **Purpose**: Prevents Claude from providing commentary on slash command execution
 **Trigger**: UserPromptSubmit (priority: 150)
-**Status**: ✅ Registered and active
+**Status**: [OK] Registered and active
 **Behavior**: Detects slash commands and blocks Claude's normal response processing
 
 ---
@@ -19,7 +19,7 @@ These hooks are active and execute as part of the plugin lifecycle.
 ### 2. user-prompt-submit.py
 **Purpose**: Main orchestration hook - routes queries to RAG and/or MAF agents
 **Trigger**: UserPromptSubmit (priority: 100)
-**Status**: ✅ Registered and active
+**Status**: [OK] Registered and active
 **Behavior**:
 - Classifies query intent
 - Routes to RAG, MAF, or both (parallel execution)
@@ -31,7 +31,7 @@ These hooks are active and execute as part of the plugin lifecycle.
 ### 3. response-post.py
 **Purpose**: Injects citations into Claude's response
 **Trigger**: ResponsePost (priority: 80)
-**Status**: ✅ Registered and active
+**Status**: [OK] Registered and active
 **Behavior**:
 - Adds source citations from RAG retrieval
 - Formats citations based on configuration
@@ -42,7 +42,7 @@ These hooks are active and execute as part of the plugin lifecycle.
 ### 4. plugin-state-change.py
 **Purpose**: Persists plugin settings and state
 **Trigger**: PluginStateChange (priority: 60)
-**Status**: ✅ Registered and active
+**Status**: [OK] Registered and active
 **Behavior**:
 - Saves configuration changes to disk
 - Manages plugin enable/disable state
@@ -53,7 +53,7 @@ These hooks are active and execute as part of the plugin lifecycle.
 ### 5. document-indexing.py
 **Purpose**: Auto-indexes documents when files are created or modified
 **Trigger**: FileCreated, FileModified (priority: 50)
-**Status**: ✅ Registered and active
+**Status**: [OK] Registered and active
 **Behavior**:
 - Watches project files for changes
 - Automatically indexes new/modified documents
@@ -68,7 +68,7 @@ These hooks are implemented but not currently registered in `hooks.json`. They e
 
 ### 1. error-handler.py
 **Purpose**: Graceful error handling with inline warnings
-**Status**: ❌ Not registered (optional feature)
+**Status**: [ERROR] Not registered (optional feature)
 **Implementation**: Complete
 **When to use**:
 - If you want custom error message formatting
@@ -97,7 +97,7 @@ These hooks are implemented but not currently registered in `hooks.json`. They e
 
 ### 2. update-rag-hook.py
 **Purpose**: Synchronizes plugin files and configuration
-**Status**: ❌ Not registered (functionality moved to `/update-rag` command)
+**Status**: [ERROR] Not registered (functionality moved to `/update-rag` command)
 **Implementation**: Complete
 **Notes**:
 - Functionality is now available via `/update-rag` slash command
@@ -130,24 +130,24 @@ These hooks are implemented but not currently registered in `hooks.json`. They e
 
 ```
 User Input
-    ↓
+    v
 [1] UserPromptSubmit hooks (priority order)
     ├─ slash-command-blocker.py (150) - Block commentary
     └─ user-prompt-submit.py (100)    - Route query
-    ↓
+    v
 Query Processing (RAG/MAF)
-    ↓
+    v
 Claude Response
-    ↓
+    v
 [2] ResponsePost hook
     └─ response-post.py (80) - Add citations
-    ↓
+    v
 [3] PluginStateChange hook (on settings change)
     └─ plugin-state-change.py (60) - Save state
-    ↓
+    v
 [4] File monitoring hooks
-    ├─ FileCreated → document-indexing.py (50)
-    └─ FileModified → document-indexing.py (50)
+    ├─ FileCreated -> document-indexing.py (50)
+    └─ FileModified -> document-indexing.py (50)
 ```
 
 ---
@@ -278,13 +278,13 @@ if __name__ == "__main__":
 
 | Hook | Status | Priority | Trigger | Purpose |
 |------|--------|----------|---------|---------|
-| slash-command-blocker.py | ✅ Active | 150 | UserPromptSubmit | Block commentary |
-| user-prompt-submit.py | ✅ Active | 100 | UserPromptSubmit | Query orchestration |
-| response-post.py | ✅ Active | 80 | ResponsePost | Citation injection |
-| plugin-state-change.py | ✅ Active | 60 | PluginStateChange | State persistence |
-| document-indexing.py | ✅ Active | 50 | FileCreated/Modified | Auto-indexing |
-| error-handler.py | ⚠️ Optional | 70 | (custom) | Error handling |
-| update-rag-hook.py | ⚠️ Optional | (custom) | (custom) | File sync |
+| slash-command-blocker.py | [OK] Active | 150 | UserPromptSubmit | Block commentary |
+| user-prompt-submit.py | [OK] Active | 100 | UserPromptSubmit | Query orchestration |
+| response-post.py | [OK] Active | 80 | ResponsePost | Citation injection |
+| plugin-state-change.py | [OK] Active | 60 | PluginStateChange | State persistence |
+| document-indexing.py | [OK] Active | 50 | FileCreated/Modified | Auto-indexing |
+| error-handler.py | [WARNING] Optional | 70 | (custom) | Error handling |
+| update-rag-hook.py | [WARNING] Optional | (custom) | (custom) | File sync |
 
 ---
 

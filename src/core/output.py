@@ -65,7 +65,7 @@ class Output:
             message: Success message
         """
         if self.verbosity >= Verbosity.NORMAL:
-            print(f"✓ {message}", file=sys.stdout)
+            print(f"[*] {message}", file=sys.stdout)
 
     def error(self, message: str):
         """Output error message.
@@ -74,7 +74,7 @@ class Output:
             message: Error message
         """
         # Always show errors
-        print(f"✗ Error: {message}", file=sys.stderr)
+        print(f"[*] Error: {message}", file=sys.stderr)
 
     def warning(self, message: str):
         """Output warning message.
@@ -83,7 +83,7 @@ class Output:
             message: Warning message
         """
         if self.verbosity >= Verbosity.NORMAL:
-            print(f"⚠ Warning: {message}", file=sys.stderr)
+            print(f"[WARNING] Warning: {message}", file=sys.stderr)
 
     def debug(self, message: str, **kwargs):
         """Output debug message.

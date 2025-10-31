@@ -122,15 +122,15 @@ Then configure in Claude Code manually (not recommended).
 
 ## Files Modified
 
-- `.mcp.json` → `.mcp.json.backup` (removed from active use)
-- `src/plugin/mcp/server.py` → `server.py.backup` (archived)
+- `.mcp.json` -> `.mcp.json.backup` (removed from active use)
+- `src/plugin/mcp/server.py` -> `server.py.backup` (archived)
 - No changes to documentation (already accurate)
 
 ## Testing Performed
 
-- Server startup verification: `python -m src.plugin.mcp.unified_server` ✓
-- Configuration structure validation ✓
-- Tool availability confirmed (14 tools) ✓
+- Server startup verification: `python -m src.plugin.mcp.unified_server` [*]
+- Configuration structure validation [*]
+- Tool availability confirmed (14 tools) [*]
 
 ## Notes
 

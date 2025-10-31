@@ -21,7 +21,7 @@ All notable changes to RAG-CLI are documented in this file. The format is based 
 - Added LICENSE file (MIT)
 - Added pyproject.toml (PEP 517/518)
 - Added .env.example template
-- Fixed all GitHub URLs (yourusername → ItMeDiaTech)
+- Fixed all GitHub URLs (yourusername -> ItMeDiaTech)
 - Synchronized versions to 1.2.0
 - Created config template files
 - Fixed Python package structure

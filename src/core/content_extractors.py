@@ -182,7 +182,7 @@ class ContentExtractor:
 
         # Remove common footer/header patterns
         content = re.sub(r'Copyright \d{4}.*$', '', content, flags=re.MULTILINE)
-        content = re.sub(r'©.*$', '', content, flags=re.MULTILINE)
+        content = re.sub(r'(c).*$', '', content, flags=re.MULTILINE)
 
         # Final cleanup
         content = content.strip()

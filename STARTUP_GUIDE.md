@@ -150,7 +150,7 @@ cd "C:\Users\DiaTech\Pictures\DiaTech\Programs\DocHub\development\RAG-CLI"
 
 2. **View Task History**:
    - Open Task Scheduler (search for "Task Scheduler")
-   - Navigate to: Task Scheduler Library → RAG-CLI-Startup
+   - Navigate to: Task Scheduler Library -> RAG-CLI-Startup
    - Check "History" tab for errors
 
 3. **Manual Start**:

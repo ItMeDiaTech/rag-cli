@@ -129,9 +129,9 @@ gen = factory.get("bert")
 **Solution:** Replaced with OrderedDict for O(1) operations.
 
 **Performance Improvement:**
-- Cache hit: O(n) → O(1)
-- Cache miss: O(n) → O(1)
-- Eviction: O(n) → O(1)
+- Cache hit: O(n) -> O(1)
+- Cache miss: O(n) -> O(1)
+- Eviction: O(n) -> O(1)
 
 **Usage:**
 ```python
@@ -198,7 +198,7 @@ from src.core.singleton_factory import SingletonFactory
 Prioritize refactoring based on impact:
 
 1. **High Priority:**
-   - Hook files using asyncio.run() → safe_asyncio_run()
+   - Hook files using asyncio.run() -> safe_asyncio_run()
    - Broad exception handlers in core modules
    - Singleton factory patterns
 

@@ -12,8 +12,8 @@ AGENT TYPES:
 
 COORDINATION PATTERNS:
 - Message passing: Agents communicate via typed messages
-- Pipeline: Sequential agent execution (A → B → C)
-- Parallel: Concurrent agent execution (A + B + C → Synthesize)
+- Pipeline: Sequential agent execution (A -> B -> C)
+- Parallel: Concurrent agent execution (A + B + C -> Synthesize)
 - Hierarchical: Parent-child agent delegation
 
 USAGE:

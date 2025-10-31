@@ -87,7 +87,7 @@ class QueryDecomposer:
         self.list_patterns = [
             r'^\s*\d+[\.)]\s+',  # Numbered lists: 1) or 1.
             r'^\s*[a-z][\.)]\s+',  # Lettered lists: a) or a.
-            r'^\s*[-•*]\s+',  # Bulleted lists
+            r'^\s*[-**]\s+',  # Bulleted lists
             r'\b(first|second|third|fourth|fifth)\b',  # Ordinal words
             r'\b(firstly|secondly|thirdly)\b'
         ]
@@ -271,7 +271,7 @@ class QueryDecomposer:
         sub_queries = []
 
         # Strategy 1: Split by numbered/bulleted lists
-        list_pattern = r'(?:^|\n)\s*(?:\d+[\.)]|[a-z][\.)]|[-•*])\s+(.+?)(?=(?:\n\s*(?:\d+[\.)]|[a-z][\.)]|[-•*]))|$)'
+        list_pattern = r'(?:^|\n)\s*(?:\d+[\.)]|[a-z][\.)]|[-**])\s+(.+?)(?=(?:\n\s*(?:\d+[\.)]|[a-z][\.)]|[-**]))|$)'
         list_matches = re.findall(list_pattern, query, re.MULTILINE)
 
         if len(list_matches) >= 2:
@@ -357,7 +357,7 @@ class QueryDecomposer:
 
             for line in lines:
                 # Match patterns like "1. ", "- ", etc.
-                match = re.match(r'^\s*(?:\d+[\.)]|[-•*])\s+(.+)$', line)
+                match = re.match(r'^\s*(?:\d+[\.)]|[-**])\s+(.+)$', line)
                 if match:
                     sub_query = match.group(1).strip()
                     if len(sub_query) > 10:  # Filter short fragments

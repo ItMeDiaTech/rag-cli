@@ -52,7 +52,7 @@ Configure embedded Multi-Agent Framework (MAF) features for RAG-CLI.
 ## Output
 
 When successful, displays:
-- ✅ MAF Status (enabled/disabled)
+- [OK] MAF Status (enabled/disabled)
 - Available Agents (7 total: debugger, developer, reviewer, tester, architect, documenter, optimizer)
 - Execution Strategy (parallel/sequential)
 - Timeout Configuration

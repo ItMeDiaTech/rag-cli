@@ -40,7 +40,7 @@ class RichOutput:
 
         # Normal mode: simple output
         if self.output.verbosity == Verbosity.NORMAL:
-            self.console.print(f"[green]✓[/green] Found {count} result{'s' if count != 1 else ''} ({time_ms:.0f}ms)")
+            self.console.print(f"[green][*][/green] Found {count} result{'s' if count != 1 else ''} ({time_ms:.0f}ms)")
             return
 
         # Verbose/Debug mode: table output
@@ -79,13 +79,13 @@ class RichOutput:
         if enhanced:
             if self.output.verbosity >= Verbosity.VERBOSE:
                 self.console.print(Panel(
-                    f"[green]✓[/green] Query enhanced with {doc_count} document{'s' if doc_count != 1 else ''}\n"
+                    f"[green][*][/green] Query enhanced with {doc_count} document{'s' if doc_count != 1 else ''}\n"
                     f"[dim]Original:[/dim] {original_query[:80]}...",
                     title="RAG Enhancement",
                     border_style="green"
                 ))
             else:
-                self.console.print(f"[green]✓[/green] Enhanced with {doc_count} doc{'s' if doc_count != 1 else ''}")
+                self.console.print(f"[green][*][/green] Enhanced with {doc_count} doc{'s' if doc_count != 1 else ''}")
         else:
             if self.output.verbosity >= Verbosity.VERBOSE:
                 self.console.print("[dim]RAG enhancement skipped[/dim]")
@@ -181,7 +181,7 @@ class RichOutput:
                 border_style="red"
             ))
         else:
-            self.console.print(f"[red]✗ Error:[/red] {error_msg}")
+            self.console.print(f"[red][*] Error:[/red] {error_msg}")
 
     def print_warning(self, warning_msg: str):
         """Print formatted warning message.
@@ -190,7 +190,7 @@ class RichOutput:
             warning_msg: Warning message
         """
         if self.output.verbosity >= Verbosity.NORMAL:
-            self.console.print(f"[yellow]⚠ Warning:[/yellow] {warning_msg}")
+            self.console.print(f"[yellow][WARNING] Warning:[/yellow] {warning_msg}")
 
     def print_success(self, success_msg: str):
         """Print formatted success message.
@@ -199,7 +199,7 @@ class RichOutput:
             success_msg: Success message
         """
         if self.output.verbosity >= Verbosity.NORMAL:
-            self.console.print(f"[green]✓[/green] {success_msg}")
+            self.console.print(f"[green][*][/green] {success_msg}")
 
     def print_service_status(self, services: Dict[str, Any]):
         """Print formatted service status table.
