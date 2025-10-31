@@ -583,8 +583,9 @@ if __name__ == '__main__':
     # Start simulation for testing (comment out in production)
     simulate_data()
 
+    # SECURITY: Bind to localhost only to prevent network access
     app.run(
-        host='0.0.0.0',
+        host='127.0.0.1',
         port=DASHBOARD_PORT,
         debug=False,
         threaded=True

@@ -654,4 +654,7 @@ if __name__ == '__main__':
     sim_thread.start()
 
     # Start dashboard
-    dashboard.start(debug=True)
+    # SECURITY: Only enable debug mode in development
+    import os
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    dashboard.start(debug=debug_mode)

@@ -101,8 +101,9 @@ Mode: {'Simulation (Demo Data)' if simulation else 'Production'}
         print("Press Ctrl+C to stop\n")
 
         # Run Flask app
+        # SECURITY: Bind to localhost only to prevent network access
         app.run(
-            host='0.0.0.0',
+            host='127.0.0.1',
             port=port,
             debug=debug,
             threaded=True

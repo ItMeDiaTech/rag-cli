@@ -6,7 +6,7 @@ import asyncio
 import hashlib
 import json
 import logging
-import pickle
+# import pickle  # SECURITY: Removed - using safe numpy serialization instead
 import sqlite3
 import time
 from dataclasses import dataclass
@@ -370,7 +370,8 @@ class MemoryManager:
                 memory = Memory(
                     id=memory_id,
                     content=content,
-                    embedding=pickle.loads(embedding_blob) if embedding_blob else None,
+                    # SECURITY FIX: Use safe numpy deserialization instead of pickle
+                    embedding=np.frombuffer(embedding_blob, dtype=np.float32) if embedding_blob else None,
                     metadata=json.loads(metadata_str) if metadata_str else {},
                     timestamp=timestamp,
                     importance=importance,

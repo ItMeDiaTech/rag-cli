@@ -572,16 +572,33 @@ def flask_logs():
 def submit_event():
     """Accept event submissions from external processes (hooks, etc.)."""
     try:
-        event_data = request.get_json()
+        # SECURITY: Limit JSON size to prevent DoS
+        content_length = request.content_length
+        if content_length and content_length > 10240:  # 10KB limit
+            return jsonify({"error": "Request too large (max 10KB)"}), 413
+
+        event_data = request.get_json(force=False, cache=False)
 
         if not event_data:
             return jsonify({"error": "No event data provided"}), 400
 
+        # SECURITY: Validate event_type length and characters
         event_type = event_data.get('event_type')
-        data = event_data.get('data', {})
-
         if not event_type:
             return jsonify({"error": "event_type is required"}), 400
+
+        # Ensure event_type is a string and reasonable length
+        if not isinstance(event_type, str) or len(event_type) > 100:
+            return jsonify({"error": "Invalid event_type"}), 400
+
+        # SECURITY: Validate data is a dictionary and limit properties
+        data = event_data.get('data', {})
+        if not isinstance(data, dict):
+            return jsonify({"error": "data must be a dictionary"}), 400
+
+        # Limit number of properties to prevent memory exhaustion
+        if len(data) > 50:
+            return jsonify({"error": "Too many data properties (max 50)"}), 400
 
         # Emit the event to all subscribers
         metrics_collector.emit_event(event_type, data)
@@ -641,8 +658,19 @@ def stream_events():
 @app.route('/api/events/history')
 def get_event_history():
     """Get recent event history."""
+    # SECURITY: Validate category against allowed values
+    allowed_categories = ['all', 'activity', 'reasoning', 'query_enhancement']
     category = request.args.get('category', 'all')
-    limit = int(request.args.get('limit', 50))
+    if category not in allowed_categories:
+        return jsonify({"error": "Invalid category parameter"}), 400
+
+    # SECURITY: Validate and bound limit parameter to prevent DoS
+    try:
+        limit = int(request.args.get('limit', 50))
+        # Bound limit between 1 and 1000 to prevent memory exhaustion
+        limit = max(1, min(limit, 1000))
+    except (ValueError, TypeError):
+        limit = 50
 
     if category == 'activity':
         events = list(metrics_collector.activity_events)[-limit:]
@@ -681,6 +709,15 @@ def get_latency_stats():
 @app.route('/api/latency/<operation>')
 def get_operation_latency(operation: str):
     """Get latency statistics for a specific operation."""
+    # SECURITY: Validate operation parameter
+    if not operation or len(operation) > 100:
+        return jsonify({"error": "Invalid operation parameter"}), 400
+
+    # Sanitize operation string - only allow alphanumeric, underscore, dash
+    import re
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', operation):
+        return jsonify({"error": "Invalid operation format"}), 400
+
     try:
         from monitoring.latency_tracker import get_latency_tracker
 
@@ -774,7 +811,8 @@ if __name__ == "__main__":
 
     try:
         # Use Flask dev server with threading for SSE support
-        app.run(host="0.0.0.0", port=9999, debug=False, threaded=True)
+        # SECURITY: Bind to localhost only to prevent network access
+        app.run(host="127.0.0.1", port=9999, debug=False, threaded=True)
     except KeyboardInterrupt:
         print("\nShutting down...")
         sys.exit(0)
