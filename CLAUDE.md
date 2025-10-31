@@ -24,6 +24,7 @@ RAG-CLI is a local Retrieval-Augmented Generation system designed as a Claude Co
 RAG-CLI/
 ├── src/                             # Package root (installed as Python package)
 │   ├── core/                        # Core RAG functionality
+│   │   ├── constants.py             # Centralized configuration constants
 │   │   ├── document_processor.py    # Document chunking (400-500 tokens)
 │   │   ├── embeddings.py            # sentence-transformers/all-MiniLM-L6-v2
 │   │   ├── vector_store.py          # FAISS operations
@@ -145,42 +146,65 @@ pytest tests/test_integration.py -v
 
 ## Core Implementation Details
 
+### 0. Global Constants (core/constants.py)
+Centralized configuration values for easier maintenance and tuning:
+- **Cache Configuration**: `TCP_CHECK_CACHE_SECONDS`, `RESPONSE_CACHE_MAX_SIZE`, `EMBEDDING_CACHE_SIZE`
+- **Token Estimation**: `CHARS_PER_TOKEN`, `TOKEN_ESTIMATION_RATIO`
+- **Search Parameters**: `DEFAULT_TOP_K`, `MAX_TOP_K`, `MAX_QUERY_LENGTH`
+- **Retrieval Weights**: `DEFAULT_VECTOR_WEIGHT` (0.7), `DEFAULT_KEYWORD_WEIGHT` (0.3)
+- **File Processing**: `CHUNK_SIZE_TOKENS` (500), `CHUNK_OVERLAP_TOKENS` (100), `MAX_FILE_SIZE_MB`
+- **Vector Store Thresholds**: `HNSW_THRESHOLD_VECTORS` (2000), `IVF_THRESHOLD_VECTORS` (1M)
+- **Performance Tuning**: `DEFAULT_BATCH_SIZE` (32), `MAX_WORKERS` (4)
+- **Monitoring Limits**: `MAX_EVENT_HISTORY`, `METRICS_HISTORY_SIZE`
+- **API Limits**: `TAVILY_FREE_TIER_LIMIT`, `CLAUDE_RATE_LIMIT_REQUESTS`
+- **Timeouts**: `DEFAULT_HTTP_TIMEOUT`, `EMBEDDING_TIMEOUT`, `SEARCH_TIMEOUT`
+
+All magic numbers throughout the codebase should reference these constants for consistency and maintainability.
+
 ### 1. Document Processing (core/document_processor.py)
-- Chunk size: 400-500 tokens
-- Overlap: 10-20% (50-100 tokens)
+- Chunk size: `CHUNK_SIZE_TOKENS` (500 tokens)
+- Overlap: `CHUNK_OVERLAP_TOKENS` (100 tokens, 20%)
 - Use RecursiveCharacterTextSplitter from langchain
 - Add contextual headers (document title, section)
 - Support formats: MD, PDF, DOCX, HTML, TXT
+- Max file size: `MAX_FILE_SIZE_MB` (10 MB)
 
 ### 2. Embeddings (core/embeddings.py)
 - Model: sentence-transformers/all-MiniLM-L6-v2
 - Dimensions: 384
-- Batch processing for efficiency
-- LRU cache for repeated queries
+- Batch processing: `DEFAULT_BATCH_SIZE` (32)
+- LRU cache for repeated queries: `EMBEDDING_CACHE_SIZE` (1000)
 
 ### 3. Vector Store (core/vector_store.py)
-- FAISS IndexFlatL2 for <100K vectors
-- FAISS IndexHNSWFlat for 100K-1M vectors
-- Save/load functionality
+- FAISS IndexFlatL2 for <`HNSW_THRESHOLD_VECTORS` (2000 vectors)
+- FAISS IndexHNSWFlat for 2K-1M vectors (threshold: `HNSW_THRESHOLD_VECTORS`)
+- FAISS IVF for >`IVF_THRESHOLD_VECTORS` (1M+ vectors)
+- Save/load functionality with automatic metadata_dict rebuilding
 - Metadata storage with pickle
 
 ### 4. Retrieval Pipeline (core/retrieval_pipeline.py)
-- Hybrid search: 0.7 vector + 0.3 keyword
-- Two-stage: retrieve 10, rerank to 5
+- Hybrid search: `DEFAULT_VECTOR_WEIGHT` (0.7) + `DEFAULT_KEYWORD_WEIGHT` (0.3)
+- Default results: `DEFAULT_TOP_K` (5), max: `MAX_TOP_K` (100)
+- Two-stage: retrieve 2×top_k, rerank to top_k
 - Cross-encoder: cross-encoder/ms-marco-MiniLM-L-6-v2
-- Target latency: <100ms for search
+- Target latency: <100ms (configurable via `SEARCH_TIMEOUT`)
 
 ### 5. Claude Integration (core/claude_integration.py)
 - Model: claude-haiku-4-5-20251001
 - Stream responses for better UX
 - Context assembly from retrieved chunks
 - Prompt template with citations
+- Response caching: `RESPONSE_CACHE_MAX_SIZE` (100)
+- Rate limiting: `CLAUDE_RATE_LIMIT_REQUESTS` (100/min)
 
 ### 6. Monitoring (monitoring/tcp_server.py)
 - TCP server on port 9999
 - Endpoints: /status, /logs, /metrics
 - JSON responses
 - Real-time log streaming
+- Event history: `MAX_EVENT_HISTORY` (100)
+- Metrics retention: `METRICS_HISTORY_SIZE` (1000)
+- Connection caching: `TCP_CHECK_CACHE_SECONDS` (30)
 
 ## Import Guidelines
 

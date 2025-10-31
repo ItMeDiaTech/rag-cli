@@ -317,7 +317,7 @@ RAG-CLI implements a sophisticated document retrieval pipeline:
 1. **Document Ingestion**
    - Supports: Markdown, PDF, DOCX, HTML, TXT
    - Automatic metadata extraction
-   - Intelligent chunking (400-500 tokens with 10% overlap)
+   - Intelligent chunking (500 tokens with 100-token overlap, configurable via `core.constants`)
 
 2. **Embedding Generation**
    - Model: `sentence-transformers/all-MiniLM-L6-v2`
@@ -326,9 +326,9 @@ RAG-CLI implements a sophisticated document retrieval pipeline:
    - Cached for repeat queries
 
 3. **Intelligent Retrieval**
-   - Hybrid search: 70% semantic + 30% keyword matching
+   - Hybrid search: 70% semantic + 30% keyword (configurable via `core.constants`)
    - Cross-encoder reranking for accuracy
-   - Returns top-K results with confidence scores
+   - Returns top-K results with confidence scores (default: 5, max: 100)
    - Sub-100ms retrieval time
 
 4. **Query Enhancement**
@@ -471,6 +471,7 @@ export RAG_CLI_MODE="claude_code"  # or "standalone" or "hybrid"
 RAG-CLI/
 ├── src/
 │   ├── core/               # Core RAG pipeline
+│   │   ├── constants.py    # Global configuration constants
 │   │   ├── embeddings.py   # Sentence transformer integration
 │   │   ├── vector_store.py # FAISS vector operations
 │   │   ├── document_processor.py # Document chunking
@@ -778,12 +779,23 @@ python scripts/retrieve.py "test query" --verbose
 
 ### Project Structure
 
-- `src/core/` - Core RAG components
+- `src/core/` - Core RAG components (includes `constants.py` for centralized configuration)
 - `src/monitoring/` - Logging and metrics
 - `src/plugin/` - Claude Code integration
 - `scripts/` - CLI utilities
 - `tests/` - Test suites
 - `config/` - Configuration files
+
+### Configuration via Constants
+
+RAG-CLI uses a centralized constants module (`core.constants`) for all tunable parameters:
+- **Performance**: Batch sizes, worker counts, cache sizes
+- **Search**: Top-K limits, hybrid search weights, query length limits
+- **Processing**: Chunk sizes, overlap ratios, file size limits
+- **Thresholds**: Vector store index transitions (Flat → HNSW → IVF)
+- **Timeouts**: HTTP, embedding generation, search operations
+
+This design makes it easy to tune performance without modifying code throughout the codebase.
 
 ### Contributing
 

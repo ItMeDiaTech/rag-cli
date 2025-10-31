@@ -390,48 +390,331 @@ def format_enhanced_query(query: str, documents: List[Dict[str, Any]]) -> str:
     adapter = get_adapter()
     return adapter.format_hook_enhancement(documents, query)
 
-def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Process the UserPromptSubmit hook event.
+
+# ==================== Process Hook Helper Functions ====================
+# These functions break down the complex process_hook() logic into
+# manageable, single-responsibility components for better maintainability.
+
+def _start_monitoring_services(logger) -> None:
+    """Ensure monitoring services are running.
+
+    Args:
+        logger: Logger instance
+
+    Note:
+        Failures are logged but don't stop execution.
+    """
+    try:
+        ensure_services_running()
+    except Exception as e:
+        logger.debug(f"Service startup check failed: {e}")
+
+
+def _validate_and_extract_query(event: Dict[str, Any]) -> Optional[str]:
+    """Extract and validate query from event.
 
     Args:
         event: Hook event data
 
     Returns:
-        Modified event data
+        Query string if valid, None otherwise
+    """
+    query = event.get("prompt", "")
+    if not query:
+        return None
+    return query
+
+
+def _emit_query_received_event(query: str) -> None:
+    """Emit activity event for query received.
+
+    Args:
+        query: User query string
+    """
+    submit_event_to_server("activity", {
+        "activity": "query_received",
+        "component": "user_prompt_hook",
+        "metadata": {
+            "query_length": len(query),
+            "word_count": len(query.split())
+        }
+    })
+
+
+def _emit_skip_reasoning(skip_reason: str, settings: Dict[str, Any],
+                         classification: Optional[QueryClassification],
+                         query: str) -> None:
+    """Emit reasoning event when query enhancement is skipped.
+
+    Args:
+        skip_reason: Human-readable reason for skipping
+        settings: RAG settings dictionary
+        classification: Query classification result
+        query: Original query string
+    """
+    reasoning_context = {
+        "rag_enabled": settings.get("enabled"),
+        "query_word_count": len(query.split())
+    }
+
+    if classification:
+        reasoning_context.update({
+            "intent": classification.primary_intent.value,
+            "confidence": classification.confidence,
+            "is_technical": classification.is_technical
+        })
+
+    submit_event_to_server("reasoning", {
+        "reasoning": f"Query enhancement skipped: {skip_reason}",
+        "component": "user_prompt_hook",
+        "context": reasoning_context
+    })
+
+
+def _orchestrate_retrieval(query: str, settings: Dict[str, Any],
+                           classification: Optional[QueryClassification]) -> Tuple[List, str, Any]:
+    """Attempt orchestrated retrieval with multi-agent support.
+
+    Args:
+        query: User query string
+        settings: RAG settings dictionary
+        classification: Query classification result
+
+    Returns:
+        Tuple of (documents, strategy_used, orchestration_result)
+
+    Raises:
+        Exception: If orchestration fails (caller should handle)
+    """
+    from core.agent_orchestrator import AgentOrchestrator
+
+    orchestrator = AgentOrchestrator()
+
+    # Run async orchestration
+    orchestration_result = asyncio.run(orchestrator.orchestrate(
+        query=query,
+        top_k=settings.get("context_limit", 3),
+        use_cache=True
+    ))
+
+    # Extract documents
+    documents = []
+    strategy_used = "retrieve_context_fallback"
+
+    if orchestration_result.rag_results:
+        documents = orchestration_result.rag_results
+        strategy_used = orchestration_result.strategy_used.value
+
+    return documents, strategy_used, orchestration_result
+
+
+def _format_orchestration_summary(strategy_used: str, classification: Optional[QueryClassification],
+                                  orchestration_result: Any, documents: List) -> str:
+    """Format orchestration output for display.
+
+    Args:
+        strategy_used: Strategy name used
+        classification: Query classification
+        orchestration_result: Orchestration result object
+        documents: Retrieved documents list
+
+    Returns:
+        Formatted markdown summary string
+    """
+    from monitoring.output_formatter import OutputFormatter
+
+    formatter = OutputFormatter(verbose=False)
+    formatted_summary = formatter.format_header("Query Processing", 2)
+    formatted_summary += f"**Strategy:** {strategy_used}\n"
+    formatted_summary += f"**Intent:** {classification.primary_intent.value if classification else 'unknown'}\n"
+    formatted_summary += f"**Confidence:** {orchestration_result.confidence:.1%}\n"
+    formatted_summary += f"**Documents:** {len(documents)}\n"
+
+    if orchestration_result.maf_result:
+        formatted_summary += f"**MAF Agent:** {orchestration_result.maf_result.agent_name}\n"
+
+    return formatted_summary
+
+
+def _emit_orchestration_reasoning(strategy_used: str, classification: Optional[QueryClassification],
+                                  orchestration_result: Any, documents: List,
+                                  formatted_summary: str) -> None:
+    """Emit reasoning event for orchestration.
+
+    Args:
+        strategy_used: Strategy name
+        classification: Query classification
+        orchestration_result: Orchestration result
+        documents: Retrieved documents
+        formatted_summary: Formatted summary string
+    """
+    submit_event_to_server("reasoning", {
+        "reasoning": f"Agent orchestration used strategy: {strategy_used}. "
+        f"Classification: {classification.primary_intent.value if classification else 'unknown'}. "
+        f"Confidence: {orchestration_result.confidence:.2f}. "
+        f"Retrieved {len(documents)} documents.",
+        "component": "agent_orchestrator",
+        "formatted_output": formatted_summary,
+        "context": {
+            "strategy": strategy_used,
+            "intent": classification.primary_intent.value if classification else None,
+            "confidence": orchestration_result.confidence,
+            "documents_count": len(documents),
+            "maf_used": orchestration_result.maf_result is not None
+        }
+    })
+
+
+def _emit_query_enhancement_event(query: str, enhanced_query: str, documents: List,
+                                  strategy_used: str, use_orchestrator: bool) -> None:
+    """Emit query enhancement event with document details.
+
+    Args:
+        query: Original query
+        enhanced_query: Enhanced query with context
+        documents: Retrieved documents
+        strategy_used: Strategy name
+        use_orchestrator: Whether orchestrator was used
+    """
+    doc_summaries = [{
+        "source": doc.source,
+        "score": doc.score,
+        "content_preview": doc.text[:100]
+    } for doc in documents[:3]]
+
+    submit_event_to_server("query_enhancement", {
+        "original_query": query,
+        "enhanced_query": enhanced_query,
+        "documents_count": len(doc_summaries),
+        "documents": doc_summaries,
+        "reasoning": f"Enhanced query with {len(documents)} documents. "
+        f"Orchestration Strategy: {strategy_used}. "
+        f"Retrieved using {'agent orchestration' if use_orchestrator else 'fallback RAG'}. "
+        "Context injected as markdown-formatted knowledge base references."
+    })
+
+
+def _emit_context_assembled_event(query: str, enhanced_query: str,
+                                  documents: List, retrieval_time: float) -> None:
+    """Emit activity event for context assembly.
+
+    Args:
+        query: Original query
+        enhanced_query: Enhanced query
+        documents: Retrieved documents
+        retrieval_time: Retrieval time in milliseconds
+    """
+    submit_event_to_server("activity", {
+        "activity": "context_assembled",
+        "component": "user_prompt_hook",
+        "metadata": {
+            "original_query_length": len(query),
+            "enhanced_query_length": len(enhanced_query),
+            "documents_count": len(documents),
+            "retrieval_time_ms": retrieval_time
+        }
+    })
+
+
+def _cache_retrieval_results(documents: List, query: str, event: Dict[str, Any],
+                             project_root: Path, logger) -> None:
+    """Cache retrieval results for ResponsePost hook.
+
+    Args:
+        documents: Retrieved documents
+        query: Original query
+        event: Hook event
+        project_root: Project root path
+        logger: Logger instance
+
+    Note:
+        Failures are logged but don't stop execution.
+    """
+    try:
+        import hashlib
+
+        session_id = event.get("session_id", "unknown")
+        prompt_hash = hashlib.md5(query.encode()).hexdigest()[:16]
+        cache_key = f"{session_id}_{prompt_hash}"
+
+        cache_dir = project_root / "data" / "cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{cache_key}.json"
+
+        # Save retrieval results
+        cache_data = {
+            "documents": [{
+                "source": doc.source,
+                "score": doc.score,
+                "text": doc.text,
+                "metadata": doc.metadata
+            } for doc in documents],
+            "timestamp": time.time()
+        }
+
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, indent=2)
+
+        logger.debug(f"Cached retrieval results: {cache_key}")
+
+    except Exception as cache_error:
+        logger.warning(f"Failed to cache retrieval results: {cache_error}")
+
+
+def _update_event_metadata(event: Dict[str, Any], enhanced_query: str,
+                           query: str, documents: List, retrieval_time: float) -> None:
+    """Update event with enhancement metadata.
+
+    Args:
+        event: Hook event (modified in place)
+        enhanced_query: Enhanced query string
+        query: Original query
+        documents: Retrieved documents
+        retrieval_time: Retrieval time in milliseconds
+    """
+    event["prompt"] = enhanced_query
+    event["metadata"] = event.get("metadata", {})
+    event["metadata"]["rag_enhanced"] = True
+    event["metadata"]["documents_used"] = len(documents)
+    event["metadata"]["retrieval_time_ms"] = retrieval_time
+    event["metadata"]["original_prompt"] = query
+
+
+# ==================== Main Process Hook Function ====================
+
+def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
+    """Process the UserPromptSubmit hook event.
+
+    This function has been refactored into smaller helper functions for better
+    maintainability. Each helper function handles a single responsibility.
+
+    Args:
+        event: Hook event data
+
+    Returns:
+        Modified event data with RAG enhancement if applicable
     """
     start_time = time.time()
     logger.info("Hook execution started", hook="UserPromptSubmit")
 
     try:
-        # Ensure monitoring services are running (auto-start if needed)
-        try:
-            ensure_services_running()
-        except Exception as e:
-            logger.debug(f"Service startup check failed: {e}")
+        # Step 1: Start monitoring services
+        _start_monitoring_services(logger)
 
-        # Extract query from event
-        query = event.get("prompt", "")
+        # Step 2: Extract and validate query
+        query = _validate_and_extract_query(event)
         if not query:
             return event
 
-        # Emit activity event: query received
-        submit_event_to_server("activity", {
-            "activity": "query_received",
-            "component": "user_prompt_hook",
-            "metadata": {
-                "query_length": len(query),
-                "word_count": len(query.split())
-            }
-        })
+        # Step 3: Emit query received event
+        _emit_query_received_event(query)
 
-        # Load settings
+        # Step 4: Load settings and check if enhancement should proceed
         settings = load_rag_settings()
-
-        # Check if we should enhance (now returns tuple)
         should_enhance, classification = should_enhance_query(query, settings)
 
         if not should_enhance:
-            # Build skip reason
+            # Build skip reason and emit
             skip_reason = "Criteria not met"
             if classification:
                 skip_reason = f"Classification: {classification.primary_intent.value} (conf: {classification.confidence:.2f})"
@@ -442,30 +725,11 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                          reason=skip_reason,
                          rag_enabled=settings.get("enabled", False))
 
-            # Emit reasoning for skipping
-            reasoning_context = {
-                "rag_enabled": settings.get("enabled"),
-                "query_word_count": len(query.split())
-            }
-            if classification:
-                reasoning_context.update({
-                    "intent": classification.primary_intent.value,
-                    "confidence": classification.confidence,
-                    "is_technical": classification.is_technical
-                })
-
-            submit_event_to_server("reasoning", {
-                "reasoning": f"Query enhancement skipped: {skip_reason}",
-                "component": "user_prompt_hook",
-                "context": reasoning_context
-            })
-
+            _emit_skip_reasoning(skip_reason, settings, classification, query)
             return event
 
-        # Retrieve context with agent orchestration (falls back to simple RAG if orchestrator unavailable)
-        start_time = time.time()
-
-        # Try orchestrated retrieval with multi-agent support
+        # Step 5: Retrieve context with orchestration or fallback
+        retrieval_start = time.time()
         use_orchestrator = settings.get("enable_agent_orchestration", True)
         documents = []
         orchestration_result = None
@@ -473,53 +737,18 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         if use_orchestrator:
             try:
-                from core.agent_orchestrator import AgentOrchestrator
+                documents, strategy_used, orchestration_result = _orchestrate_retrieval(
+                    query, settings, classification
+                )
 
-                # Initialize orchestrator
-                orchestrator = AgentOrchestrator()
-
-                # Run async orchestration
-                orchestration_result = asyncio.run(orchestrator.orchestrate(
-                    query=query,
-                    top_k=settings.get("context_limit", 3),
-                    use_cache=True
-                ))
-
-                # Extract documents from orchestration result
-                if orchestration_result.rag_results:
-                    documents = orchestration_result.rag_results
-                    strategy_used = orchestration_result.strategy_used.value
-
-                    # Format orchestration output for clean display
-                    from monitoring.output_formatter import OutputFormatter
-                    formatter = OutputFormatter(verbose=False)
-
-                    # Create formatted summary based on strategy
-                    formatted_summary = formatter.format_header("Query Processing", 2)
-                    formatted_summary += f"**Strategy:** {strategy_used}\n"
-                    formatted_summary += f"**Intent:** {classification.primary_intent.value if classification else 'unknown'}\n"
-                    formatted_summary += f"**Confidence:** {orchestration_result.confidence:.1%}\n"
-                    formatted_summary += f"**Documents:** {len(documents)}\n"
-
-                    if orchestration_result.maf_result:
-                        formatted_summary += f"**MAF Agent:** {orchestration_result.maf_result.agent_name}\n"
-
-                    # Emit orchestration reasoning with formatted output
-                    submit_event_to_server("reasoning", {
-                        "reasoning": f"Agent orchestration used strategy: {strategy_used}. "
-                        f"Classification: {classification.primary_intent.value if classification else 'unknown'}. "
-                        f"Confidence: {orchestration_result.confidence:.2f}. "
-                        f"Retrieved {len(documents)} documents.",
-                        "component": "agent_orchestrator",
-                        "formatted_output": formatted_summary,
-                        "context": {
-                            "strategy": strategy_used,
-                            "intent": classification.primary_intent.value if classification else None,
-                            "confidence": orchestration_result.confidence,
-                            "documents_count": len(documents),
-                            "maf_used": orchestration_result.maf_result is not None
-                        }
-                    })
+                # Format and emit orchestration summary
+                formatted_summary = _format_orchestration_summary(
+                    strategy_used, classification, orchestration_result, documents
+                )
+                _emit_orchestration_reasoning(
+                    strategy_used, classification, orchestration_result,
+                    documents, formatted_summary
+                )
 
                 logger.info("Orchestrated retrieval complete",
                             strategy=strategy_used,
@@ -535,80 +764,23 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
             documents = retrieve_context(query, settings, classification=classification)
             strategy_used = "rag_only_fallback"
 
-        retrieval_time = (time.time() - start_time) * 1000
+        retrieval_time = (time.time() - retrieval_start) * 1000
 
+        # Step 6: Process retrieved documents
         if documents:
             # Format enhanced query
             enhanced_query = format_enhanced_query(query, documents)
 
-            # Emit query enhancement event with full details
-            doc_summaries = [{
-                "source": doc.source,
-                "score": doc.score,
-                "content_preview": doc.text[:100]
-            } for doc in documents[:3]]
+            # Emit query enhancement and context assembly events
+            _emit_query_enhancement_event(query, enhanced_query, documents,
+                                         strategy_used, use_orchestrator)
+            _emit_context_assembled_event(query, enhanced_query, documents, retrieval_time)
 
-            submit_event_to_server("query_enhancement", {
-                "original_query": query,
-                "enhanced_query": enhanced_query,
-                "documents_count": len(doc_summaries),
-                "documents": doc_summaries,
-                "reasoning": f"Enhanced query with {len(documents)} documents. "
-                f"Orchestration Strategy: {strategy_used}. "
-                f"Retrieved using {'agent orchestration' if use_orchestrator else 'fallback RAG'}. "
-                "Context injected as markdown-formatted knowledge base references."
-            })
+            # Cache results for ResponsePost hook
+            _cache_retrieval_results(documents, query, event, project_root, logger)
 
-            # Emit activity event: context assembled
-            submit_event_to_server("activity", {
-                "activity": "context_assembled",
-                "component": "user_prompt_hook",
-                "metadata": {
-                    "original_query_length": len(query),
-                    "enhanced_query_length": len(enhanced_query),
-                    "documents_count": len(documents),
-                    "retrieval_time_ms": retrieval_time
-                }
-            })
-
-            # Cache retrieval results for ResponsePost hook
-            try:
-                import hashlib
-                session_id = event.get("session_id", "unknown")
-                prompt_hash = hashlib.md5(query.encode()).hexdigest()[:16]
-                cache_key = f"{session_id}_{prompt_hash}"
-
-                cache_dir = project_root / "data" / "cache"
-                cache_dir.mkdir(parents=True, exist_ok=True)
-                cache_file = cache_dir / f"{cache_key}.json"
-
-                # Save retrieval results
-                cache_data = {
-                    "documents": [{
-                        "source": doc.source,
-                        "score": doc.score,
-                        "text": doc.text,
-                        "metadata": doc.metadata
-                    } for doc in documents],
-                    "timestamp": time.time()
-                }
-
-                with open(cache_file, 'w', encoding='utf-8') as f:
-                    json.dump(cache_data, f, indent=2)
-
-                logger.debug(f"Cached retrieval results: {cache_key}")
-
-            except Exception as cache_error:
-                logger.warning(f"Failed to cache retrieval results: {cache_error}")
-                # Continue execution even if caching fails
-
-            # Update event
-            event["prompt"] = enhanced_query
-            event["metadata"] = event.get("metadata", {})
-            event["metadata"]["rag_enhanced"] = True
-            event["metadata"]["documents_used"] = len(documents)
-            event["metadata"]["retrieval_time_ms"] = retrieval_time
-            event["metadata"]["original_prompt"] = query  # Store for ResponsePost hook
+            # Update event metadata
+            _update_event_metadata(event, enhanced_query, query, documents, retrieval_time)
 
             logger.info("Query enhanced with RAG",
                         original_length=len(query),

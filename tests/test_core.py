@@ -1,9 +1,12 @@
 """Core component tests for RAG-CLI - Simplified test suite."""
 
 import pytest
+import pytest_asyncio
+import asyncio
 import numpy as np
 import tempfile
 import shutil
+import time
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
@@ -108,6 +111,166 @@ class TestVectorStore:
         query_embedding = np.array([[0.1, 0.2, 0.3]])
         distances, indices = store.index.search(query_embedding, 1)
         assert len(indices[0]) == 1
+
+
+class TestVectorStoreAsync:
+    """Test async file I/O operations for vector store."""
+
+    @pytest.fixture
+    def temp_paths(self):
+        """Create temporary paths for testing."""
+        temp_dir = Path(tempfile.mkdtemp())
+        index_path = str(temp_dir / "test_vectors.index")
+        metadata_path = str(temp_dir / "test_metadata.json")
+
+        yield index_path, metadata_path
+
+        # Cleanup
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir)
+
+    @pytest.fixture
+    def mock_config(self):
+        """Create mock configuration."""
+        config = Mock()
+        config.vector_store.save_path = "./data/vectors/vectors.index"
+        config.vector_store.metadata_path = "./data/vectors/metadata.json"
+        config.vector_store.auto_save = False
+        config.vector_store.backup_enabled = False
+        config.vector_store.backup_count = 0
+        return config
+
+    @patch('core.vector_store.get_config')
+    def test_async_save_and_load(self, mock_get_config, temp_paths, mock_config):
+        """Test async save and load operations."""
+        mock_get_config.return_value = mock_config
+        index_path, metadata_path = temp_paths
+
+        # Create store and add data
+        store = FAISSVectorStore(dimension=3, index_type="flat")
+        embeddings = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        store.add(embeddings, texts=["text1", "text2"])
+
+        assert store.index.ntotal == 2
+
+        # Save using async method (wrapper for sync context)
+        store.save_async_sync_wrapper(path=index_path, metadata_path=metadata_path)
+
+        # Verify files were created
+        assert Path(index_path).exists()
+        assert Path(metadata_path).exists()
+
+        # Create new store and load
+        new_store = FAISSVectorStore(dimension=3, index_type="flat")
+        new_store.load_async_sync_wrapper(path=index_path, metadata_path=metadata_path)
+
+        assert new_store.index.ntotal == 2
+        assert len(new_store.metadata) == 2
+
+    @patch('core.vector_store.get_config')
+    def test_async_save_performance(self, mock_get_config, temp_paths, mock_config):
+        """Test async save is faster than sync save for large datasets."""
+        mock_get_config.return_value = mock_config
+        index_path, metadata_path = temp_paths
+
+        # Create store with moderate dataset
+        store = FAISSVectorStore(dimension=384, index_type="flat")
+
+        # Generate 1000 vectors
+        embeddings = np.random.rand(1000, 384).astype(np.float32)
+        texts = [f"text_{i}" for i in range(1000)]
+        store.add(embeddings, texts=texts)
+
+        # Measure sync save time
+        sync_start = time.perf_counter()
+        store.save(path=index_path, metadata_path=metadata_path)
+        sync_time = time.perf_counter() - sync_start
+
+        # Measure async save time
+        async_start = time.perf_counter()
+        store.save_async_sync_wrapper(path=index_path, metadata_path=metadata_path)
+        async_time = time.perf_counter() - async_start
+
+        # Async should be comparable or faster
+        # (Note: For small datasets, overhead might make it similar)
+        assert async_time <= sync_time * 1.5  # Allow 50% margin
+
+        print(f"\nSync save: {sync_time:.4f}s, Async save: {async_time:.4f}s")
+        print(f"Speedup: {sync_time / async_time:.2f}x")
+
+    @patch('core.vector_store.get_config')
+    def test_async_load_performance(self, mock_get_config, temp_paths, mock_config):
+        """Test async load is faster than sync load for large datasets."""
+        mock_get_config.return_value = mock_config
+        index_path, metadata_path = temp_paths
+
+        # Create and save dataset
+        store = FAISSVectorStore(dimension=384, index_type="flat")
+        embeddings = np.random.rand(1000, 384).astype(np.float32)
+        texts = [f"text_{i}" for i in range(1000)]
+        store.add(embeddings, texts=texts)
+        store.save(path=index_path, metadata_path=metadata_path)
+
+        # Measure sync load time
+        sync_store = FAISSVectorStore(dimension=384, index_type="flat")
+        sync_start = time.perf_counter()
+        sync_store.load(path=index_path, metadata_path=metadata_path)
+        sync_time = time.perf_counter() - sync_start
+
+        # Measure async load time
+        async_store = FAISSVectorStore(dimension=384, index_type="flat")
+        async_start = time.perf_counter()
+        async_store.load_async_sync_wrapper(path=index_path, metadata_path=metadata_path)
+        async_time = time.perf_counter() - async_start
+
+        # Both stores should have same data
+        assert async_store.index.ntotal == sync_store.index.ntotal
+        assert len(async_store.metadata) == len(sync_store.metadata)
+
+        # Async should be comparable or faster
+        assert async_time <= sync_time * 1.5  # Allow 50% margin
+
+        print(f"\nSync load: {sync_time:.4f}s, Async load: {async_time:.4f}s")
+        print(f"Speedup: {sync_time / async_time:.2f}x")
+
+    @pytest.mark.asyncio
+    @patch('core.vector_store.get_config')
+    async def test_native_async_save(self, mock_get_config, temp_paths, mock_config):
+        """Test native async save in async context."""
+        mock_get_config.return_value = mock_config
+        index_path, metadata_path = temp_paths
+
+        # Create store and add data
+        store = FAISSVectorStore(dimension=3, index_type="flat")
+        embeddings = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        store.add(embeddings, texts=["text1", "text2"])
+
+        # Save using native async method
+        await store.save_async(path=index_path, metadata_path=metadata_path)
+
+        # Verify files were created
+        assert Path(index_path).exists()
+        assert Path(metadata_path).exists()
+
+    @pytest.mark.asyncio
+    @patch('core.vector_store.get_config')
+    async def test_native_async_load(self, mock_get_config, temp_paths, mock_config):
+        """Test native async load in async context."""
+        mock_get_config.return_value = mock_config
+        index_path, metadata_path = temp_paths
+
+        # Create and save dataset
+        store = FAISSVectorStore(dimension=3, index_type="flat")
+        embeddings = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        store.add(embeddings, texts=["text1", "text2"])
+        await store.save_async(path=index_path, metadata_path=metadata_path)
+
+        # Load using native async method
+        new_store = FAISSVectorStore(dimension=3, index_type="flat")
+        await new_store.load_async(path=index_path, metadata_path=metadata_path)
+
+        assert new_store.index.ntotal == 2
+        assert len(new_store.metadata) == 2
 
 
 class TestDocumentProcessor:
