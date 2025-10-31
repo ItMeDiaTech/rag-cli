@@ -26,7 +26,9 @@ class MAFConfigCommand:
         """Initialize MAF config command."""
         self.maf = get_maf_connector()
         self.formatter = OutputFormatter()
-        self.config_file = plugin_root / "config" / "rag_settings.json"
+        # Navigate to project root: src -> RAG-CLI
+        project_root = plugin_root.parent
+        self.config_file = project_root / "config" / "rag_settings.json"
 
     def execute(self, option: Optional[str] = None) -> str:
         """Execute MAF configuration command.
@@ -91,7 +93,7 @@ class MAFConfigCommand:
         """
         try:
             config = self._load_config()
-            config["ma"]["enabled"] = True
+            config["maf"]["enabled"] = True
             config["orchestration"]["enable_maf"] = True
             self._save_config(config)
 
@@ -109,7 +111,7 @@ class MAFConfigCommand:
         """
         try:
             config = self._load_config()
-            config["ma"]["enabled"] = False
+            config["maf"]["enabled"] = False
             config["orchestration"]["enable_maf"] = False
             self._save_config(config)
 
@@ -199,7 +201,7 @@ class MAFConfigCommand:
                 return f"❌ Invalid mode '{mode}'. Use: PARALLEL or SEQUENTIAL"
 
             config = self._load_config()
-            config["ma"]["mode"] = mode.lower()
+            config["maf"]["mode"] = mode.lower()
             self._save_config(config)
 
             if mode == "PARALLEL":
