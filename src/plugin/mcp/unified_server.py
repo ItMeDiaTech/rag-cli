@@ -23,6 +23,13 @@ from monitoring.output_formatter import OutputFormatter
 
 logger = get_logger(__name__)
 
+# Resolve project root for path operations
+project_root = Path(__file__).resolve().parents[3]
+
+# Input validation constants
+MAX_QUERY_LENGTH = 10000
+MAX_TOP_K = 100
+
 class UnifiedMCPServer:
     """Unified MCP server combining RAG operations and service management."""
 
@@ -495,12 +502,20 @@ class UnifiedMCPServer:
 
     async def handle_rag_search(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle RAG search request."""
-        query = arguments.get("query", "")
-        top_k = arguments.get("top_k", 5)
-        use_llm = arguments.get("use_llm", True)
+        query = arguments.get("query", "").strip()
 
+        # Validate query
         if not query:
             return self.error_response(request_id, "Missing required parameter: query")
+        if len(query) > MAX_QUERY_LENGTH:
+            return self.error_response(request_id, f"Query too long (max {MAX_QUERY_LENGTH} characters)")
+
+        # Validate top_k
+        top_k = arguments.get("top_k", 5)
+        if not isinstance(top_k, int) or top_k < 1 or top_k > MAX_TOP_K:
+            return self.error_response(request_id, f"Invalid top_k (must be 1-{MAX_TOP_K})")
+
+        use_llm = arguments.get("use_llm", True)
 
         # Check if vector store exists
         vector_store_path = project_root / "data" / "vectors" / "faiss_index"

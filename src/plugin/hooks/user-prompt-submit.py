@@ -17,6 +17,14 @@ from typing import Dict, Any, Optional, List, Tuple
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
+# Initialize path resolution variables
+hook_file = Path(__file__).resolve()
+project_root = os.environ.get('RAG_CLI_ROOT')
+if project_root:
+    project_root = Path(project_root)
+else:
+    project_root = None
+
 # Could be in .claude/plugins/rag-cli (when synced to Claude Code)
 # or in development directory
 # Strategy 2: Try to find project root by walking up from hook location

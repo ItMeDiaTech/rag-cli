@@ -98,6 +98,7 @@ class FAISSVectorStore:
         # Initialize index and metadata
         self.index = self._create_index()
         self.metadata: List[VectorMetadata] = []
+        self.metadata_dict: Dict[str, VectorMetadata] = {}  # O(1) lookup by ID
         self.id_counter = 0
 
         # Lock configuration: thread-safe (default) or process-aware
@@ -132,10 +133,10 @@ class FAISSVectorStore:
             Recommended index type
         """
         # Updated thresholds based on 2024-2025 best practices:
-        # - Flat: < 10K vectors (exact search, simple)
-        # - HNSW: 10K-1M vectors (fast approximate search, 95%+ recall)
+        # - Flat: < 2K vectors (exact search, simple)
+        # - HNSW: 2K-1M vectors (fast approximate search, 95%+ recall)
         # - IVF: > 1M vectors (scalable but requires training)
-        if estimated_vectors < 10000:
+        if estimated_vectors < 2000:
             return "flat"
         elif estimated_vectors < 1000000:
             return "hnsw"
@@ -242,6 +243,7 @@ class FAISSVectorStore:
                     metadata=metadata[i] if metadata else {}
                 )
                 self.metadata.append(meta)
+                self.metadata_dict[meta.id] = meta  # Add to dictionary for O(1) lookup
 
             # Record metrics
             elapsed = time.time() - start_time
@@ -322,7 +324,7 @@ class FAISSVectorStore:
             return results
 
     def get_by_id(self, vector_id: str) -> Optional[VectorMetadata]:
-        """Get metadata by vector ID.
+        """Get metadata by vector ID with O(1) lookup.
 
         Args:
             vector_id: ID of the vector
@@ -330,10 +332,7 @@ class FAISSVectorStore:
         Returns:
             Vector metadata or None if not found
         """
-        for meta in self.metadata:
-            if meta.id == vector_id:
-                return meta
-        return None
+        return self.metadata_dict.get(vector_id)
 
     def get_index_size_mb(self) -> float:
         """Get current FAISS index size in MB.

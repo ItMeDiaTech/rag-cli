@@ -239,8 +239,11 @@ class MemoryManager:
         cursor = conn.cursor()
 
         try:
-            # Serialize embedding
-            embedding_blob = pickle.dumps(memory.embedding) if memory.embedding else None
+            # Serialize embedding using safe numpy format
+            if memory.embedding is not None:
+                embedding_blob = np.array(memory.embedding, dtype=np.float32).tobytes()
+            else:
+                embedding_blob = None
 
             cursor.execute('''
                 INSERT OR REPLACE INTO memories
@@ -306,9 +309,10 @@ class MemoryManager:
                  importance, access_count, last_accessed) = row
 
                 if embedding_blob:
-                    embedding = pickle.loads(embedding_blob)
+                    # Deserialize from safe numpy format
+                    embedding = np.frombuffer(embedding_blob, dtype=np.float32)
                     similarity = self.embedding_manager.similarity(
-                        query_embedding, np.array(embedding)
+                        query_embedding, embedding
                     )
 
                     # Combined score (similarity + importance)

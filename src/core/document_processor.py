@@ -40,6 +40,51 @@ logger = get_logger(__name__)
 metrics = get_metrics_logger()
 
 
+# Allowed base directories for document processing (path traversal protection)
+def get_allowed_document_paths() -> List[Path]:
+    """Get list of allowed base directories for document access."""
+    return [
+        Path.cwd() / "data" / "documents",
+        Path.home() / ".claude" / "plugins" / "rag-cli" / "data" / "documents",
+        Path(__file__).resolve().parents[2] / "data" / "documents",
+    ]
+
+
+def validate_path(user_path: Union[str, Path]) -> Path:
+    """Validate that path is within allowed directories (prevents path traversal).
+
+    Args:
+        user_path: User-supplied path to validate
+
+    Returns:
+        Resolved absolute path
+
+    Raises:
+        ValueError: If path is outside allowed directories or is a symlink
+    """
+    path = Path(user_path).resolve()
+
+    # Check if path is a symlink (potential security risk)
+    if Path(user_path).is_symlink():
+        raise ValueError(f"Symlinks not allowed: {user_path}")
+
+    # Check if path is within any allowed base directory
+    allowed_paths = get_allowed_document_paths()
+    for base_dir in allowed_paths:
+        try:
+            # This will raise ValueError if path is not relative to base_dir
+            path.relative_to(base_dir.resolve())
+            return path  # Path is safe
+        except ValueError:
+            continue
+
+    # If we get here, path is not in any allowed directory
+    raise ValueError(
+        f"Path {path} is outside allowed directories. "
+        f"Allowed: {[str(p) for p in allowed_paths]}"
+    )
+
+
 @dataclass
 class DocumentChunk:
     """Represents a chunk of a document."""
@@ -170,7 +215,8 @@ class DocumentProcessor:
         Returns:
             Processed document
         """
-        file_path = Path(file_path)
+        # Validate path to prevent path traversal attacks
+        file_path = validate_path(file_path)
 
         if not file_path.exists():
             raise FileNotFoundError(f"Document not found: {file_path}")
