@@ -48,6 +48,9 @@ data/documents/*
 !data/documents/.gitkeep
 data/vectors/*
 !data/vectors/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+*.db
 
 # Logs
 *.log
