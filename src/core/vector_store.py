@@ -469,8 +469,16 @@ class FAISSVectorStore:
             )
             metrics.record_success("vector_store_save")
 
+        except (FileNotFoundError, IOError, OSError) as e:
+            logger.error(f"Failed to write vector store files: {e}")
+            metrics.record_failure("vector_store_save", str(e))
+            raise
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid vector store data: {e}")
+            metrics.record_failure("vector_store_save", str(e))
+            raise
         except Exception as e:
-            logger.error(f"Failed to save vector store: {e}")
+            logger.error(f"Unexpected error saving vector store: {e}", exc_info=True)
             metrics.record_failure("vector_store_save", str(e))
             raise
 
@@ -523,8 +531,16 @@ class FAISSVectorStore:
             )
             metrics.record_success("vector_store_save_async")
 
+        except (FileNotFoundError, IOError, OSError) as e:
+            logger.error(f"Failed to write vector store files (async): {e}")
+            metrics.record_failure("vector_store_save_async", str(e))
+            raise
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid vector store data (async): {e}")
+            metrics.record_failure("vector_store_save_async", str(e))
+            raise
         except Exception as e:
-            logger.error(f"Failed to save vector store (async): {e}")
+            logger.error(f"Unexpected error saving vector store (async): {e}", exc_info=True)
             metrics.record_failure("vector_store_save_async", str(e))
             raise
 
@@ -585,8 +601,16 @@ class FAISSVectorStore:
             )
             metrics.record_success("vector_store_load_async")
 
+        except (FileNotFoundError, IOError) as e:
+            logger.error(f"Vector store files not found (async): {e}")
+            metrics.record_failure("vector_store_load_async", str(e))
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in metadata file (async): {e}")
+            metrics.record_failure("vector_store_load_async", str(e))
+            raise
         except Exception as e:
-            logger.error(f"Failed to load vector store (async): {e}")
+            logger.error(f"Unexpected error loading vector store (async): {e}", exc_info=True)
             metrics.record_failure("vector_store_load_async", str(e))
             raise
 
@@ -633,8 +657,16 @@ class FAISSVectorStore:
             )
             metrics.record_success("vector_store_load")
 
+        except (FileNotFoundError, IOError) as e:
+            logger.error(f"Vector store files not found: {e}")
+            metrics.record_failure("vector_store_load", str(e))
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in metadata file: {e}")
+            metrics.record_failure("vector_store_load", str(e))
+            raise
         except Exception as e:
-            logger.error(f"Failed to load vector store: {e}")
+            logger.error(f"Unexpected error loading vector store: {e}", exc_info=True)
             metrics.record_failure("vector_store_load", str(e))
             raise
 

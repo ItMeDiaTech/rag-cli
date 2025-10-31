@@ -119,7 +119,9 @@ def check_tcp_server_available() -> bool:
             _tcp_check_time = current_time
             return _tcp_server_available
 
-    except Exception:
+    except (urllib.error.URLError, urllib.error.HTTPError, ConnectionError, TimeoutError, OSError) as e:
+        # Network/connection errors are expected when server is not running
+        logger.debug(f"TCP server not reachable: {type(e).__name__}")
         _tcp_server_available = False
         _tcp_check_time = current_time
         return False
@@ -175,10 +177,14 @@ def load_rag_settings() -> Dict[str, Any]:
     """
     if SETTINGS_FILE.exists():
         try:
-            with open(SETTINGS_FILE, 'r') as f:
+            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
+        except (FileNotFoundError, IOError, OSError) as e:
+            logger.error(f"Failed to read RAG settings file: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in RAG settings file: {e}")
         except Exception as e:
-            logger.error(f"Failed to load RAG settings: {e}")
+            logger.error(f"Unexpected error loading RAG settings: {e}", exc_info=True)
 
     # Default settings
     return {
@@ -198,10 +204,14 @@ def save_rag_settings(settings: Dict[str, Any]):
     """
     try:
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(SETTINGS_FILE, 'w') as f:
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=2)
+    except (FileNotFoundError, IOError, OSError) as e:
+        logger.error(f"Failed to write RAG settings file: {e}")
+    except (TypeError, ValueError) as e:
+        logger.error(f"Invalid settings data structure: {e}")
     except Exception as e:
-        logger.error(f"Failed to save RAG settings: {e}")
+        logger.error(f"Unexpected error saving RAG settings: {e}", exc_info=True)
 
 def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Optional['QueryClassification']]:
     """Determine if a query should be enhanced with RAG using intelligent classification.
@@ -369,8 +379,14 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
 
         return filtered_docs
 
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Network error during context retrieval: {e}")
+        return []
+    except (FileNotFoundError, IOError) as e:
+        logger.error(f"Vector store file error: {e}")
+        return []
     except Exception as e:
-        logger.error(f"Failed to retrieve context: {e}")
+        logger.error(f"Failed to retrieve context: {e}", exc_info=True)
         return []
 
 def format_enhanced_query(query: str, documents: List[Dict[str, Any]]) -> str:
@@ -657,8 +673,10 @@ def _cache_retrieval_results(documents: List, query: str, event: Dict[str, Any],
 
         logger.debug(f"Cached retrieval results: {cache_key}")
 
-    except Exception as cache_error:
-        logger.warning(f"Failed to cache retrieval results: {cache_error}")
+    except (FileNotFoundError, IOError, OSError) as e:
+        logger.warning(f"Failed to write cache file: {e}")
+    except (TypeError, ValueError) as e:
+        logger.warning(f"Invalid cache data structure: {e}")
 
 
 def _update_event_metadata(event: Dict[str, Any], enhanced_query: str,
@@ -755,8 +773,14 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                             documents_count=len(documents),
                             confidence=orchestration_result.confidence)
 
+            except ImportError as e:
+                logger.debug(f"Agent orchestrator not available: {e}")
+                use_orchestrator = False
+            except (ConnectionError, TimeoutError) as e:
+                logger.warning(f"Network error during orchestration: {e}")
+                use_orchestrator = False
             except Exception as e:
-                logger.warning(f"Agent orchestration failed, falling back to simple retrieval: {e}")
+                logger.warning(f"Agent orchestration failed, falling back to simple retrieval: {e}", exc_info=True)
                 use_orchestrator = False
 
         # Fallback to simple retrieve_context if orchestrator not used or failed
@@ -788,8 +812,14 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
                         documents=len(documents),
                         time_ms=retrieval_time)
 
+    except KeyError as e:
+        logger.error(f"Missing required event field: {e}")
+        # Return original event on error
+    except (ConnectionError, TimeoutError) as e:
+        logger.error(f"Network error during hook processing: {e}")
+        # Return original event on error
     except Exception as e:
-        logger.error(f"Hook processing failed: {e}")
+        logger.error(f"Hook processing failed: {e}", exc_info=True)
         # Return original event on error
     finally:
         execution_time = (time.time() - start_time) * 1000
