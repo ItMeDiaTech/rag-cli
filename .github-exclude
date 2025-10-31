@@ -1,0 +1,52 @@
+# Files to exclude from GitHub repo (development artifacts and trash)
+
+# Implementation documentation (not needed for users)
+IMPLEMENTATION_COMPLETE.md
+IMPLEMENTATION_SUMMARY.md
+HOOKS_IMPLEMENTATION_COMPLETE.md
+HOOK_INTEGRATION_COMPLETE.md
+INTEGRATION_COMPLETE.md
+PHASE_3_COMPLETE.md
+PHASE_4_5_IMPLEMENTATION_SUMMARY.md
+PLUGIN_INTEGRATION_COMPLETE.md
+PROMPT_ANALYSIS_IMPLEMENTATION_SUMMARY.md
+SUB_AGENT_ORCHESTRATION_IMPLEMENTATION.md
+FIXES_APPLIED.md
+RAG_OPTIMIZATIONS_2025.md
+RAG_PROJECT_COMMAND.md
+
+# Development documentation (duplicates or internal)
+QUICK_SETUP.md
+PLUGIN_SYNC_README.md
+RAG-implementation.md
+changelog.txt
+
+# Development scripts and utilities
+implement/
+activate.ps1
+sync_global.py
+sync_to_plugin.py
+OPEN_DASHBOARD.bat
+Open-Dashboard.ps1
+
+# Test files
+test_*.py
+tests/
+
+# Cache and runtime data
+data/cache/
+data/project_indexing_result.json
+nul
+config/auto_indexing.json
+config/citation_config.json
+config/error_config.json
+config/error_history.json
+config/hook_config.json
+config/services_status.json
+
+# Lock files (generate from requirements.txt)
+requirements-lock.txt
+
+# Environment files
+.env
+.env.example

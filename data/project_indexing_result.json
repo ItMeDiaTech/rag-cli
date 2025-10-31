@@ -1,0 +1,157 @@
+{
+  "success": true,
+  "technologies": [
+    {
+      "name": "Python",
+      "type": "language",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "requirements.txt"
+    },
+    {
+      "name": "LangChain",
+      "type": "framework",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "requirements.txt"
+    },
+    {
+      "name": "NumPy",
+      "type": "library",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "requirements.txt"
+    },
+    {
+      "name": "Anthropic SDK",
+      "type": "library",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "requirements.txt"
+    },
+    {
+      "name": "Flask",
+      "type": "framework",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "requirements.txt"
+    },
+    {
+      "name": "Python",
+      "type": "language",
+      "version": null,
+      "confidence": 1.0,
+      "source_file": "pyproject.toml"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Python",
+      "url": "https://docs.python.org/3/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "LangChain",
+      "url": "https://python.langchain.com/docs/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "NumPy",
+      "url": "https://numpy.org/doc/stable/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "Anthropic SDK",
+      "url": "https://docs.anthropic.com/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "Flask",
+      "url": "https://flask.palletsprojects.com/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "Python",
+      "url": "https://docs.python.org/3/",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
+      "name": "Python",
+      "url": "https://realpython.com/",
+      "priority": 2,
+      "doc_type": "tutorial"
+    },
+    {
+      "name": "Python",
+      "url": "https://realpython.com/",
+      "priority": 2,
+      "doc_type": "tutorial"
+    }
+  ],
+  "results": [
+    {
+      "source": "Python",
+      "documents_added": 1,
+      "success": true,
+      "error": null,
+      "duration_seconds": 47.78322124481201
+    },
+    {
+      "source": "LangChain",
+      "documents_added": 3,
+      "success": true,
+      "error": null,
+      "duration_seconds": 52.63720345497131
+    },
+    {
+      "source": "NumPy",
+      "documents_added": 224,
+      "success": true,
+      "error": null,
+      "duration_seconds": 502.9918999671936
+    },
+    {
+      "source": "Anthropic SDK",
+      "documents_added": 217,
+      "success": true,
+      "error": null,
+      "duration_seconds": 402.2619478702545
+    },
+    {
+      "source": "Flask",
+      "documents_added": 5,
+      "success": true,
+      "error": null,
+      "duration_seconds": 48.917969703674316
+    },
+    {
+      "source": "Python",
+      "documents_added": 1,
+      "success": true,
+      "error": null,
+      "duration_seconds": 42.96899127960205
+    },
+    {
+      "source": "Python",
+      "documents_added": 621,
+      "success": true,
+      "error": null,
+      "duration_seconds": 702.704601764679
+    },
+    {
+      "source": "Python",
+      "documents_added": 621,
+      "success": true,
+      "error": null,
+      "duration_seconds": 599.5126938819885
+    }
+  ],
+  "total_documents": 1693,
+  "duration_seconds": 2400.9247274398804
+}

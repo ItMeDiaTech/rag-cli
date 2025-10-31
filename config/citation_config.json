@@ -1,0 +1,20 @@
+{
+  "format": "inline",
+  "max_citations": 3,
+  "show_scores": true,
+  "styles": {
+    "inline": {
+      "template": "[Source: {source}]",
+      "separator": " "
+    },
+    "footnotes": {
+      "template": "[{index}]",
+      "footer_template": "[{index}] {source} - {preview}"
+    },
+    "collapsible": {
+      "template": "<details><summary>Sources ({count})</summary>{sources}</details>",
+      "source_template": "- {source}: {preview}"
+    }
+  },
+  "preview_length": 100
+}
