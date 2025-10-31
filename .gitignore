@@ -4,112 +4,59 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-*.egg-info/
-dist/
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
-.venv/
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
 
-# IDE
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 
-# Testing
-.coverage
-.pytest_cache/
-htmlcov/
-.tox/
-.hypothesis/
+# OS
+.DS_Store
+Thumbs.db
+
+# Data directories (keep structure, ignore contents)
+data/documents/*
+!data/documents/.gitkeep
+data/vectors/*
+!data/vectors/.gitkeep
 
 # Logs
 *.log
 logs/
-*.log.*
+
+# Temporary files
+*.tmp
+*.temp
 
 # Environment variables
 .env
 .env.local
-*.env
-
-# Data files (can be large)
-data/documents/*
-data/vectors/*
-!data/documents/.gitkeep
-!data/vectors/.gitkeep
-
-# Model cache
-.cache/
-~/.cache/
-
-# Monitoring
-*.pid
-
-# Temporary files
-*.tmp
-*.bak
-temp/
-tmp/
-
-# Claude Code specific
-.claude/settings.local.json
-
-# OS specific
-Thumbs.db
-Desktop.ini
-
-# Project specific
-*.index
-*.pkl
-*.faiss
-
-# Development artifacts and trash (not for GitHub plugin store)
-IMPLEMENTATION_COMPLETE.md
-IMPLEMENTATION_SUMMARY.md
-HOOKS_IMPLEMENTATION_COMPLETE.md
-HOOK_INTEGRATION_COMPLETE.md
-INTEGRATION_COMPLETE.md
-PHASE_3_COMPLETE.md
-PHASE_4_5_IMPLEMENTATION_SUMMARY.md
-PLUGIN_INTEGRATION_COMPLETE.md
-PROMPT_ANALYSIS_IMPLEMENTATION_SUMMARY.md
-SUB_AGENT_ORCHESTRATION_IMPLEMENTATION.md
-FIXES_APPLIED.md
-RAG_OPTIMIZATIONS_2025.md
-RAG_PROJECT_COMMAND.md
-QUICK_SETUP.md
-QUICKSTART.md
-PLUGIN_SYNC_README.md
-RAG-implementation.md
-changelog.txt
-implement/
-activate.ps1
-sync_global.py
-sync_to_plugin.py
-OPEN_DASHBOARD.bat
-Open-Dashboard.ps1
-test_*.py
-nul
-config/auto_indexing.json
-config/citation_config.json
-config/error_config.json
-config/error_history.json
-config/hook_config.json
-config/services_status.json
-config/rag_settings.json
-requirements-lock.txt
-.env.example
-.github-exclude
-data/cache/
-data/project_indexing_result.json
