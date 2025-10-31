@@ -74,6 +74,7 @@ from core.claude_code_adapter import get_adapter
 from core.query_classifier import QueryClassification
 from monitoring.logger import get_logger
 from monitoring.service_manager import ensure_services_running
+from core.constants import TCP_CHECK_CACHE_SECONDS
 
 logger = get_logger(__name__)
 
@@ -99,8 +100,8 @@ def check_tcp_server_available() -> bool:
 
     current_time = time.time()
 
-    # Use cached result if check was recent (within 30 seconds)
-    if _tcp_server_available is not None and (current_time - _tcp_check_time) < 30:
+    # Use cached result if check was recent
+    if _tcp_server_available is not None and (current_time - _tcp_check_time) < TCP_CHECK_CACHE_SECONDS:
         return _tcp_server_available
 
     # Try to connect to TCP server

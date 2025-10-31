@@ -19,6 +19,7 @@ except ImportError:
     Anthropic = None
 
 from core.config import get_config
+from core.constants import RESPONSE_CACHE_MAX_SIZE
 from core.retrieval_pipeline import RetrievalResult
 from core.claude_code_adapter import get_adapter, is_claude_code_mode
 from core.prompt_templates import get_prompt_manager
@@ -116,10 +117,10 @@ class ClaudeIntegration:
             self.client = Anthropic(api_key=self.api_key)
             logger.info("Claude integration initialized in standalone mode", model=self.model)
 
-        # Response cache with LRU eviction (limit to 100 responses)
+        # Response cache with LRU eviction
         self.cache = {}
         self.cache_access_order = []
-        self.cache_max_size = 100
+        self.cache_max_size = RESPONSE_CACHE_MAX_SIZE
         self.cache_hits = 0
         self.cache_misses = 0
 

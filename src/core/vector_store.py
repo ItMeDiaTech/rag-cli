@@ -489,6 +489,9 @@ class FAISSVectorStore:
                 metadata_dicts = json.load(f)
                 self.metadata = [VectorMetadata.from_dict(d) for d in metadata_dicts]
 
+            # Rebuild metadata dictionary for O(1) lookups
+            self.metadata_dict = {meta.id: meta for meta in self.metadata}
+
             # Update ID counter
             if self.metadata:
                 last_id = max(int(m.id.split('_')[1]) for m in self.metadata)
