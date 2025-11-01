@@ -1,6 +1,6 @@
 {
   "name": "rag-cli",
-  "version": "1.2.3",
+  "version": "2.0.0",
   "description": "Local RAG system with embedded Multi-Agent Framework for Claude Code plugin",
   "author": {
     "name": "DiaTech",
@@ -37,7 +37,7 @@
       "command": "python",
       "args": [
         "-m",
-        "plugin.mcp.unified_server"
+        "rag_cli_plugin.mcp.unified_server"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1",

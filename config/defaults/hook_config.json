@@ -1,0 +1,32 @@
+{
+  "slash_command_blocker": {
+    "enabled": true,
+    "priority": 150,
+    "description": "Prevent Claude from responding to slash commands"
+  },
+  "user_prompt_submit": {
+    "enabled": true,
+    "priority": 100,
+    "description": "Main RAG hook for processing user queries"
+  },
+  "response_post": {
+    "enabled": true,
+    "priority": 80,
+    "description": "Add citations to Claude responses"
+  },
+  "error_handler": {
+    "enabled": true,
+    "priority": 70,
+    "description": "Handle errors gracefully in RAG pipeline"
+  },
+  "plugin_state_change": {
+    "enabled": true,
+    "priority": 60,
+    "description": "Respond to plugin state changes"
+  },
+  "document_indexing": {
+    "enabled": false,
+    "priority": 50,
+    "description": "Auto-index documents on file changes"
+  }
+}

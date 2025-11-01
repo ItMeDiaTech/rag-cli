@@ -1,0 +1,24 @@
+{
+  "name": "rag-cli",
+  "description": "RAG-CLI Retrieval-Augmented Generation Service",
+  "version": "2.0.0",
+  "type": "stdio",
+  "command": "python",
+  "args": [
+    "-m",
+    "rag_cli_plugin.mcp.unified_server"
+  ],
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "RAG_CLI_MODE": "claude_code",
+    "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}",
+    "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}:${CLAUDE_PLUGIN_ROOT}/src"
+  },
+  "alwaysAllowTrust": false,
+  "features": {
+    "autoStart": true,
+    "retryOnFailure": true,
+    "maxRetries": 3,
+    "retryDelayMs": 1000
+  }
+}

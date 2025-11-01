@@ -1,0 +1,19 @@
+{
+  "monitoring_server": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 9999,
+    "auto_start": false
+  },
+  "web_dashboard": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 8080,
+    "auto_start": false
+  },
+  "file_watcher": {
+    "enabled": false,
+    "watch_paths": [],
+    "auto_index": false
+  }
+}

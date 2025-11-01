@@ -52,6 +52,12 @@ data/cache/*
 !data/cache/.gitkeep
 *.db
 
+# Configuration (ignore user configs, keep defaults)
+config/*.json
+!config/defaults/
+config/pids/
+config/backups/
+
 # Logs
 *.log
 logs/
@@ -68,3 +74,5 @@ logs/
 .cursor/
 .mcp.json
 .claude/
+/CLAUDE.md
+/requirements-lock.txt

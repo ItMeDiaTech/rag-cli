@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rag-cli"
-version = "1.2.3"
+version = "2.0.0"
 description = "Local RAG system with embedded Multi-Agent Framework for Claude Code plugin"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -49,15 +49,18 @@ Repository = "https://github.com/ItMeDiaTech/rag-cli"
 Documentation = "https://github.com/ItMeDiaTech/rag-cli/wiki"
 
 [project.scripts]
-rag-index = "cli.index:main"
-rag-retrieve = "cli.retrieve:main"
-rag-monitor = "monitoring.__main__:main"
+rag-index = "rag_cli.cli.index:main"
+rag-retrieve = "rag_cli.cli.retrieve:main"
+rag-monitor = "rag_cli_plugin.services.__main__:main"
+rag-cli-install = "rag_cli_plugin.lifecycle.installer:main"
+rag-cli-update = "rag_cli_plugin.lifecycle.updater:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["rag_cli*"]
 
 [tool.isort]
 profile = "black"

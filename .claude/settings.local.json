@@ -12,12 +12,14 @@
       "Bash(pip install:*)",
       "WebSearch",
       "Bash(git config:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "WebFetch(domain:scottspence.com)",
+      "Bash(dir /B \"C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI\")",
+      "Bash(dir /B \"C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI\\src\")"
     ],
     "deny": [],
     "ask": []
   },
-  "enabledMcpjsonServers": [
-  ],
+  "enabledMcpjsonServers": [],
   "outputStyle": "technical-rag-focused"
 }

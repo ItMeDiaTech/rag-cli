@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RAG-CLI Settings Schema",
+  "description": "JSON Schema for RAG-CLI configuration validation",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean",
+      "description": "Enable or disable RAG enhancement"
+    },
+    "auto_trigger_threshold": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Minimum query length to trigger RAG automatically"
+    },
+    "context_limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Maximum number of context chunks to include"
+    },
+    "relevance_threshold": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Minimum relevance score for including results"
+    },
+    "enable_agent_orchestration": {
+      "type": "boolean",
+      "description": "Enable multi-agent framework orchestration"
+    },
+    "vector_weight": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Weight for vector similarity in hybrid search"
+    },
+    "keyword_weight": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Weight for keyword matching in hybrid search"
+    },
+    "enable_online_retrieval": {
+      "type": "boolean",
+      "description": "Enable online retrieval (ArXiv, Tavily, web scraping)"
+    },
+    "enable_hyde_optimization": {
+      "type": "boolean",
+      "description": "Enable HyDE query optimization"
+    },
+    "enable_semantic_caching": {
+      "type": "boolean",
+      "description": "Enable semantic caching for query results"
+    }
+  },
+  "required": ["enabled"],
+  "additionalProperties": true
+}
