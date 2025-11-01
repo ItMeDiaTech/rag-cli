@@ -4,7 +4,7 @@
     "name": "DiaTech",
     "email": "support@rag-cli.dev"
   },
-  "description": "RAG-CLI Marketplace - Local Retrieval-Augmented Generation plugin for Claude Code",
+  "description": "Advanced Retrieval-Augmented Generation marketplace for Claude Code. Features local vector search with FAISS, semantic embeddings, multi-agent orchestration (7 specialized agents), parallel RAG+MAF execution, HyDE optimization, and comprehensive monitoring. Enhances Claude with knowledge retrieval, intelligent query routing, and production-ready observability.",
   "homepage": "https://github.com/ItMeDiaTech/rag-cli",
   "repository": "https://github.com/ItMeDiaTech/rag-cli",
   "license": "MIT",

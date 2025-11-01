@@ -518,7 +518,7 @@ class UnifiedMCPServer:
         use_llm = arguments.get("use_llm", True)
 
         # Check if vector store exists
-        vector_store_path = project_root / "data" / "vectors" / "faiss_index"
+        vector_store_path = project_root / "data" / "vectors" / "vectors.index"
         if not vector_store_path.exists():
             return {
                 "jsonrpc": "2.0",
@@ -661,7 +661,7 @@ class UnifiedMCPServer:
         """Handle RAG status request."""
         try:
             # Check if vector store exists
-            vector_store_path = project_root / "data" / "vectors" / "faiss_index"
+            vector_store_path = project_root / "data" / "vectors" / "vectors.index"
             has_index = vector_store_path.exists()
 
             status = {

@@ -1,15 +1,21 @@
 {
   "name": "rag-cli",
   "version": "1.2.2",
-  "description": "Local RAG (Retrieval-Augmented Generation) system with embedded 7-agent framework for parallel execution. Enhances Claude Code with knowledge retrieval, code analysis, and multi-agent orchestration.",
+  "description": "Local RAG system with embedded Multi-Agent Framework for Claude Code plugin",
   "author": {
     "name": "DiaTech",
     "email": "support@rag-cli.dev",
-    "url": "https://github.com/ItMeDiaTech"
+    "url": "https://github.com/ItMeDiaTech/rag-cli"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ItMeDiaTech/rag-cli.git"
   },
   "homepage": "https://github.com/ItMeDiaTech/rag-cli",
-  "repository": "https://github.com/ItMeDiaTech/rag-cli",
-  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ItMeDiaTech/rag-cli/issues"
+  },
   "keywords": [
     "rag",
     "retrieval",
@@ -20,25 +26,45 @@
     "orchestration",
     "documentation",
     "knowledge-base",
-    "faiss",
-    "embeddings",
     "claude-code",
     "plugin"
   ],
-  "commands": [
-    "./src/plugin/commands/"
-  ],
-  "hooks": "./.claude-plugin/hooks.json",
+  "commands": "./commands",
+  "hooks": "./hooks.json",
+  "skills": "./skills",
   "mcpServers": {
-    "rag-server": {
+    "rag-cli": {
       "command": "python",
-      "args": ["-m", "plugin.mcp.unified_server"],
+      "args": [
+        "-m",
+        "src.plugin.mcp.unified_server"
+      ],
       "env": {
         "PYTHONUNBUFFERED": "1",
         "RAG_CLI_MODE": "claude_code",
-        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}",
-        "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}"
+        "RAG_CLI_ROOT": "${CLAUDE_PLUGIN_ROOT}",
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}:${CLAUDE_PLUGIN_ROOT}/src"
+      },
+      "alwaysAllowTrust": false,
+      "features": {
+        "autoStart": true,
+        "retryOnFailure": true,
+        "maxRetries": 3,
+        "retryDelayMs": 1000
       }
+    }
+  },
+  "requirements": {
+    "python": ">=3.8"
+  },
+  "configuration": {
+    "settingsFile": "config/rag_settings.json",
+    "defaultSettings": {
+      "enabled": false,
+      "auto_trigger_threshold": 5,
+      "context_limit": 3,
+      "relevance_threshold": 0.6,
+      "enable_agent_orchestration": true
     }
   }
 }
