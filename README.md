@@ -2,7 +2,7 @@
 
 I'm in the process of refractoring and analyzing best practices for plugins since they just came out. It's not in a workable state, but I just started this project a few days ago. Hoping to get it in a working state / runnable state in the next day or two from 11/01/2025. 
 
-A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claude Code plugin. Process documents locally, generate embeddings, store vectors in FAISS, and get AI-powered responses using Claude Haiku.
+Local Retrieval-Augmented Generation (RAG) plugin for Claude Code that combines FAISS vector embeddings with intelligent info retrieval with Multi-Agent Framework (MAF) orchestration for context-aware development assistance. Uses Open Source / Free frameworks. Implements bridge to Claude Code CLI for agent integration so no additional token use is required. Why spend more money when you can just connect it up and utilize that plan. Could probably connect to other CLI forms easily enough. Just installing the plugin within Claude Code CLI should be enough to setup the entire project. Hooks, MCP, Slash Commands, MAF, and RAG should all be installed from the file that gets pulled. May need to run the enable rag slash command for it to start working fully from there but that's pretty much it.
 
 ## Overview
 
