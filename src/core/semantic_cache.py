@@ -3,6 +3,9 @@
 This module implements intelligent caching that matches similar queries
 using cosine similarity rather than exact string matching. This significantly
 improves cache hit rates for semantically equivalent queries.
+
+NOTE: This module now uses HNSW indexing for O(log n) similarity search
+instead of O(n) linear search. See semantic_cache_hnsw.py for implementation.
 """
 
 import time
@@ -373,6 +376,14 @@ class SemanticCache:
             self.cache.clear()
 
 
+# Import HNSW version for better performance
+try:
+    from core.semantic_cache_hnsw import HNSWSemanticCache
+    USE_HNSW = True
+except ImportError:
+    logger.warning("HNSW semantic cache not available, falling back to linear search")
+    USE_HNSW = False
+
 # Global cache instance
 _semantic_cache: Optional[SemanticCache] = None
 
@@ -393,7 +404,7 @@ def get_semantic_cache(embedding_generator=None,
         ttl_seconds: Time-to-live for cache entries
 
     Returns:
-        Semantic cache instance
+        Semantic cache instance (HNSW-based if available, otherwise linear)
     """
     global _semantic_cache
 
@@ -404,7 +415,10 @@ def get_semantic_cache(embedding_generator=None,
                 if embedding_generator is None:
                     raise ValueError("embedding_generator required for cache initialization")
 
-                _semantic_cache = SemanticCache(
+                # Use HNSW version if available for O(log n) performance
+                CacheClass = HNSWSemanticCache if USE_HNSW else SemanticCache
+
+                _semantic_cache = CacheClass(
                     embedding_generator=embedding_generator,
                     similarity_threshold=similarity_threshold,
                     max_size=max_size,

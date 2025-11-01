@@ -9,6 +9,7 @@ import json
 import time
 import threading
 import socket
+import signal
 import weakref
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -24,6 +25,9 @@ from monitoring.logger import get_logger, get_metrics_logger
 
 logger = get_logger(__name__)
 metrics_logger = get_metrics_logger()
+
+# Global shutdown flag for graceful termination
+_shutdown_event = threading.Event()
 
 # Global metrics storage
 
@@ -629,7 +633,8 @@ def stream_events():
             # Send initial connection confirmation
             yield f"data: {json.dumps({'event_type': 'connected', 'message': 'SSE stream connected'})}\n\n"
 
-            while True:
+            # Add loop exit condition for graceful shutdown
+            while not _shutdown_event.is_set():
                 try:
                     # Wait for events with timeout for keepalive
                     event = queue.get(timeout=15)
@@ -638,6 +643,10 @@ def stream_events():
                 except Empty:
                     # Timeout - send keepalive
                     yield ": keepalive\n\n"
+                    # Check for shutdown during keepalive
+                    if _shutdown_event.is_set():
+                        yield f"data: {json.dumps({'event_type': 'shutdown', 'message': 'Server shutting down'})}\n\n"
+                        break
 
         except GeneratorExit:
             # Client disconnected
@@ -797,8 +806,20 @@ def start_monitoring_server():
         return None
 
 
+def shutdown_handler(signum=None, frame=None):
+    """Handle shutdown signals gracefully."""
+    logger.info("Shutdown signal received")
+    _shutdown_event.set()
+    # Give threads time to clean up
+    time.sleep(0.5)
+
+
 if __name__ == "__main__":
     import sys
+
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, shutdown_handler)
+    signal.signal(signal.SIGTERM, shutdown_handler)
 
     # Use Flask development server for SSE streaming support
     # NOTE: Waitress and other production WSGI servers buffer responses
@@ -814,5 +835,6 @@ if __name__ == "__main__":
         # SECURITY: Bind to localhost only to prevent network access
         app.run(host="127.0.0.1", port=9999, debug=False, threaded=True)
     except KeyboardInterrupt:
-        print("\nShutting down...")
+        shutdown_handler()
+        print("\nShutting down gracefully...")
         sys.exit(0)

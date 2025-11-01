@@ -7,17 +7,21 @@ Ensures all monitoring services are running and stays alive.
 import sys
 import time
 import signal
+import threading
 
 from monitoring.logger import get_logger
 from monitoring.service_manager import ensure_services_running, get_services_status
 
 logger = get_logger(__name__)
 
+# Global shutdown event for graceful termination
+_shutdown_event = threading.Event()
+
 
 def signal_handler(sig, frame):
     """Handle shutdown signals gracefully."""
     logger.info("Shutdown signal received")
-    sys.exit(0)
+    _shutdown_event.set()
 
 
 def main():
@@ -55,9 +59,12 @@ def main():
         logger.info("Monitoring services ready!")
         logger.info("Press Ctrl+C to shutdown...")
 
-        # Keep running
-        while True:
-            time.sleep(60)
+        # Keep running with proper exit condition
+        while not _shutdown_event.is_set():
+            # Wait with timeout for shutdown check
+            if _shutdown_event.wait(timeout=60):
+                break
+
             # Periodically check services are still running
             try:
                 services = get_services_status()

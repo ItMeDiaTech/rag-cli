@@ -6,10 +6,14 @@ viewing real-time RAG-CLI metrics and system status.
 
 import json
 import time
+import threading
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, render_template, jsonify, Response, stream_with_context
 from flask_cors import CORS
+
+# Global shutdown event for graceful termination
+_shutdown_event = threading.Event()
 
 # Get the templates directory
 templates_dir = Path(__file__).parent / 'templates'
@@ -125,8 +129,10 @@ def api_events():
             yield f"data: {json.dumps(error_event)}\n\n"
 
             # Send keepalive every 15 seconds while disconnected
-            while True:
-                time.sleep(15)
+            while not _shutdown_event.is_set():
+                if _shutdown_event.wait(timeout=15):
+                    yield f"data: {json.dumps({'event': 'shutdown', 'message': 'Server shutting down'})}\n\n"
+                    break
                 yield ": keepalive (disconnected)\n\n"
 
     return Response(
