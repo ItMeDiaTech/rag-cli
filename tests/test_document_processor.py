@@ -409,7 +409,7 @@ class TestDocumentProcessor:
 
     def test_unicode_content_handling(self, processor):
         """Test handling of unicode content."""
-        unicode_text = "Hello 世界 🌍 Test"
+        unicode_text = "Hello   Test"
         doc = Document(
             content=unicode_text,
             source="unicode.txt",

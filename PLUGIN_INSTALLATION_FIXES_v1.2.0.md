@@ -133,13 +133,13 @@ All 7 **CRITICAL** blocking issues have been fixed. The plugin is now ready for 
 ### Template Files (7)
 ```
 config/*.json.example
-├── auto_indexing.json.example
-├── citation_config.json.example
-├── error_config.json.example
-├── error_history.json.example
-├── hook_config.json.example
-├── rag_settings.json.example
-└── services_status.json.example
+ auto_indexing.json.example
+ citation_config.json.example
+ error_config.json.example
+ error_history.json.example
+ hook_config.json.example
+ rag_settings.json.example
+ services_status.json.example
 ```
 
 ### Modified Files (3)

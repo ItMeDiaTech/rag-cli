@@ -169,15 +169,15 @@
 ### Project Structure
 ```
 RAG-CLI/
-├── src/
-│   ├── core/           # Document processing, embeddings, vector store, retrieval, Claude
-│   ├── monitoring/     # Logging, metrics, TCP server
-│   └── plugin/         # Skills, commands, hooks for Claude Code
-├── scripts/            # CLI tools (index.py, retrieve.py, monitor.ps1)
-├── tests/              # Unit and integration tests
-├── data/               # Documents and vector indexes
-├── config/             # Configuration files
-└── requirements.txt
+ src/
+    core/           # Document processing, embeddings, vector store, retrieval, Claude
+    monitoring/     # Logging, metrics, TCP server
+    plugin/         # Skills, commands, hooks for Claude Code
+ scripts/            # CLI tools (index.py, retrieve.py, monitor.ps1)
+ tests/              # Unit and integration tests
+ data/               # Documents and vector indexes
+ config/             # Configuration files
+ requirements.txt
 ```
 
 ## Current Status

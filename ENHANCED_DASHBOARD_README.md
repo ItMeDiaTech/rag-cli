@@ -38,22 +38,22 @@ A comprehensive, real-time monitoring dashboard for RAG pipelines and multi-agen
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Enhanced Dashboard                        │
-│  ┌────────────┐  ┌─────────────┐  ┌──────────────┐         │
-│  │  Frontend  │  │   Backend   │  │ Metrics      │         │
-│  │   HTML/JS  │◄─┤    Flask    │◄─┤ Collector    │         │
-│  │   D3.js    │  │   API       │  │              │         │
-│  │  Chart.js  │  │   SSE       │  │              │         │
-│  └────────────┘  └─────────────┘  └──────────────┘         │
-└─────────────────────────────────────────────────────────────┘
-           │                    │                   │
-           │                    │                   │
-           ▼                    ▼                   ▼
-┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐
-│   TCP Server     │  │   Multi-Agent    │  │  RAG-CLI     │
-│  (Port 9999)     │  │   Framework      │  │   Core       │
-└──────────────────┘  └──────────────────┘  └──────────────┘
+
+                    Enhanced Dashboard                        
+               
+    Frontend       Backend      Metrics               
+     HTML/JS      Flask     Collector             
+     D3.js         API                                
+    Chart.js       SSE                                
+               
+
+                                                  
+                                                  
+                                                  
+    
+   TCP Server          Multi-Agent        RAG-CLI     
+  (Port 9999)          Framework           Core       
+    
 ```
 
 ## Installation

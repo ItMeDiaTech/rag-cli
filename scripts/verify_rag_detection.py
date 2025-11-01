@@ -21,15 +21,15 @@ def print_header(text: str):
 
 
 def print_success(text: str):
-    print(f"✓ {text}")
+    print(f" {text}")
 
 
 def print_error(text: str):
-    print(f"✗ {text}", file=sys.stderr)
+    print(f" {text}", file=sys.stderr)
 
 
 def print_warning(text: str):
-    print(f"⚠ {text}")
+    print(f" {text}")
 
 
 def print_info(text: str):
@@ -323,17 +323,17 @@ class RAGDetectionVerifier:
         print(f"Issues:    {total_issues}")
 
         if total_issues == 0:
-            print("\n✅ RAG-CLI appears to be properly installed and configured!")
+            print("\n RAG-CLI appears to be properly installed and configured!")
             if total_warnings > 0:
-                print("\n⚠ Some warnings were found:")
+                print("\n Some warnings were found:")
                 for warning in self.warnings:
                     print(f"  - {warning}")
         else:
-            print("\n❌ Issues found that may prevent RAG-CLI from working:")
+            print("\n Issues found that may prevent RAG-CLI from working:")
             for issue in self.issues:
                 print(f"  - {issue}")
 
-            print("\n💡 Suggested fixes:")
+            print("\n Suggested fixes:")
             if "Claude Code not installed" in str(self.issues):
                 print("  1. Install Claude Code first")
             if "RAG-CLI plugin directory missing" in str(self.issues):

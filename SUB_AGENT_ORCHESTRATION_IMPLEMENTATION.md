@@ -35,14 +35,14 @@ Successfully implemented a comprehensive sub-agent orchestration system for RAG-
 **Architecture**:
 ```
 Query -> Embedding
-       ├─► [Vector Search  || Keyword Search] (parallel)
-       │    (2s timeout)      (2s timeout)
-       │
-       ├─► RRF Fusion (serial)
-       │
-       ├─► Reranking (async, 3s timeout)
-       │
-       └─► Results
+        [Vector Search  || Keyword Search] (parallel)
+           (2s timeout)      (2s timeout)
+       
+        RRF Fusion (serial)
+       
+        Reranking (async, 3s timeout)
+       
+        Results
 ```
 
 **Performance**:
@@ -72,17 +72,17 @@ Query -> Embedding
 **Architecture**:
 ```
 Large Batch (100+ texts)
-       │
-       ├─► Split into chunks
-       │
-       ├─► ThreadPoolExecutor (8 workers)
-       │   ├─► Worker 1: Chunk 1-12
-       │   ├─► Worker 2: Chunk 13-24
-       │   ├─► Worker 3: Chunk 25-36
-       │   ...
-       │   └─► Worker 8: Chunk 85-100
-       │
-       └─► Concatenate results
+       
+        Split into chunks
+       
+        ThreadPoolExecutor (8 workers)
+           Worker 1: Chunk 1-12
+           Worker 2: Chunk 13-24
+           Worker 3: Chunk 25-36
+          ...
+           Worker 8: Chunk 85-100
+       
+        Concatenate results
 ```
 
 **Performance**:
@@ -112,19 +112,19 @@ Large Batch (100+ texts)
 **Architecture**:
 ```
 Directory Scan
-       │
-       ├─► Find all files (glob)
-       │
-       ├─► ThreadPoolExecutor (8 workers)
-       │   ├─► Worker 1: file1.md
-       │   ├─► Worker 2: file2.pdf
-       │   ├─► Worker 3: file3.docx
-       │   ...
-       │   └─► Worker 8: file8.html
-       │
-       ├─► Collect results (as_completed)
-       │
-       └─► Parallel chunking (same pool)
+       
+        Find all files (glob)
+       
+        ThreadPoolExecutor (8 workers)
+           Worker 1: file1.md
+           Worker 2: file2.pdf
+           Worker 3: file3.docx
+          ...
+           Worker 8: file8.html
+       
+        Collect results (as_completed)
+       
+        Parallel chunking (same pool)
 ```
 
 **Performance**:
@@ -203,19 +203,19 @@ python test_async_performance.py
 **Architecture**:
 ```
 RAG-CLI
-    │
-    ├─► MAFConnector
-    │       │
-    │       ├─► Import MAF (parent/multi-agent-framework)
-    │       │
-    │       ├─► ImprovedMAFRunner
-    │       │   └─► Task Classification
-    │       │       └─► Agent Execution
-    │       │           └─► Result Formatting
-    │       │
-    │       └─► MAFResult (standardized)
-    │
-    └─► Agent Orchestrator (uses connector)
+    
+     MAFConnector
+           
+            Import MAF (parent/multi-agent-framework)
+           
+            ImprovedMAFRunner
+               Task Classification
+                   Agent Execution
+                       Result Formatting
+           
+            MAFResult (standardized)
+    
+     Agent Orchestrator (uses connector)
 ```
 
 **Key Features**:
@@ -255,33 +255,33 @@ class RoutingStrategy(Enum):
 **Routing Logic**:
 ```
 Query
-  │
-  ├─► Intent Classification (QueryClassifier)
-  │   ├─ TROUBLESHOOTING + MAF available + confidence ≥ 0.7
-  │   │  └─► PARALLEL_RAG_MAF
-  │   │
-  │   ├─ Complex query
-  │   │  └─► DECOMPOSED (future)
-  │   │
-  │   └─ Default
-  │      └─► RAG_ONLY
-  │
-  ├─► Execute Strategy
-  │   │
-  │   ├─► RAG_ONLY:
-  │   │   └─► retriever.retrieve_async()
-  │   │
-  │   ├─► PARALLEL_RAG_MAF:
-  │   │   └─► asyncio.gather(
-  │   │         retriever.retrieve_async(),
-  │   │         maf_connector.execute_debugger()
-  │   │       )
-  │   │
-  │   └─► DECOMPOSED:
-  │       └─► Query Decomposer (Phase 3)
-  │
-  └─► Result Synthesis
-      └─► OrchestrationResult
+  
+   Intent Classification (QueryClassifier)
+      TROUBLESHOOTING + MAF available + confidence ≥ 0.7
+        PARALLEL_RAG_MAF
+     
+      Complex query
+        DECOMPOSED (future)
+     
+      Default
+         RAG_ONLY
+  
+   Execute Strategy
+     
+      RAG_ONLY:
+         retriever.retrieve_async()
+     
+      PARALLEL_RAG_MAF:
+         asyncio.gather(
+              retriever.retrieve_async(),
+              maf_connector.execute_debugger()
+            )
+     
+      DECOMPOSED:
+          Query Decomposer (Phase 3)
+  
+   Result Synthesis
+       OrchestrationResult
 ```
 
 **Parallel Execution**:
@@ -339,17 +339,17 @@ Recommended fix: ...
 **Example Synthesis**:
 ```
 Content Structure:
-┌─────────────────────────────────────┐
-│ [MAF Debugger Analysis]             │
-│ - Error interpretation              │
-│ - Root cause analysis               │
-│ - Recommended solutions             │
-├─────────────────────────────────────┤
-│ [RAG Context]                       │
-│ 1. [doc1] Relevant information...   │
-│ 2. [doc2] Supporting details...     │
-│ 3. [doc3] Additional context...     │
-└─────────────────────────────────────┘
+
+ [MAF Debugger Analysis]             
+ - Error interpretation              
+ - Root cause analysis               
+ - Recommended solutions             
+
+ [RAG Context]                       
+ 1. [doc1] Relevant information...   
+ 2. [doc2] Supporting details...     
+ 3. [doc3] Additional context...     
+
 
 Sources: [
   {source: 'maf_agent', score: 0.85, method: 'maf_agent'},
@@ -402,81 +402,81 @@ overall_confidence = sum(confidence_scores) / len(confidence_scores)
 ### Overall System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      USER QUERY                             │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-                       ▼
-┌─────────────────────────────────────────────────────────────┐
-│                 AGENT ORCHESTRATOR                          │
-│  ┌───────────────────────────────────────────────────────┐ │
-│  │ 1. Query Classification (Intent Detection)            │ │
-│  │ 2. Routing Strategy Selection                         │ │
-│  │ 3. Parallel Execution Coordination                    │ │
-│  │ 4. Result Synthesis                                   │ │
-│  └───────────────────────────────────────────────────────┘ │
-└──────┬────────────────────────────────────┬─────────────────┘
-       │                                    │
-       ▼                                    ▼
-┌─────────────────────┐          ┌──────────────────────┐
-│   RAG RETRIEVAL     │          │   MAF AGENTS         │
-│  (Async Pipeline)   │          │   (Connector)        │
-├─────────────────────┤          ├──────────────────────┤
-│ * Vector Search ║   │          │ * Debugger           │
-│ * Keyword Search    │          │ * Architect          │
-│ * RRF Fusion        │          │ * Developer          │
-│ * Reranking         │          │ * Reviewer           │
-│ * Online Fallback   │          │ * Tester             │
-│ * Semantic Cache    │          │ * Documenter         │
-└─────────────────────┘          │ * Optimizer          │
-                                 └──────────────────────┘
-       │                                    │
-       └────────────────┬───────────────────┘
-                        │
-                        ▼
-            ┌──────────────────────┐
-            │  HYBRID SYNTHESIS    │
-            │  * Content Merge     │
-            │  * Source Attribution│
-            │  * Confidence Weight │
-            └──────────────────────┘
-                        │
-                        ▼
-            ┌──────────────────────┐
-            │  ORCHESTRATION       │
-            │  RESULT              │
-            └──────────────────────┘
+
+                      USER QUERY                             
+
+                       
+                       
+
+                 AGENT ORCHESTRATOR                          
+   
+   1. Query Classification (Intent Detection)             
+   2. Routing Strategy Selection                          
+   3. Parallel Execution Coordination                     
+   4. Result Synthesis                                    
+   
+
+                                           
+                                           
+          
+   RAG RETRIEVAL                  MAF AGENTS         
+  (Async Pipeline)                (Connector)        
+          
+ * Vector Search               * Debugger           
+ * Keyword Search               * Architect          
+ * RRF Fusion                   * Developer          
+ * Reranking                    * Reviewer           
+ * Online Fallback              * Tester             
+ * Semantic Cache               * Documenter         
+           * Optimizer          
+                                 
+                                           
+       
+                        
+                        
+            
+              HYBRID SYNTHESIS    
+              * Content Merge     
+              * Source Attribution
+              * Confidence Weight 
+            
+                        
+                        
+            
+              ORCHESTRATION       
+              RESULT              
+            
 ```
 
 ### Async Retrieval Pipeline (Detail)
 
 ```
 Query
-  │
-  ├─► Embedding Generation (sync, fast)
-  │
-  ├─► PARALLEL SEARCH PHASE
-  │   ┌──────────────────────────────┐
-  │   │    asyncio.gather()          │
-  │   └──────────┬──────────┬────────┘
-  │              │          │
-  │              ▼          ▼
-  │   ┌──────────────┐  ┌──────────────┐
-  │   │ Vector Search│  │Keyword Search│
-  │   │  (FAISS)     │  │   (BM25)     │
-  │   │  Timeout: 2s │  │  Timeout: 2s │
-  │   └──────┬───────┘  └─────┬────────┘
-  │          │                │
-  │          └────────┬───────┘
-  │                   │
-  ├─► RRF Fusion (Reciprocal Rank Fusion)
-  │
-  ├─► Reranking (Async, Timeout: 3s)
-  │   └─► Cross-encoder scoring
-  │
-  ├─► Online Fallback (if needed)
-  │
-  └─► Semantic Cache Update
+  
+   Embedding Generation (sync, fast)
+  
+   PARALLEL SEARCH PHASE
+     
+         asyncio.gather()          
+     
+                          
+                          
+       
+      Vector Search  Keyword Search
+       (FAISS)          (BM25)     
+       Timeout: 2s     Timeout: 2s 
+       
+                            
+            
+                     
+   RRF Fusion (Reciprocal Rank Fusion)
+  
+   Reranking (Async, Timeout: 3s)
+      Cross-encoder scoring
+  
+   Online Fallback (if needed)
+  
+   Semantic Cache Update
 ```
 
 ---

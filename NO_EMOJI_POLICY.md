@@ -48,12 +48,12 @@ Instead of emojis, use these text-based alternatives:
 
 | Emoji | Replacement | Usage |
 |-------|-------------|-------|
-| ✅ | `[OK]`, `SUCCESS:`, `ENABLED` | Success indicators |
-| ❌ | `[ERROR]`, `ERROR:`, `DISABLED` | Error indicators |
-| ⚠️ | `[WARNING]`, `WARNING:` | Warning messages |
-| 🔍 | `[SEARCH]` | Search operations |
-| 📝 | `[NOTE]` | Notes or documentation |
-| 🚀 | `[LAUNCH]` | Start/launch operations |
+|  | `[OK]`, `SUCCESS:`, `ENABLED` | Success indicators |
+|  | `[ERROR]`, `ERROR:`, `DISABLED` | Error indicators |
+|  | `[WARNING]`, `WARNING:` | Warning messages |
+|  | `[SEARCH]` | Search operations |
+|  | `[NOTE]` | Notes or documentation |
+|  | `[LAUNCH]` | Start/launch operations |
 | → | `->` | Right arrow |
 | ← | `<-` | Left arrow |
 

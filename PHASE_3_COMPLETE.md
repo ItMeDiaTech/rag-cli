@@ -78,22 +78,22 @@ Complexity Indicators:
 **Synthesis Pipeline**:
 ```
 Sub-query Results
-    │
-    ├─► Collect & Track Sources
-    │
-    ├─► Deduplication
-    │   ├─ Exact: MD5 hash matching
-    │   └─ Near: Jaccard similarity ≥ 0.85
-    │
-    ├─► Re-ranking
-    │   ├─ Original score (60%)
-    │   ├─ Source diversity (20%)
-    │   └─ Method quality (20%)
-    │
-    └─► Confidence Calculation
-        ├─ Avg result scores (60%)
-        ├─ Coverage (20%)
-        └─ Dedup quality (20%)
+    
+     Collect & Track Sources
+    
+     Deduplication
+        Exact: MD5 hash matching
+        Near: Jaccard similarity ≥ 0.85
+    
+     Re-ranking
+        Original score (60%)
+        Source diversity (20%)
+        Method quality (20%)
+    
+     Confidence Calculation
+         Avg result scores (60%)
+         Coverage (20%)
+         Dedup quality (20%)
 ```
 
 **Deduplication**:
@@ -149,21 +149,21 @@ def _determine_strategy(classification):
 **Execution Flow**:
 ```
 Complex Query
-    │
-    ├─► Query Decomposer
-    │   └─► 3 sub-queries
-    │
-    ├─► Parallel Retrieval (asyncio.gather)
-    │   ├─► Sub-query 1: retrieve_async() -> 5 results
-    │   ├─► Sub-query 2: retrieve_async() -> 5 results
-    │   └─► Sub-query 3: retrieve_async() -> 5 results
-    │
-    ├─► Result Synthesizer
-    │   ├─► Deduplication: 15 -> 12 unique
-    │   └─► Re-ranking: Top 10 by relevance
-    │
-    └─► Formatted Response
-        └─► OrchestrationResult with decomposition metadata
+    
+     Query Decomposer
+        3 sub-queries
+    
+     Parallel Retrieval (asyncio.gather)
+        Sub-query 1: retrieve_async() -> 5 results
+        Sub-query 2: retrieve_async() -> 5 results
+        Sub-query 3: retrieve_async() -> 5 results
+    
+     Result Synthesizer
+        Deduplication: 15 -> 12 unique
+        Re-ranking: Top 10 by relevance
+    
+     Formatted Response
+         OrchestrationResult with decomposition metadata
 ```
 
 **Performance**:
@@ -176,80 +176,80 @@ Complex Query
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Complex Query                        │
-│  "How to implement FastAPI with async DB and CORS?"    │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              Query Decomposer                           │
-│  * Complexity Analysis: score = 0.75 (COMPLEX)         │
-│  * Strategy: Pattern-based (conjunctions detected)     │
-│  * Confidence: 0.80                                    │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ├─► SubQuery[0]: "How to implement FastAPI?"
-                     ├─► SubQuery[1]: "FastAPI async database?"
-                     └─► SubQuery[2]: "FastAPI CORS?"
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│         Parallel Retrieval (asyncio.gather)            │
-│                                                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐ │
-│  │ retrieve_    │  │ retrieve_    │  │ retrieve_    │ │
-│  │ async()      │  │ async()      │  │ async()      │ │
-│  │ SubQuery 0   │  │ SubQuery 1   │  │ SubQuery 2   │ │
-│  │ ~600ms       │  │ ~600ms       │  │ ~600ms       │ │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘ │
-│         │                 │                 │          │
-│         ▼                 ▼                 ▼          │
-│    5 results         5 results         5 results       │
-└─────────┬───────────────────┬───────────────┬──────────┘
-          │                   │               │
-          └───────────┬───────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│              Result Synthesizer                         │
-│                                                         │
-│  Step 1: Collect & Track                               │
-│  * Total results: 15                                   │
-│  * Source mapping: maintained                          │
-│                                                         │
-│  Step 2: Deduplication                                 │
-│  * Exact duplicates: 2 (MD5 hash)                     │
-│  * Near-duplicates: 1 (similarity ≥ 0.85)             │
-│  * Unique results: 12                                  │
-│                                                         │
-│  Step 3: Re-ranking                                    │
-│  * Original scores: weighted 60%                       │
-│  * Diversity bonus: weighted 20%                       │
-│  * Method quality: weighted 20%                        │
-│  * Final ranking: top 10 selected                     │
-│                                                         │
-│  Step 4: Confidence Calculation                        │
-│  * Avg scores: 0.82                                    │
-│  * Coverage: 0.80 (12/15)                             │
-│  * Dedup quality: 0.20 (3/15*0.3)                     │
-│  * Overall confidence: 0.87                            │
-└────────────────────┬────────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────────┐
-│              OrchestrationResult                        │
-│                                                         │
-│  Strategy: DECOMPOSED                                  │
-│  Confidence: 0.87                                      │
-│  Results: 10 unique, synthesized results              │
-│  Metadata:                                             │
-│    * sub_query_count: 3                               │
-│    * total_results_collected: 15                      │
-│    * duplicates_removed: 3                            │
-│    * deduplication_rate: 0.20                         │
-│  Execution time: ~650ms (vs 1800ms sequential)       │
-└─────────────────────────────────────────────────────────┘
+
+                    Complex Query                        
+  "How to implement FastAPI with async DB and CORS?"    
+
+                     
+                     
+
+              Query Decomposer                           
+  * Complexity Analysis: score = 0.75 (COMPLEX)         
+  * Strategy: Pattern-based (conjunctions detected)     
+  * Confidence: 0.80                                    
+
+                     
+                      SubQuery[0]: "How to implement FastAPI?"
+                      SubQuery[1]: "FastAPI async database?"
+                      SubQuery[2]: "FastAPI CORS?"
+                     
+                     
+
+         Parallel Retrieval (asyncio.gather)            
+                                                         
+       
+   retrieve_       retrieve_       retrieve_     
+   async()         async()         async()       
+   SubQuery 0      SubQuery 1      SubQuery 2    
+   ~600ms          ~600ms          ~600ms        
+       
+                                                     
+                                                     
+    5 results         5 results         5 results       
+
+                                            
+          
+                      
+                      
+
+              Result Synthesizer                         
+                                                         
+  Step 1: Collect & Track                               
+  * Total results: 15                                   
+  * Source mapping: maintained                          
+                                                         
+  Step 2: Deduplication                                 
+  * Exact duplicates: 2 (MD5 hash)                     
+  * Near-duplicates: 1 (similarity ≥ 0.85)             
+  * Unique results: 12                                  
+                                                         
+  Step 3: Re-ranking                                    
+  * Original scores: weighted 60%                       
+  * Diversity bonus: weighted 20%                       
+  * Method quality: weighted 20%                        
+  * Final ranking: top 10 selected                     
+                                                         
+  Step 4: Confidence Calculation                        
+  * Avg scores: 0.82                                    
+  * Coverage: 0.80 (12/15)                             
+  * Dedup quality: 0.20 (3/15*0.3)                     
+  * Overall confidence: 0.87                            
+
+                     
+                     
+
+              OrchestrationResult                        
+                                                         
+  Strategy: DECOMPOSED                                  
+  Confidence: 0.87                                      
+  Results: 10 unique, synthesized results              
+  Metadata:                                             
+    * sub_query_count: 3                               
+    * total_results_collected: 15                      
+    * duplicates_removed: 3                            
+    * deduplication_rate: 0.20                         
+  Execution time: ~650ms (vs 1800ms sequential)       
+
 ```
 
 ---

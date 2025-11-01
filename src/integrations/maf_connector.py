@@ -354,9 +354,9 @@ class MAFConnector:
         if self.maf_available:
             try:
                 from agents.maf.core import agent
-                health['maf_version'] = getattr(agent, '__version__', '1.2.0')
+                health['maf_version'] = getattr(agent, '__version__', '1.2.2')
             except Exception:
-                health['maf_version'] = '1.2.0 (embedded)'
+                health['maf_version'] = '1.2.2 (embedded)'
 
         return health
 

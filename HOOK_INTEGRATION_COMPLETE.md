@@ -169,19 +169,19 @@ Added comprehensive logging with timestamps:
 ### Source (Development)
 ```
 C:\Users\DiaTech\Pictures\DiaTech\Programs\DocHub\development\RAG-CLI\
-├── src\plugin\hooks\
-│   ├── user-prompt-submit.py (Updated)
-│   └── update-rag-hook.py (Updated)
-└── sync_plugin.py
+ src\plugin\hooks\
+    user-prompt-submit.py (Updated)
+    update-rag-hook.py (Updated)
+ sync_plugin.py
 ```
 
 ### Deployed (Claude Code)
 ```
 C:\Users\DiaTech\.claude\plugins\rag-cli\
-├── hooks\
-│   ├── user-prompt-submit.py (Synced)
-│   └── update-rag-hook.py (Synced)
-└── plugin.json
+ hooks\
+    user-prompt-submit.py (Synced)
+    update-rag-hook.py (Synced)
+ plugin.json
 ```
 
 ## Performance Characteristics

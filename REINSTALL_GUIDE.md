@@ -117,23 +117,23 @@ After successful reinstall:
 
 ```
 ~/.claude/
-├── plugins/
-│   └── marketplaces/
-│       └── rag-cli/              # Only RAG installation
-│           ├── .claude-plugin/
-│           │   ├── plugin.json
-│           │   ├── marketplace.json
-│           │   └── hooks.json
-│           ├── src/
-│           │   ├── core/
-│           │   ├── monitoring/
-│           │   └── plugin/
-│           │       ├── commands/  # Command definitions
-│           │       ├── hooks/     # Hook scripts
-│           │       └── mcp/       # MCP server
-│           └── config/
-│               └── rag_settings.json
-└── mcp/
+ plugins/
+    marketplaces/
+        rag-cli/              # Only RAG installation
+            .claude-plugin/
+               plugin.json
+               marketplace.json
+               hooks.json
+            src/
+               core/
+               monitoring/
+               plugin/
+                   commands/  # Command definitions
+                   hooks/     # Hook scripts
+                   mcp/       # MCP server
+            config/
+                rag_settings.json
+ mcp/
     # NO rag-cli.json file here
 ```
 

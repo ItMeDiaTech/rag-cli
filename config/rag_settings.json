@@ -24,7 +24,7 @@
   },
   "metadata": {
     "last_updated": "2025-10-30T00:00:00Z",
-    "version": "1.2.0",
+    "version": "1.2.2",
     "description": "RAG enhancement settings with embedded multi-agent framework (v1.2.0)",
     "features": ["embedded_maf", "parallel_execution", "all_7_agents", "graceful_fallback"]
   }

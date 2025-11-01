@@ -115,22 +115,22 @@ def main():
     tests_total = 3
 
     if result_1 is not None:
-        print("✓ Test 1 (UserPromptSubmit): PASSED")
+        print(" Test 1 (UserPromptSubmit): PASSED")
         tests_passed += 1
     else:
-        print("✗ Test 1 (UserPromptSubmit): FAILED")
+        print(" Test 1 (UserPromptSubmit): FAILED")
 
     if result_2 is not None:
-        print("✓ Test 2 (UserPromptSubmit Command): PASSED")
+        print(" Test 2 (UserPromptSubmit Command): PASSED")
         tests_passed += 1
     else:
-        print("✗ Test 2 (UserPromptSubmit Command): FAILED")
+        print(" Test 2 (UserPromptSubmit Command): FAILED")
 
     if result_3 is not None:
-        print("✓ Test 3 (UpdateRagCommand): PASSED")
+        print(" Test 3 (UpdateRagCommand): PASSED")
         tests_passed += 1
     else:
-        print("✗ Test 3 (UpdateRagCommand): FAILED")
+        print(" Test 3 (UpdateRagCommand): FAILED")
 
     print(f"\nResults: {tests_passed}/{tests_total} tests passed")
 

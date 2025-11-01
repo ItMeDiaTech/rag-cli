@@ -218,7 +218,7 @@ class RichOutput:
 
         for service_name, status in services.items():
             running = status.get('running', False)
-            status_icon = "[green]●[/green] Running" if running else "[red]●[/red] Stopped"
+            status_icon = "[green][/green] Running" if running else "[red][/red] Stopped"
             port = str(status.get('port', 'N/A'))
             url = status.get('url', '-')
 

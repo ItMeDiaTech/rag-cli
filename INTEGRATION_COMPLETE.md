@@ -184,45 +184,45 @@ PYTHONUNBUFFERED=1
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Query                               │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │
-┌───────────────────────▼─────────────────────────────────────────┐
-│           UserPromptSubmit Hook (Priority 100)                   │
-│  - Load settings                                                  │
-│  - Query classification                                           │
-│  - Should enhance check                                           │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │
-        ┌───────────────▼───────────────┐
-        │   Agent Orchestrator          │
-        │  (Intent-based routing)       │
-        └───┬───────────────────────┬───┘
-            │                       │
-    ┌───────▼─────────┐     ┌──────▼────────┐
-    │   RAG Pipeline  │     │ MAF Connector  │
-    │                 │     │ (Multi-Agent)  │
-    │ * Vector Store  │     │ * Architect    │
-    │ * Embeddings    │     │ * Developer    │
-    │ * Hybrid Search │     │ * Debugger     │
-    │ * Reranking     │     │ * Tester       │
-    └────────┬────────┘     │ * Optimizer    │
-             │              └────────┬────────┘
-             │                       │
-        ┌────▼───────────────────────▼────┐
-        │     Result Synthesizer          │
-        │  - Combine RAG + MAF results    │
-        │  - Confidence scoring            │
-        │  - Source attribution            │
-        └────┬────────────────────────────┘
-             │
-┌────────────▼──────────────────────────────────────────────────┐
-│                   Enhanced Query to Claude                      │
-│  - Context-enriched prompt                                      │
-│  - Source citations                                             │
-│  - Agent recommendations                                         │
-└────────────────────────────────────────────────────────────────┘
+
+                         User Query                               
+
+                        
+
+           UserPromptSubmit Hook (Priority 100)                   
+  - Load settings                                                  
+  - Query classification                                           
+  - Should enhance check                                           
+
+                        
+        
+           Agent Orchestrator          
+          (Intent-based routing)       
+        
+                                   
+         
+       RAG Pipeline        MAF Connector  
+                           (Multi-Agent)  
+     * Vector Store        * Architect    
+     * Embeddings          * Developer    
+     * Hybrid Search       * Debugger     
+     * Reranking           * Tester       
+          * Optimizer    
+                           
+                                    
+        
+             Result Synthesizer          
+          - Combine RAG + MAF results    
+          - Confidence scoring            
+          - Source attribution            
+        
+             
+
+                   Enhanced Query to Claude                      
+  - Context-enriched prompt                                      
+  - Source citations                                             
+  - Agent recommendations                                         
+
 ```
 
 ## Integration Points
@@ -305,8 +305,8 @@ The agent orchestrator uses intelligent routing based on query classification:
 - **Flow:**
   ```
   Query -> Classification
-    ├─► RAG: Search for solutions (async)
-    └─► MAF: Debugger agent analysis (async)
+     RAG: Search for solutions (async)
+     MAF: Debugger agent analysis (async)
   -> Synthesize results -> Response
   ```
 - **Latency:** ~5-10s (parallel execution)
@@ -316,9 +316,9 @@ The agent orchestrator uses intelligent routing based on query classification:
 - **Flow:**
   ```
   Query -> Decomposition into sub-queries
-    ├─► Sub-query 1: RAG or MAF
-    ├─► Sub-query 2: RAG or MAF
-    └─► Sub-query N: RAG or MAF
+     Sub-query 1: RAG or MAF
+     Sub-query 2: RAG or MAF
+     Sub-query N: RAG or MAF
   -> Synthesize all results -> Response
   ```
 - **Latency:** ~10-30s (depends on sub-query count)

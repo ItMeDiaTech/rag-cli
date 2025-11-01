@@ -180,18 +180,18 @@ To reach 80% (10,336 statements), need to add tests for:
 
 ```
 PerformanceDashboard
-├── MetricsCollector (data collection)
-│   ├── Latency tracking
-│   ├── Throughput monitoring
-│   ├── Error recording
-│   └── Cache statistics
-├── Flask web server
-│   ├── REST API endpoints
-│   └── Real-time updates (2s interval)
-└── Frontend (embedded HTML/JS)
-    ├── Chart.js visualizations
-    ├── Responsive design
-    └── Dark theme UI
+ MetricsCollector (data collection)
+    Latency tracking
+    Throughput monitoring
+    Error recording
+    Cache statistics
+ Flask web server
+    REST API endpoints
+    Real-time updates (2s interval)
+ Frontend (embedded HTML/JS)
+     Chart.js visualizations
+     Responsive design
+     Dark theme UI
 ```
 
 #### Usage Example

@@ -107,31 +107,31 @@ Query Input
 Intent Classification (10 intents)
     v
 Routing Decision (4 strategies)
-    ├─ RAG_ONLY
-    ├─ MAF_ONLY
-    ├─ PARALLEL_RAG_MAF <- DEFAULT
-    └─ DECOMPOSED
+     RAG_ONLY
+     MAF_ONLY
+     PARALLEL_RAG_MAF <- DEFAULT
+     DECOMPOSED
     v
 Concurrent Execution (asyncio.gather)
-    ├─ RAG Pipeline (2-3s)
-    │   ├─ FAISS vector search
-    │   ├─ BM25 keyword search
-    │   └─ Cross-encoder reranking
-    │
-    └─ MAF Agents (30s, up to 3 parallel)
-        ├─ Debugger (error analysis)
-        ├─ Developer (code generation)
-        ├─ Reviewer (quality checks)
-        ├─ Tester (test creation)
-        ├─ Architect (design planning)
-        ├─ Documenter (documentation)
-        └─ Optimizer (performance)
+     RAG Pipeline (2-3s)
+        FAISS vector search
+        BM25 keyword search
+        Cross-encoder reranking
+    
+     MAF Agents (30s, up to 3 parallel)
+         Debugger (error analysis)
+         Developer (code generation)
+         Reviewer (quality checks)
+         Tester (test creation)
+         Architect (design planning)
+         Documenter (documentation)
+         Optimizer (performance)
     v
 Result Synthesis
-    ├─ Combine outputs
-    ├─ Confidence weighting
-    ├─ Deduplication
-    └─ Citation management
+     Combine outputs
+     Confidence weighting
+     Deduplication
+     Citation management
     v
 Formatted Response
 ```
@@ -139,21 +139,21 @@ Formatted Response
 ### Configuration Hierarchy
 ```
 config/rag_settings.json
-├── orchestration (legacy settings)
-│   ├── enable_maf: true
-│   ├── parallel_threshold_confidence: 0.7
-│   ├── decomposition_complexity_threshold: 0.6
-│   └── maf_timeout: 30.0
-│
-└── maf (new v1.2.0 settings)
-    ├── enabled: true
-    ├── mode: "parallel"
-    ├── agents: [all 7 agents]
-    ├── fallback_to_rag: true
-    ├── show_notifications: true
-    ├── execution_strategy: "always_parallel"
-    ├── timeout_seconds: 30
-    └── max_parallel_agents: 3
+ orchestration (legacy settings)
+    enable_maf: true
+    parallel_threshold_confidence: 0.7
+    decomposition_complexity_threshold: 0.6
+    maf_timeout: 30.0
+
+ maf (new v1.2.0 settings)
+     enabled: true
+     mode: "parallel"
+     agents: [all 7 agents]
+     fallback_to_rag: true
+     show_notifications: true
+     execution_strategy: "always_parallel"
+     timeout_seconds: 30
+     max_parallel_agents: 3
 ```
 
 ## Key Features Implemented
@@ -310,25 +310,25 @@ pip install -r requirements.txt
 
 ```
   [OK] Embedded MAF Framework
-   ├─ 6 core components
-   ├─ 7 specialized agents
-   ├─ Config and utilities
-   └─ 16 Python files total
+    6 core components
+    7 specialized agents
+    Config and utilities
+    16 Python files total
   [OK] Integration Complete
-   ├─ Connector updated
-   ├─ Imports fixed
-   ├─ Config enhanced
-   └─ Commands created
+    Connector updated
+    Imports fixed
+    Config enhanced
+    Commands created
   [OK] Ready for Production
-   ├─ Backward compatible
-   ├─ Fallback mechanisms
-   ├─ Comprehensive logging
-   └─ User-friendly commands
+    Backward compatible
+    Fallback mechanisms
+    Comprehensive logging
+    User-friendly commands
   [OK] Fully Documented
-   ├─ Architecture guide
-   ├─ Configuration docs
-   ├─ Usage examples
-   └─ Troubleshooting
+    Architecture guide
+    Configuration docs
+    Usage examples
+    Troubleshooting
 ```
 
 ---

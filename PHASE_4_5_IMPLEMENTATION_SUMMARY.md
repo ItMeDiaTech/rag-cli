@@ -464,45 +464,45 @@ Agent orchestration system is fully operational!
 **System Architecture:**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    RAG-CLI ORCHESTRATION                     │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           AGENT COORDINATION LAYER (Phase 5)         │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │  * AgentCoordinator: Central coordination           │   │
-│  │  * BaseAgent: Agent protocol                        │   │
-│  │  * AgentMessage: Typed message passing              │   │
-│  │  * AgentMonitor: Execution tracking                 │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                           │                                  │
-│  ┌────────────────────────┴────────────────────────────┐   │
-│  │         SPECIALIZED AGENTS (Phase 3 + 5)            │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │  * QueryDecomposer: Complex query splitting         │   │
-│  │  * ResultSynthesizer: Multi-result merging          │   │
-│  │  * Future: ReRanker, QueryExpander, etc.            │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                           │                                  │
-│  ┌────────────────────────┴────────────────────────────┐   │
-│  │      MULTI-PROCESS PIPELINE (Phase 4)               │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │  * ProcessEmbeddingPool: Parallel embeddings        │   │
-│  │  * Process-parallel chunking: Parallel docs         │   │
-│  │  * Multiprocessing-safe vector store                │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                           │                                  │
-│  ┌────────────────────────┴────────────────────────────┐   │
-│  │         CORE RETRIEVAL (Phase 1 + 2)                │   │
-│  ├─────────────────────────────────────────────────────┤   │
-│  │  * Async retrieval pipeline                         │   │
-│  │  * Hybrid search (vector + keyword)                 │   │
-│  │  * HyDE query enhancement                           │   │
-│  │  * MAF integration                                  │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+
+                    RAG-CLI ORCHESTRATION                     
+
+                                                               
+     
+             AGENT COORDINATION LAYER (Phase 5)            
+     
+    * AgentCoordinator: Central coordination              
+    * BaseAgent: Agent protocol                           
+    * AgentMessage: Typed message passing                 
+    * AgentMonitor: Execution tracking                    
+     
+                                                             
+     
+           SPECIALIZED AGENTS (Phase 3 + 5)               
+     
+    * QueryDecomposer: Complex query splitting            
+    * ResultSynthesizer: Multi-result merging             
+    * Future: ReRanker, QueryExpander, etc.               
+     
+                                                             
+     
+        MULTI-PROCESS PIPELINE (Phase 4)                  
+     
+    * ProcessEmbeddingPool: Parallel embeddings           
+    * Process-parallel chunking: Parallel docs            
+    * Multiprocessing-safe vector store                   
+     
+                                                             
+     
+           CORE RETRIEVAL (Phase 1 + 2)                   
+     
+    * Async retrieval pipeline                            
+    * Hybrid search (vector + keyword)                    
+    * HyDE query enhancement                              
+    * MAF integration                                     
+     
+                                                               
+
 ```
 
 ## Testing and Validation

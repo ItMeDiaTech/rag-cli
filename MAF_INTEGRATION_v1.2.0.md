@@ -80,28 +80,28 @@ User Query
 Query Classifier (intent detection)
     v
 Routing Decision (4 strategies)
-    ├─ RAG_ONLY -> vector + keyword search
-    ├─ MAF_ONLY -> direct agent execution
-    ├─ PARALLEL_RAG_MAF -> asyncio.gather(RAG, MAF)
-    └─ DECOMPOSED -> complex query breakdown
+     RAG_ONLY -> vector + keyword search
+     MAF_ONLY -> direct agent execution
+     PARALLEL_RAG_MAF -> asyncio.gather(RAG, MAF)
+     DECOMPOSED -> complex query breakdown
     v
 Concurrent Execution (if PARALLEL)
-    ├─ RAG Pipeline (2-3s timeout)
-    │   ├─ FAISS vector search
-    │   ├─ BM25 keyword search
-    │   └─ Cross-encoder reranking
-    │
-    └─ MAF Agents (30s timeout)
-        ├─ Debugger (error analysis)
-        ├─ Developer (code generation)
-        ├─ Reviewer (quality checks)
-        └─ (up to 7 agents simultaneously)
+     RAG Pipeline (2-3s timeout)
+        FAISS vector search
+        BM25 keyword search
+        Cross-encoder reranking
+    
+     MAF Agents (30s timeout)
+         Debugger (error analysis)
+         Developer (code generation)
+         Reviewer (quality checks)
+         (up to 7 agents simultaneously)
     v
 Result Synthesis
-    ├─ Combine both sources
-    ├─ Confidence-weighted merging
-    ├─ Deduplication
-    └─ Citation management
+     Combine both sources
+     Confidence-weighted merging
+     Deduplication
+     Citation management
     v
 Formatted Response
 ```
@@ -129,50 +129,50 @@ Formatted Response
 
 ```
 RAG-CLI/
-├── src/
-│   ├── agents/
-│   │   ├── maf/                          # NEW: Embedded MAF framework
-│   │   │   ├── __init__.py
-│   │   │   ├── core/                     # 6 core components
-│   │   │   │   ├── agent.py
-│   │   │   │   ├── orchestrator.py
-│   │   │   │   ├── agent_communication.py
-│   │   │   │   ├── memory.py
-│   │   │   │   ├── task_classifier.py
-│   │   │   │   ├── claude_cli_unified.py
-│   │   │   │   └── __init__.py
-│   │   │   ├── agents/                   # 7 agents
-│   │   │   │   ├── debugger.py
-│   │   │   │   ├── developer.py
-│   │   │   │   ├── reviewer.py
-│   │   │   │   ├── tester.py
-│   │   │   │   ├── architect.py
-│   │   │   │   ├── documenter.py
-│   │   │   │   ├── optimizer.py
-│   │   │   │   └── __init__.py
-│   │   │   └── config.yaml
-│   │   └── query_decomposer.py
-│   ├── core/
-│   │   ├── agent_orchestrator.py         # UPDATED: Already supports parallel
-│   │   └── ... (other core components)
-│   ├── integrations/
-│   │   ├── maf_connector.py              # UPDATED: Uses embedded MAF
-│   │   └── ... (other integrations)
-│   └── plugin/
-│       ├── commands/
-│       │   ├── rag-maf-config.md         # NEW: MAF config command
-│       │   ├── rag_maf_config.py         # NEW: Implementation
-│       │   └── ... (other commands)
-│       └── ... (other plugin components)
-├── config/
-│   ├── rag_settings.json                 # UPDATED: v1.2.0 config
-│   └── ... (other configs)
-├── .claude-plugin/
-│   ├── plugin.json                       # UPDATED: v1.2.0
-│   └── ... (other plugin files)
-├── requirements.txt                      # UPDATED: Added aiofiles
-├── MAF_INTEGRATION_v1.2.0.md            # NEW: This file
-└── ... (other project files)
+ src/
+    agents/
+       maf/                          # NEW: Embedded MAF framework
+          __init__.py
+          core/                     # 6 core components
+             agent.py
+             orchestrator.py
+             agent_communication.py
+             memory.py
+             task_classifier.py
+             claude_cli_unified.py
+             __init__.py
+          agents/                   # 7 agents
+             debugger.py
+             developer.py
+             reviewer.py
+             tester.py
+             architect.py
+             documenter.py
+             optimizer.py
+             __init__.py
+          config.yaml
+       query_decomposer.py
+    core/
+       agent_orchestrator.py         # UPDATED: Already supports parallel
+       ... (other core components)
+    integrations/
+       maf_connector.py              # UPDATED: Uses embedded MAF
+       ... (other integrations)
+    plugin/
+        commands/
+           rag-maf-config.md         # NEW: MAF config command
+           rag_maf_config.py         # NEW: Implementation
+           ... (other commands)
+        ... (other plugin components)
+ config/
+    rag_settings.json                 # UPDATED: v1.2.0 config
+    ... (other configs)
+ .claude-plugin/
+    plugin.json                       # UPDATED: v1.2.0
+    ... (other plugin files)
+ requirements.txt                      # UPDATED: Added aiofiles
+ MAF_INTEGRATION_v1.2.0.md            # NEW: This file
+ ... (other project files)
 ```
 
 ## Key Features

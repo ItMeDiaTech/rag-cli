@@ -469,29 +469,29 @@ export RAG_CLI_MODE="claude_code"  # or "standalone" or "hybrid"
 
 ```
 RAG-CLI/
-├── src/
-│   ├── core/               # Core RAG pipeline
-│   │   ├── constants.py    # Global configuration constants
-│   │   ├── embeddings.py   # Sentence transformer integration
-│   │   ├── vector_store.py # FAISS vector operations
-│   │   ├── document_processor.py # Document chunking
-│   │   ├── retrieval_pipeline.py # Hybrid search
-│   │   └── claude_integration.py # Claude API interface
-│   │
-│   ├── monitoring/         # Observability
-│   │   ├── logger.py      # Structured logging
-│   │   └── tcp_server.py  # Monitoring server
-│   │
-│   └── plugin/            # Claude Code integration
-│       ├── skills/        # Agent skills
-│       ├── commands/      # Slash commands
-│       ├── hooks/         # Event hooks
-│       └── mcp/           # MCP server
-│
-├── scripts/               # CLI utilities
-├── tests/                 # Test suites
-├── data/                  # Documents and vectors
-└── config/                # Configuration files
+ src/
+    core/               # Core RAG pipeline
+       constants.py    # Global configuration constants
+       embeddings.py   # Sentence transformer integration
+       vector_store.py # FAISS vector operations
+       document_processor.py # Document chunking
+       retrieval_pipeline.py # Hybrid search
+       claude_integration.py # Claude API interface
+   
+    monitoring/         # Observability
+       logger.py      # Structured logging
+       tcp_server.py  # Monitoring server
+   
+    plugin/            # Claude Code integration
+        skills/        # Agent skills
+        commands/      # Slash commands
+        hooks/         # Event hooks
+        mcp/           # MCP server
+
+ scripts/               # CLI utilities
+ tests/                 # Test suites
+ data/                  # Documents and vectors
+ config/                # Configuration files
 ```
 
 ### Data Flow

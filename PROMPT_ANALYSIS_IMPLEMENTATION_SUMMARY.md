@@ -147,33 +147,33 @@ User Query
 UserPromptSubmit Hook (user-prompt-submit.py)
     v
 Query Classifier (query_classifier.py)
-    ├-> Intent Detection
-    ├-> Entity Extraction
-    ├-> Confidence Scoring
-    └-> Technical Detection
+    -> Intent Detection
+    -> Entity Extraction
+    -> Confidence Scoring
+    -> Technical Detection
     v
 Should Enhance? (with confidence threshold)
     v YES
 Query Enhancer (query_enhancer.py) [Optional]
-    ├-> Acronym Resolution
-    ├-> Synonym Expansion
-    └-> Enhanced Query
+    -> Acronym Resolution
+    -> Synonym Expansion
+    -> Enhanced Query
     v
 Retrieval Pipeline (retrieval_pipeline.py)
-    ├-> Adaptive Weight Calculation (based on intent)
-    ├-> HyDE Application (if beneficial)
-    ├-> Hybrid Search (vector + keyword with adaptive weights)
-    ├-> Cross-Encoder Reranking
-    └-> Return Results
+    -> Adaptive Weight Calculation (based on intent)
+    -> HyDE Application (if beneficial)
+    -> Hybrid Search (vector + keyword with adaptive weights)
+    -> Cross-Encoder Reranking
+    -> Return Results
     v
 Best Practices Detector (best_practices_detector.py) [if applicable]
-    └-> Flag authoritative sources
+    -> Flag authoritative sources
     v
 Prompt Template Manager (prompt_templates.py)
-    └-> Select appropriate template (including BEST_PRACTICES)
+    -> Select appropriate template (including BEST_PRACTICES)
     v
 Claude Integration
-    └-> Generate response with structured template
+    -> Generate response with structured template
 ```
 
 ---

@@ -250,58 +250,58 @@ config/rag_settings.json (added orchestration options)
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Query                               │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │
-┌───────────────────────▼─────────────────────────────────────────┐
-│           UserPromptSubmit Hook (Priority 100)                   │
-│  - Load settings (with enable_agent_orchestration flag)         │
-│  - Query classification (QueryIntent + TechnicalDepth)          │
-│  - Should enhance check (5+ words, technical, enabled)          │
-└───────────────────────┬─────────────────────────────────────────┘
-                        │
-        ┌───────────────▼───────────────┐
-        │   Agent Orchestrator          │
-        │  (Intent-based routing)       │
-        │                               │
-        │  Strategy Decision:           │
-        │  * TROUBLESHOOTING + high     │
-        │    confidence -> PARALLEL      │
-        │  * Multiple intents or        │
-        │    advanced topic -> DECOMPOSE │
-        │  * Default -> RAG_ONLY         │
-        └───┬───────────────────────┬───┘
-            │                       │
-    ┌───────▼─────────┐     ┌──────▼────────┐
-    │   RAG Pipeline  │     │ MAF Connector  │
-    │                 │     │ (Multi-Agent)  │
-    │ * Vector Store  │     │                │
-    │ * Embeddings    │     │ Agents:        │
-    │ * BM25 Search   │     │ * Debugger     │
-    │ * HyDE          │     │ * Architect    │
-    │ * Reranking     │     │ * Developer    │
-    │ * Online Fetch  │     │ * Reviewer     │
-    │                 │     │ * Tester       │
-    └────────┬────────┘     │ * Documenter   │
-             │              │ * Optimizer    │
-             │              └────────┬────────┘
-             │                       │
-        ┌────▼───────────────────────▼────┐
-        │     Result Synthesizer          │
-        │  - Combine RAG + MAF results    │
-        │  - Deduplicate sources          │
-        │  - Confidence scoring            │
-        │  - Source attribution            │
-        └────┬────────────────────────────┘
-             │
-┌────────────▼──────────────────────────────────────────────────┐
-│                   Enhanced Query to Claude                      │
-│  - Original query + retrieved context                           │
-│  - Source citations [1][2][3]                                   │
-│  - Agent recommendations (if MAF used)                          │
-│  - Strategy metadata for ResponsePost hook                      │
-└────────────────────────────────────────────────────────────────┘
+
+                         User Query                               
+
+                        
+
+           UserPromptSubmit Hook (Priority 100)                   
+  - Load settings (with enable_agent_orchestration flag)         
+  - Query classification (QueryIntent + TechnicalDepth)          
+  - Should enhance check (5+ words, technical, enabled)          
+
+                        
+        
+           Agent Orchestrator          
+          (Intent-based routing)       
+                                       
+          Strategy Decision:           
+          * TROUBLESHOOTING + high     
+            confidence -> PARALLEL      
+          * Multiple intents or        
+            advanced topic -> DECOMPOSE 
+          * Default -> RAG_ONLY         
+        
+                                   
+         
+       RAG Pipeline        MAF Connector  
+                           (Multi-Agent)  
+     * Vector Store                       
+     * Embeddings          Agents:        
+     * BM25 Search         * Debugger     
+     * HyDE                * Architect    
+     * Reranking           * Developer    
+     * Online Fetch        * Reviewer     
+                           * Tester       
+          * Documenter   
+                            * Optimizer    
+                           
+                                    
+        
+             Result Synthesizer          
+          - Combine RAG + MAF results    
+          - Deduplicate sources          
+          - Confidence scoring            
+          - Source attribution            
+        
+             
+
+                   Enhanced Query to Claude                      
+  - Original query + retrieved context                           
+  - Source citations [1][2][3]                                   
+  - Agent recommendations (if MAF used)                          
+  - Strategy metadata for ResponsePost hook                      
+
 ```
 
 ---

@@ -18,31 +18,31 @@ After sync, your Claude plugin directory will look like:
 
 ```
 ~/.claude/
-├── plugins/
-│   └── rag-cli/
-│       ├── commands/                 (synced from src/plugin/commands)
-│       │   ├── rag-enable.md
-│       │   ├── rag-disable.md
-│       │   └── search.md
-│       ├── hooks/                    (synced from src/plugin/hooks)
-│       │   └── user-prompt-submit.py
-│       ├── skills/                   (synced from src/plugin/skills)
-│       │   └── rag-retrieval/
-│       │       ├── retrieve.py
-│       │       └── SKILL.md
-│       ├── mcp/                      (synced from src/plugin/mcp)
-│       │   └── server.py
-│       ├── src/
-│       │   ├── core/ -> (symlink to RAG-CLI/src/core)
-│       │   └── monitoring/ -> (symlink to RAG-CLI/src/monitoring)
-│       ├── plugin.json               (synced)
-│       ├── README.md                 (synced)
-│       ├── requirements.txt           (synced)
-│       └── logs/                     (preserved - runtime files)
-└── commands/
-    ├── rag-enable.md                (synced)
-    ├── rag-disable.md               (synced)
-    └── search.md                    (synced)
+ plugins/
+    rag-cli/
+        commands/                 (synced from src/plugin/commands)
+           rag-enable.md
+           rag-disable.md
+           search.md
+        hooks/                    (synced from src/plugin/hooks)
+           user-prompt-submit.py
+        skills/                   (synced from src/plugin/skills)
+           rag-retrieval/
+               retrieve.py
+               SKILL.md
+        mcp/                      (synced from src/plugin/mcp)
+           server.py
+        src/
+           core/ -> (symlink to RAG-CLI/src/core)
+           monitoring/ -> (symlink to RAG-CLI/src/monitoring)
+        plugin.json               (synced)
+        README.md                 (synced)
+        requirements.txt           (synced)
+        logs/                     (preserved - runtime files)
+ commands/
+     rag-enable.md                (synced)
+     rag-disable.md               (synced)
+     search.md                    (synced)
 ```
 
 ## Usage

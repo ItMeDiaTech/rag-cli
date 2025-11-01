@@ -67,26 +67,26 @@ The complete Multi-Agent Framework (MAF) has been successfully integrated into t
 
 ```
 src/agents/maf/                    <- NEW: Embedded MAF Framework
-├── __init__.py
-├── config.yaml
-├── core/                          <- 6 core components
-│   ├── __init__.py
-│   ├── agent.py
-│   ├── agent_communication.py
-│   ├── claude_cli_unified.py
-│   ├── memory.py
-│   ├── orchestrator.py
-│   └── task_classifier.py
-│
-└── agents/                        <- 7 specialized agents
-    ├── __init__.py
-    ├── architect.py
-    ├── debugger.py
-    ├── developer.py
-    ├── documenter.py
-    ├── optimizer.py
-    ├── reviewer.py
-    └── tester.py
+ __init__.py
+ config.yaml
+ core/                          <- 6 core components
+    __init__.py
+    agent.py
+    agent_communication.py
+    claude_cli_unified.py
+    memory.py
+    orchestrator.py
+    task_classifier.py
+
+ agents/                        <- 7 specialized agents
+     __init__.py
+     architect.py
+     debugger.py
+     developer.py
+     documenter.py
+     optimizer.py
+     reviewer.py
+     tester.py
 ```
 
 ---

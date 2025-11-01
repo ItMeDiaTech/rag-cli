@@ -136,7 +136,7 @@ class CliOutputFormatter:
         if self.level.value >= OutputLevel.NORMAL.value:
             bar_width = 20
             filled = int(bar_width * progress_pct / 100)
-            bar = "█" * filled + "░" * (bar_width - filled)
+            bar = "" * filled + "" * (bar_width - filled)
             self._write(f"\r      Progress: [{bar}] {progress_pct}% - {activity}", end="")
 
             if progress_pct == 100:

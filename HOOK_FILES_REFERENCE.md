@@ -132,22 +132,22 @@ These hooks are implemented but not currently registered in `hooks.json`. They e
 User Input
     v
 [1] UserPromptSubmit hooks (priority order)
-    ├─ slash-command-blocker.py (150) - Block commentary
-    └─ user-prompt-submit.py (100)    - Route query
+     slash-command-blocker.py (150) - Block commentary
+     user-prompt-submit.py (100)    - Route query
     v
 Query Processing (RAG/MAF)
     v
 Claude Response
     v
 [2] ResponsePost hook
-    └─ response-post.py (80) - Add citations
+     response-post.py (80) - Add citations
     v
 [3] PluginStateChange hook (on settings change)
-    └─ plugin-state-change.py (60) - Save state
+     plugin-state-change.py (60) - Save state
     v
 [4] File monitoring hooks
-    ├─ FileCreated -> document-indexing.py (50)
-    └─ FileModified -> document-indexing.py (50)
+     FileCreated -> document-indexing.py (50)
+     FileModified -> document-indexing.py (50)
 ```
 
 ---

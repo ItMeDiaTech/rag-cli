@@ -12,20 +12,20 @@ The plugin directory structure follows this pattern:
 
 ```
 rag-plugin/
-├── .claude-plugin/
-│   └── plugin.json          # Required manifest
-├── commands/                 # Slash commands
-│   ├── rag-enable.md
-│   └── rag-disable.md
-├── skills/                   # Agent Skills  
-│   └── rag-retrieval/
-│       ├── SKILL.md
-│       └── scripts/
-│           └── retrieve.py
-├── hooks/
-│   └── hooks.json           # Query interception
-├── .mcp.json                # Vector DB connection
-└── README.md
+ .claude-plugin/
+    plugin.json          # Required manifest
+ commands/                 # Slash commands
+    rag-enable.md
+    rag-disable.md
+ skills/                   # Agent Skills  
+    rag-retrieval/
+        SKILL.md
+        scripts/
+            retrieve.py
+ hooks/
+    hooks.json           # Query interception
+ .mcp.json                # Vector DB connection
+ README.md
 ```
 
 The plugin manifest (plugin.json) requires name, version, description, and author fields. Environment variables like ${CLAUDE_PLUGIN_ROOT} provide the absolute path to the plugin directory, essential for referencing scripts in hooks and MCP configurations. The layered configuration system loads defaults first, then user settings from ~/.claude/settings.json, then project settings from .claude/settings.json, and finally CLI flags override everything.
@@ -348,11 +348,11 @@ Save as `commands/search.md` and invoke with `/search How do I configure the API
 
 ```
 commands/
-├── rag/
-│   ├── search.md       # Invoked as /rag:search
-│   ├── index.md        # Invoked as /rag:index
-│   └── clear.md        # Invoked as /rag:clear
-└── config.md           # Invoked as /config
+ rag/
+    search.md       # Invoked as /rag:search
+    index.md        # Invoked as /rag:index
+    clear.md        # Invoked as /rag:clear
+ config.md           # Invoked as /config
 ```
 
 The frontmatter supports several powerful options. Use `allowed-tools` to restrict which tools the command can access (security best practice). Set `model` to specify which Claude model executes the command (use opus for complex RAG reasoning, haiku for simple retrieval). The `disable-model-invocation` field prevents Claude from automatically choosing this command, keeping it manual-only. The `argument-hint` provides users with guidance on expected arguments.
@@ -780,17 +780,17 @@ Claude Code plugins distribute through marketplace repositories on GitHub or sim
 
 ```
 my-marketplace/
-├── .claude-plugin/
-│   └── marketplace.json
-├── rag-plugin/
-│   ├── .claude-plugin/
-│   │   └── plugin.json
-│   ├── commands/
-│   ├── skills/
-│   ├── scripts/
-│   └── README.md
-└── other-plugin/
-    └── ...
+ .claude-plugin/
+    marketplace.json
+ rag-plugin/
+    .claude-plugin/
+       plugin.json
+    commands/
+    skills/
+    scripts/
+    README.md
+ other-plugin/
+     ...
 ```
 
 The marketplace.json lists available plugins:

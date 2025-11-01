@@ -1,6 +1,6 @@
 {
   "name": "rag-cli",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Local RAG (Retrieval-Augmented Generation) system with embedded 7-agent framework for parallel execution. Enhances Claude Code with knowledge retrieval, code analysis, and multi-agent orchestration.",
   "author": {
     "name": "DiaTech",

@@ -184,9 +184,9 @@ Request 3: /maf optimize -> Isolated runner C -> Cleanup
 **Behavior:**
 ```
 Request 1: /maf complex refactoring (30s) -> Runner A (isolated)
-  ├─ Request 2: /maf_status -> Quick response (no blocking)
-  ├─ Request 3: /maf classify "new task" -> Quick response
-  └─ Completes, cleans up Runner A
+   Request 2: /maf_status -> Quick response (no blocking)
+   Request 3: /maf classify "new task" -> Quick response
+   Completes, cleans up Runner A
 ```
 
 **Result:** Status and classification don't block, full concurrency

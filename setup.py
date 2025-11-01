@@ -21,7 +21,7 @@ else:
 
 setup(
     name="rag-cli",
-    version="1.2.0",
+    version="1.2.2",
     author="DiaTech",
     author_email="support@rag-cli.dev",
     description="Local RAG system with embedded Multi-Agent Framework for Claude Code plugin",

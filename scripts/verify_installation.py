@@ -38,17 +38,17 @@ class InstallationVerifier:
 
     def check_pass(self, message: str) -> None:
         """Print passing check."""
-        print(f"{GREEN}✓{RESET} {message}")
+        print(f"{GREEN}{RESET} {message}")
         self.checks_passed += 1
 
     def check_fail(self, message: str) -> None:
         """Print failing check."""
-        print(f"{RED}✗{RESET} {message}")
+        print(f"{RED}{RESET} {message}")
         self.checks_failed += 1
 
     def check_warn(self, message: str) -> None:
         """Print warning check."""
-        print(f"{YELLOW}⚠{RESET} {message}")
+        print(f"{YELLOW}{RESET} {message}")
         self.checks_warnings += 1
 
     def check_file_exists(self, path: str, required: bool = True) -> bool:
@@ -323,11 +323,11 @@ class InstallationVerifier:
             print(f"{RED}Failed:{RESET}  {self.checks_failed}/{total}")
 
         if self.checks_failed == 0:
-            print(f"\n{GREEN}{BOLD}✓ Installation verification PASSED{RESET}")
+            print(f"\n{GREEN}{BOLD} Installation verification PASSED{RESET}")
             print(f"{GREEN}RAG-CLI is ready to use!{RESET}\n")
             return 0
         else:
-            print(f"\n{RED}{BOLD}✗ Installation verification FAILED{RESET}")
+            print(f"\n{RED}{BOLD} Installation verification FAILED{RESET}")
             print(f"{RED}Please fix the issues above and try again.{RESET}\n")
             return 1
 

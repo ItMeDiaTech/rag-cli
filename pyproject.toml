@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rag-cli"
-version = "1.2.0"
+version = "1.2.2"
 description = "Local RAG system with embedded Multi-Agent Framework for Claude Code plugin"
 readme = "README.md"
 requires-python = ">=3.8"

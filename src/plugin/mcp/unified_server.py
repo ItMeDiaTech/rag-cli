@@ -61,7 +61,7 @@ class UnifiedMCPServer:
                 logger.warning(f"Failed to start monitoring services: {e}")
 
             # Check if vector store exists
-            vector_store_path = project_root / "data" / "vectors" / "faiss_index"
+            vector_store_path = project_root / "data" / "vectors" / "vectors.index"
             if not vector_store_path.exists():
                 logger.warning("No vector index found")
                 # Don't return - allow service management tools to work

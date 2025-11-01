@@ -22,56 +22,56 @@ RAG-CLI is a local Retrieval-Augmented Generation system designed as a Claude Co
 
 ```
 RAG-CLI/
-├── src/                             # Package root (installed as Python package)
-│   ├── core/                        # Core RAG functionality
-│   │   ├── constants.py             # Centralized configuration constants
-│   │   ├── document_processor.py    # Document chunking (400-500 tokens)
-│   │   ├── embeddings.py            # sentence-transformers/all-MiniLM-L6-v2
-│   │   ├── vector_store.py          # FAISS operations
-│   │   ├── retrieval_pipeline.py    # Hybrid search + reranking
-│   │   └── claude_integration.py    # claude-haiku-4-5-20251001 interface
-│   ├── monitoring/                  # Monitoring and observability
-│   │   ├── logger.py                # Comprehensive logging
-│   │   ├── metrics.py               # Performance tracking
-│   │   ├── tcp_server.py            # REST API (port 9999)
-│   │   └── __main__.py              # Entry point for rag-monitor
-│   ├── cli/                         # Command-line tools
-│   │   ├── index.py                 # Document indexing (rag-index)
-│   │   └── retrieve.py              # Retrieval CLI (rag-retrieve)
-│   ├── agents/                      # Multi-agent framework
-│   │   ├── base_agent.py            # Agent base class
-│   │   ├── query_decomposer.py      # Query decomposition
-│   │   └── result_synthesizer.py    # Result synthesis
-│   ├── integrations/                # External integrations
-│   │   ├── arxiv_connector.py       # ArXiv integration
-│   │   ├── tavily_connector.py      # Tavily search
-│   │   └── maf_connector.py         # Multi-agent framework
-│   └── plugin/                      # Claude Code plugin components
-│       ├── commands/                # Slash commands (.md + .py)
-│       ├── hooks/                   # Event hooks (.py)
-│       ├── skills/                  # Agent skills
-│       └── mcp/                     # MCP server
-├── scripts/                         # Utility scripts
-│   ├── fix_imports.py               # Import fixer
-│   ├── remove_syspath.py            # sys.path cleaner
-│   └── verify_installation.py       # Installation verifier
-├── tests/                           # Test suite
-│   ├── test_foundation.py           # Foundation tests
-│   ├── test_core.py                 # Core module tests
-│   └── test_integration.py          # Integration tests
-├── data/                            # Data storage
-│   ├── documents/                   # Source documents
-│   └── vectors/                     # FAISS indexes
-├── config/                          # Configuration files
-│   └── rag_settings.json           # RAG settings
-├── .claude-plugin/                  # Plugin metadata
-│   ├── plugin.json                  # Plugin configuration
-│   └── hooks.json                   # Hook configurations
-├── requirements.txt                 # Python dependencies
-├── setup.py                         # Package setup (distutils)
-├── pyproject.toml                   # Package setup (PEP 517/518)
-├── install_plugin.py                # Plugin installation script
-└── pytest.ini                       # Test configuration
+ src/                             # Package root (installed as Python package)
+    core/                        # Core RAG functionality
+       constants.py             # Centralized configuration constants
+       document_processor.py    # Document chunking (400-500 tokens)
+       embeddings.py            # sentence-transformers/all-MiniLM-L6-v2
+       vector_store.py          # FAISS operations
+       retrieval_pipeline.py    # Hybrid search + reranking
+       claude_integration.py    # claude-haiku-4-5-20251001 interface
+    monitoring/                  # Monitoring and observability
+       logger.py                # Comprehensive logging
+       metrics.py               # Performance tracking
+       tcp_server.py            # REST API (port 9999)
+       __main__.py              # Entry point for rag-monitor
+    cli/                         # Command-line tools
+       index.py                 # Document indexing (rag-index)
+       retrieve.py              # Retrieval CLI (rag-retrieve)
+    agents/                      # Multi-agent framework
+       base_agent.py            # Agent base class
+       query_decomposer.py      # Query decomposition
+       result_synthesizer.py    # Result synthesis
+    integrations/                # External integrations
+       arxiv_connector.py       # ArXiv integration
+       tavily_connector.py      # Tavily search
+       maf_connector.py         # Multi-agent framework
+    plugin/                      # Claude Code plugin components
+        commands/                # Slash commands (.md + .py)
+        hooks/                   # Event hooks (.py)
+        skills/                  # Agent skills
+        mcp/                     # MCP server
+ scripts/                         # Utility scripts
+    fix_imports.py               # Import fixer
+    remove_syspath.py            # sys.path cleaner
+    verify_installation.py       # Installation verifier
+ tests/                           # Test suite
+    test_foundation.py           # Foundation tests
+    test_core.py                 # Core module tests
+    test_integration.py          # Integration tests
+ data/                            # Data storage
+    documents/                   # Source documents
+    vectors/                     # FAISS indexes
+ config/                          # Configuration files
+    rag_settings.json           # RAG settings
+ .claude-plugin/                  # Plugin metadata
+    plugin.json                  # Plugin configuration
+    hooks.json                   # Hook configurations
+ requirements.txt                 # Python dependencies
+ setup.py                         # Package setup (distutils)
+ pyproject.toml                   # Package setup (PEP 517/518)
+ install_plugin.py                # Plugin installation script
+ pytest.ini                       # Test configuration
 ```
 
 ## Package Structure

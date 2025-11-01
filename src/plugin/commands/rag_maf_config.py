@@ -136,7 +136,7 @@ class MAFConfigCommand:
                 f"**Overall Status**: {'HEALTHY' if health['status'] == 'healthy' else 'UNAVAILABLE'}",
                 f"**MAF Type**: {health.get('maf_type', 'embedded')}",
                 f"**Location**: {health.get('maf_location', 'src/agents/maf/')}",
-                f"**Version**: {health.get('maf_version', '1.2.0')}",
+                f"**Version**: {health.get('maf_version', '1.2.2')}",
                 f"**Available Agents**: {len(health.get('available_agents', []))}",
             ]
 

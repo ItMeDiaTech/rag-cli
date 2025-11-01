@@ -60,10 +60,10 @@ def start_dashboard(port=5000, simulation=True, open_browser=True, debug=False):
         return False
 
     print(f"""
-╔═══════════════════════════════════════════════════════════════╗
-║  RAG-CLI Enhanced Dashboard                                   ║
-║  Multi-Agent Orchestration & RAG Pipeline Monitor             ║
-╚═══════════════════════════════════════════════════════════════╝
+
+  RAG-CLI Enhanced Dashboard                                   
+  Multi-Agent Orchestration & RAG Pipeline Monitor             
+
 
 Starting dashboard on http://localhost:{port}
 

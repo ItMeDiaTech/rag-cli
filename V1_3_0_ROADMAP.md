@@ -65,8 +65,8 @@ v1.3.0 focuses on user experience enhancements, advanced features, test coverage
 
 **Key Components**:
 ```
-RAG Retrieved Docs ──-> Agent Memory (semantic understanding)
-Agent Insights ──────-> RAG Cache (for faster retrieval)
+RAG Retrieved Docs -> Agent Memory (semantic understanding)
+Agent Insights -> RAG Cache (for faster retrieval)
 ```
 
 **Acceptance Criteria**:

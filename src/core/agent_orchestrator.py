@@ -4,23 +4,23 @@ Coordinates between RAG retrieval and MAF agents for enhanced query processing.
 Implements intelligent routing based on query intent and parallel execution.
 
 ARCHITECTURE:
-┌──────────────────────┐
-│  Agent Orchestrator  │
-└──────┬───────────────┘
-       │
-       ├─────► Intent Classification
-       │
-       ├─────► Route Decision
-       │       ├─ Simple query -> RAG only
-       │       ├─ Error query -> RAG || MAF Debugger
-       │       └─ Complex query -> Query Decomposer
-       │
-       ├─────► Parallel Execution
-       │       ├─ RAG retrieval (async)
-       │       └─ MAF agent (async)
-       │
-       └─────► Result Synthesis
-               └─ Hybrid RAG + MAF response
+
+  Agent Orchestrator  
+
+       
+        Intent Classification
+       
+        Route Decision
+               Simple query -> RAG only
+               Error query -> RAG || MAF Debugger
+               Complex query -> Query Decomposer
+       
+        Parallel Execution
+               RAG retrieval (async)
+               MAF agent (async)
+       
+        Result Synthesis
+                Hybrid RAG + MAF response
 """
 
 import time
@@ -272,27 +272,27 @@ class AgentOrchestrator:
         """Execute RAG and MAF in parallel for enhanced results.
 
         PARALLEL EXECUTION:
-        ┌─────────────┐
-        │    Query    │
-        └──────┬──────┘
-               │
-        ┌──────┴───────┐
-        │   asyncio    │
-        │   .gather()  │
-        └──────┬───────┘
-               │
-        ┌──────┴──────┬──────────────┐
-        │             │              │
-        ▼             ▼              ▼
+        
+            Query    
+        
+               
+        
+           asyncio    
+           .gather()  
+        
+               
+        
+                                   
+                                   
     RAG Retrieval  MAF Debugger  (timeout)
     (2s timeout)   (30s timeout)
-        │             │              │
-        └──────┬──────┴──────────────┘
-               │
-               ▼
+                                   
+        
+               
+               
        Result Synthesis
-               │
-               ▼
+               
+               
          Hybrid Response
 
         Args:

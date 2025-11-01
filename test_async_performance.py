@@ -95,7 +95,7 @@ def benchmark_retrieval_sync_vs_async():
     print("-"*70)
     print(f"Average Latency Reduction: {improvement:+.1f}%")
     print(f"Speedup Factor: {speedup:.2f}x")
-    print(f"Target Achievement: {'✓ PASS' if improvement >= 30 else '✗ BELOW TARGET'} (target: 30-40%)")
+    print(f"Target Achievement: {' PASS' if improvement >= 30 else ' BELOW TARGET'} (target: 30-40%)")
 
     return improvement
 
@@ -146,7 +146,7 @@ def benchmark_embedding_parallel():
     print("-"*70)
     print(f"Speedup Factor: {speedup:.2f}x")
     print(f"Time Reduction: {improvement:.1f}%")
-    print(f"Target Achievement: {'✓ PASS' if speedup >= 2.0 else '✗ BELOW TARGET'} (target: 2-3x)")
+    print(f"Target Achievement: {' PASS' if speedup >= 2.0 else ' BELOW TARGET'} (target: 2-3x)")
 
     return speedup
 
@@ -223,7 +223,7 @@ best practices for building efficient RAG systems at scale.
         print("-"*70)
         print(f"Speedup Factor: {speedup:.2f}x")
         print(f"Time Reduction: {improvement:.1f}%")
-        print(f"Target Achievement: {'✓ PASS' if speedup >= 3.0 else '✗ BELOW TARGET'} (target: 3-5x)")
+        print(f"Target Achievement: {' PASS' if speedup >= 3.0 else ' BELOW TARGET'} (target: 3-5x)")
 
         return speedup
 
@@ -273,19 +273,19 @@ def main():
     try:
         results['retrieval_improvement'] = benchmark_retrieval_sync_vs_async()
     except Exception as e:
-        print(f"\n✗ Retrieval benchmark failed: {e}")
+        print(f"\n Retrieval benchmark failed: {e}")
         results['retrieval_improvement'] = 0
 
     try:
         results['embedding_speedup'] = benchmark_embedding_parallel()
     except Exception as e:
-        print(f"\n✗ Embedding benchmark failed: {e}")
+        print(f"\n Embedding benchmark failed: {e}")
         results['embedding_speedup'] = 1.0
 
     try:
         results['doc_processing_speedup'] = benchmark_document_processing()
     except Exception as e:
-        print(f"\n✗ Document processing benchmark failed: {e}")
+        print(f"\n Document processing benchmark failed: {e}")
         results['doc_processing_speedup'] = 1.0
 
     # Final summary
@@ -295,15 +295,15 @@ def main():
 
     print(f"\n1. Retrieval Pipeline:")
     print(f"   - Latency Reduction: {results['retrieval_improvement']:+.1f}%")
-    print(f"   - Status: {'✓ PASS' if results['retrieval_improvement'] >= 30 else '✗ BELOW TARGET'}")
+    print(f"   - Status: {' PASS' if results['retrieval_improvement'] >= 30 else ' BELOW TARGET'}")
 
     print(f"\n2. Embedding Encoding:")
     print(f"   - Speedup: {results['embedding_speedup']:.2f}x")
-    print(f"   - Status: {'✓ PASS' if results['embedding_speedup'] >= 2.0 else '✗ BELOW TARGET'}")
+    print(f"   - Status: {' PASS' if results['embedding_speedup'] >= 2.0 else ' BELOW TARGET'}")
 
     print(f"\n3. Document Processing:")
     print(f"   - Speedup: {results['doc_processing_speedup']:.2f}x")
-    print(f"   - Status: {'✓ PASS' if results['doc_processing_speedup'] >= 3.0 else '✗ BELOW TARGET'}")
+    print(f"   - Status: {' PASS' if results['doc_processing_speedup'] >= 3.0 else ' BELOW TARGET'}")
 
     # Overall assessment
     all_pass = (
@@ -313,7 +313,7 @@ def main():
     )
 
     print(f"\n{'='*70}")
-    print(f"Overall Phase 1 Assessment: {'✓ ALL TARGETS MET' if all_pass else '⚠ SOME TARGETS MISSED'}")
+    print(f"Overall Phase 1 Assessment: {' ALL TARGETS MET' if all_pass else ' SOME TARGETS MISSED'}")
     print(f"{'='*70}\n")
 
 
