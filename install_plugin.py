@@ -135,13 +135,27 @@ def update_plugin_json(plugin_dir: Path, project_root: Path):
         # Update paths to use installed package
         config['commands'] = ['./commands/']
 
-        # Ensure MCP server uses installed package
+        # Ensure MCP server uses installed package and correct module path
         if 'mcpServers' in config:
             for server_name, server_config in config['mcpServers'].items():
-                # Set PYTHONPATH to project root for development
+                # Ensure we're using the module path, not a file path
+                server_config['command'] = 'python'
+                args = server_config.get('args', [])
+                # Check if args point to server.py or any file path
+                if not args or len(args) == 0 or (len(args) == 1 and (args[0].endswith('.py') or '/' in args[0] or '\\' in args[0])):
+                    server_config['args'] = ['-m', 'plugin.mcp.unified_server']
+                
+                # Set environment variables
                 if 'env' not in server_config:
                     server_config['env'] = {}
+                server_config['env']['PYTHONUNBUFFERED'] = '1'
+                server_config['env']['RAG_CLI_MODE'] = 'claude_code'
+                server_config['env']['CLAUDE_PLUGIN_ROOT'] = str(plugin_dir)
                 server_config['env']['RAG_CLI_ROOT'] = str(plugin_dir)
+                
+                # Remove cwd if it exists (not needed with module path)
+                if 'cwd' in server_config:
+                    del server_config['cwd']
 
         with open(plugin_json_path, 'w') as f:
             json.dump(config, f, indent=2)

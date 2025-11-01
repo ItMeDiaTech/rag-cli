@@ -20,6 +20,14 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
+# Initialize path resolution variables
+hook_file = Path(__file__).resolve()
+project_root = os.environ.get('RAG_CLI_ROOT')
+if project_root:
+    project_root = Path(project_root)
+else:
+    project_root = None
+
 # Strategy 2: Try to find project root by walking up from hook location
 if project_root is None:
     current = hook_file.parent

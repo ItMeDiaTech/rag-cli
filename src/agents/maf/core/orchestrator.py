@@ -610,3 +610,46 @@ class WorkflowOrchestrator:
             'active_workflows': len(self.active_workflows),
             'registered_workflows': len(self.workflows)
         }
+
+
+def check_maf_status() -> Dict[str, Any]:
+    """Check MAF status and availability.
+    
+    This function provides a simple way to check if the MAF orchestrator
+    is available and what its current status is.
+    
+    Returns:
+        Dictionary with status information including:
+        - available: bool indicating if MAF is available
+        - orchestrator_initialized: bool indicating if orchestrator is ready
+        - stats: Dictionary with orchestrator statistics if available
+    """
+    try:
+        # Try to import and initialize orchestrator
+        from agents.maf.core.agent import AgentRegistry
+        from agents.maf.core.orchestrator import WorkflowOrchestrator
+        
+        # Get agent registry
+        registry = AgentRegistry()
+        agents = registry.get_all_agents()
+        
+        # Create orchestrator instance
+        orchestrator = WorkflowOrchestrator(agents=agents)
+        
+        # Get stats
+        stats = orchestrator.get_stats()
+        
+        return {
+            'available': True,
+            'orchestrator_initialized': True,
+            'agent_count': len(agents),
+            'stats': stats
+        }
+    except Exception as e:
+        logging.getLogger('check_maf_status').warning(f"MAF status check failed: {e}")
+        return {
+            'available': False,
+            'orchestrator_initialized': False,
+            'error': str(e),
+            'stats': {}
+        }
