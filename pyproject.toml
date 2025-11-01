@@ -57,10 +57,18 @@ rag-cli-update = "rag_cli_plugin.lifecycle.updater:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["rag_cli*"]
+
+[tool.setuptools.package-data]
+"*" = [
+    ".claude-plugin/**/*",
+    "config/**/*",
+    "scripts/**/*"
+]
 
 [tool.isort]
 profile = "black"

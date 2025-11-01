@@ -74,10 +74,10 @@ def validate_plugin_json() -> Tuple[bool, List[str]]:
         if not data['hooks'].startswith('./'):
             errors.append("plugin.json hooks path must start with './'")
 
-    # Validate commands field
+    # Validate commands field (can be array or string path)
     if 'commands' in data:
-        if not isinstance(data['commands'], list):
-            errors.append("plugin.json commands must be an array")
+        if not isinstance(data['commands'], (list, str)):
+            errors.append("plugin.json commands must be an array or string path")
 
     # Validate mcpServers field
     if 'mcpServers' in data:
@@ -172,8 +172,13 @@ def validate_hooks_json() -> Tuple[bool, List[str]]:
             continue
 
         for i, hook_entry in enumerate(hooks_array):
-            if 'hooks' not in hook_entry:
-                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'hooks' field")
+            # Validate required fields for each hook
+            if 'name' not in hook_entry:
+                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'name' field")
+            if 'script' not in hook_entry:
+                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'script' field")
+            if 'priority' not in hook_entry:
+                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'priority' field")
 
     return len(errors) == 0, errors
 
@@ -186,13 +191,13 @@ def validate_file_structure() -> Tuple[bool, List[str]]:
         '.claude-plugin/plugin.json',
         '.claude-plugin/marketplace.json',
         '.claude-plugin/hooks.json',
-        'src/plugin/commands/search.md',
-        'src/plugin/commands/rag-enable.md',
-        'src/plugin/commands/rag-disable.md',
-        'src/plugin/commands/update-rag.md',
-        'src/plugin/hooks/user-prompt-submit.py',
-        'src/plugin/hooks/response-post.py',
-        'src/plugin/mcp/unified_server.py',
+        'src/rag_cli_plugin/commands/rag_project_indexer.py',
+        'src/rag_cli_plugin/commands/update_rag.py',
+        'src/rag_cli_plugin/hooks/user-prompt-submit.py',
+        'src/rag_cli_plugin/hooks/response-post.py',
+        'src/rag_cli_plugin/hooks/session-start.py',
+        'src/rag_cli_plugin/mcp/unified_server.py',
+        'src/rag_cli_plugin/lifecycle/installer.py',
     ]
 
     for file_path in required_files:

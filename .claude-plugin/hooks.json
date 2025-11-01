@@ -3,14 +3,14 @@
     "UserPromptSubmit": [
       {
         "name": "slash-command-blocker",
-        "script": "./hooks/slash-command-blocker.py",
+        "script": "./src/rag_cli_plugin/hooks/slash-command-blocker.py",
         "priority": 150,
         "enabled": true,
         "description": "Prevents Claude from responding to slash commands, showing only execution status"
       },
       {
         "name": "user-prompt-submit",
-        "script": "./hooks/user-prompt-submit.py",
+        "script": "./src/rag_cli_plugin/hooks/user-prompt-submit.py",
         "priority": 100,
         "enabled": true,
         "description": "Automatically enhances queries with RAG context and multi-agent orchestration"
@@ -19,7 +19,7 @@
     "PostToolUse": [
       {
         "name": "response-post",
-        "script": "./hooks/response-post.py",
+        "script": "./src/rag_cli_plugin/hooks/response-post.py",
         "priority": 80,
         "enabled": true,
         "description": "Adds inline citations to Claude responses when RAG context is used"
@@ -28,30 +28,23 @@
     "Notification": [
       {
         "name": "error-handler",
-        "script": "./hooks/error-handler.py",
+        "script": "./src/rag_cli_plugin/hooks/error-handler.py",
         "priority": 70,
         "enabled": true,
         "description": "Provides graceful error handling with helpful troubleshooting tips"
       },
       {
         "name": "plugin-state-change",
-        "script": "./hooks/plugin-state-change.py",
+        "script": "./src/rag_cli_plugin/hooks/plugin-state-change.py",
         "priority": 60,
         "enabled": true,
         "description": "Persists RAG settings across Claude Code restarts"
-      },
-      {
-        "name": "update-rag-hook",
-        "script": "./hooks/update-rag-hook.py",
-        "priority": 20,
-        "enabled": true,
-        "description": "Handles plugin update operations for RAG-CLI"
       }
     ],
     "PreToolUse": [
       {
         "name": "document-indexing",
-        "script": "./hooks/document-indexing.py",
+        "script": "./src/rag_cli_plugin/hooks/document-indexing.py",
         "priority": 50,
         "enabled": false,
         "description": "Automatically indexes new or modified documents (disabled by default)"
@@ -60,7 +53,7 @@
     "SessionStart": [
       {
         "name": "session-start",
-        "script": "./hooks/session-start.py",
+        "script": "./src/rag_cli_plugin/hooks/session-start.py",
         "priority": 40,
         "enabled": true,
         "description": "Initializes RAG-CLI resources when a Claude Code session starts"
@@ -69,7 +62,7 @@
     "SessionEnd": [
       {
         "name": "session-end",
-        "script": "./hooks/session-end.py",
+        "script": "./src/rag_cli_plugin/hooks/session-end.py",
         "priority": 30,
         "enabled": true,
         "description": "Cleanup and state persistence when Claude Code session ends"

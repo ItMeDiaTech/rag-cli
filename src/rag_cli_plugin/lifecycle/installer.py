@@ -115,6 +115,54 @@ def initialize_data_directories() -> bool:
     return success
 
 
+def copy_plugin_metadata() -> bool:
+    """Ensure .claude-plugin/ directory exists with all required files."""
+    plugin_root = get_plugin_root()
+    metadata_dir = plugin_root / ".claude-plugin"
+
+    print("Verifying plugin metadata...")
+
+    # Check if .claude-plugin already exists (e.g., in editable install)
+    if metadata_dir.exists():
+        print(f"  Plugin metadata directory exists at: {metadata_dir}")
+
+        # Verify required files
+        required_files = [
+            "plugin.json",
+            "hooks.json",
+            "marketplace.json",
+            "lifecycle.json"
+        ]
+
+        missing_files = []
+        for filename in required_files:
+            file_path = metadata_dir / filename
+            if file_path.exists():
+                print(f"  Found: {filename}")
+            else:
+                missing_files.append(filename)
+                print(f"  Missing: {filename}")
+
+        # Check commands directory
+        commands_dir = metadata_dir / "commands"
+        if commands_dir.exists() and commands_dir.is_dir():
+            print(f"  Found: commands/ directory")
+        else:
+            print(f"  Warning: commands/ directory not found")
+
+        if missing_files:
+            print(f"  Warning: Missing {len(missing_files)} required file(s)")
+            return False
+
+        print("  Plugin metadata verification complete")
+        return True
+    else:
+        print(f"  Warning: .claude-plugin directory not found at {metadata_dir}")
+        print(f"  This may indicate the plugin was not packaged correctly")
+        print(f"  Please ensure MANIFEST.in includes .claude-plugin/")
+        return False
+
+
 def verify_installation() -> bool:
     """Run health check to verify installation."""
     print("Verifying installation...")
@@ -181,22 +229,27 @@ def main():
     success = True
 
     try:
-        print("\n[1/4] Installing dependencies...")
+        print("\n[1/5] Installing dependencies...")
         if not install_dependencies():
             print("  Warning: Dependency installation incomplete")
             success = False
 
-        print("\n[2/4] Initializing configuration...")
+        print("\n[2/5] Initializing configuration...")
         if not initialize_config():
             print("  Warning: Configuration initialization incomplete")
             success = False
 
-        print("\n[3/4] Creating data directories...")
+        print("\n[3/5] Creating data directories...")
         if not initialize_data_directories():
             print("  Warning: Directory creation incomplete")
             success = False
 
-        print("\n[4/4] Verifying installation...")
+        print("\n[4/5] Verifying plugin metadata...")
+        if not copy_plugin_metadata():
+            print("  Warning: Plugin metadata verification incomplete")
+            success = False
+
+        print("\n[5/5] Verifying installation...")
         if verify_installation():
             print_usage_instructions()
             return 0 if success else 1

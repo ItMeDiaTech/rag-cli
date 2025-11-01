@@ -1,0 +1,25 @@
+# Include plugin metadata
+recursive-include .claude-plugin *
+
+# Include configuration files
+recursive-include config *
+
+# Include scripts
+recursive-include scripts *
+
+# Include documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CLAUDE.md
+
+# Include requirements files
+include requirements.txt
+include requirements-minimal.txt
+include requirements-lock.txt
+
+# Exclude compiled Python files
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.pyo
+global-exclude .DS_Store
