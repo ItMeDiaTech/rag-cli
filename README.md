@@ -100,9 +100,14 @@ source venv/bin/activate
 # Install with development dependencies
 pip install -e ".[dev]"
 
+# Configure MCP server for development mode
+python scripts/configure_mcp.py
+
 # Run tests to verify
 pytest tests/
 ```
+
+**Important for Contributors**: The `configure_mcp.py` script generates `.mcp.json` with absolute paths for your system. This file is gitignored and preserves any other MCP servers you have configured. You can re-run the script anytime if your project path changes.
 
 ### Plugin Sync for Manual Installation
 
