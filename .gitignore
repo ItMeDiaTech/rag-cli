@@ -63,3 +63,8 @@ logs/
 # Environment variables
 .env
 .env.local
+
+# User-specific files
+.cursor/
+.mcp.json
+.claude/
