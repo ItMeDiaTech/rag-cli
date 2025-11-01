@@ -66,8 +66,18 @@ def update_from_git() -> bool:
 
         # Pull latest changes
         print("Pulling latest changes...")
+
+        # Check which remote exists (origin or github)
+        remote_check = subprocess.run(
+            ["git", "remote"],
+            cwd=plugin_root,
+            capture_output=True,
+            text=True
+        )
+        remote = "github" if "github" in remote_check.stdout else "origin"
+
         result = subprocess.run(
-            ["git", "pull", "origin", "master"],
+            ["git", "pull", remote, "master"],
             cwd=plugin_root,
             capture_output=True,
             text=True,

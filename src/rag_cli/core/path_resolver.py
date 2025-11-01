@@ -26,7 +26,7 @@ class PathResolver:
         self.config_root = self.project_root / "config"
         self.data_root = self.project_root / "data"
         self.src_root = self.project_root / "src"
-        self.plugin_root = self.project_root / "src" / "plugin"
+        self.plugin_root = self.project_root / "src" / "rag_cli_plugin"
 
     @classmethod
     def get_instance(cls) -> 'PathResolver':
@@ -52,26 +52,26 @@ class PathResolver:
             if root.exists():
                 return root
 
-        # Strategy 2: Claude plugin directory
+        # Strategy 2: Claude plugin directory (v2.0 structure)
         plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
-        if plugin_dir.exists() and (plugin_dir / 'src' / 'core').exists():
+        if plugin_dir.exists() and (plugin_dir / 'src' / 'rag_cli' / 'core').exists():
             return plugin_dir
 
-        # Strategy 3: Marketplace plugin directory
+        # Strategy 3: Marketplace plugin directory (v2.0 structure)
         marketplace_dir = Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli'
-        if marketplace_dir.exists() and (marketplace_dir / 'src' / 'core').exists():
+        if marketplace_dir.exists() and (marketplace_dir / 'src' / 'rag_cli' / 'core').exists():
             return marketplace_dir
 
-        # Strategy 4: Walk up from current file
+        # Strategy 4: Walk up from current file (v2.0 structure)
         current = Path(__file__).resolve().parent
         for _ in range(5):  # Search up to 5 levels
-            if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
+            if (current / 'src' / 'rag_cli').exists() and (current / 'src' / 'rag_cli_plugin').exists():
                 return current
             current = current.parent
 
-        # Strategy 5: Current working directory
+        # Strategy 5: Current working directory (v2.0 structure)
         cwd = Path.cwd()
-        if (cwd / 'src' / 'core').exists():
+        if (cwd / 'src' / 'rag_cli').exists():
             return cwd
 
         # If all strategies fail, raise error

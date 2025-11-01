@@ -35,7 +35,7 @@ class UnifiedMCPServer:
 
     def __init__(self):
         """Initialize the MCP server."""
-        from core.config import get_config
+        from rag_cli.core.config import get_config
 
         self.config = get_config()
         self.vector_store = None
@@ -69,10 +69,10 @@ class UnifiedMCPServer:
                 return
 
             # Initialize RAG components
-            from core.vector_store import get_vector_store
-            from core.embeddings import get_embedding_generator
-            from core.retrieval_pipeline import HybridRetriever
-            from core.claude_integration import ClaudeAssistant
+            from rag_cli.core.vector_store import get_vector_store
+            from rag_cli.core.embeddings import get_embedding_generator
+            from rag_cli.core.retrieval_pipeline import HybridRetriever
+            from rag_cli.core.claude_integration import ClaudeAssistant
 
             self.vector_store = get_vector_store()
             self.embedding_model = get_embedding_generator()
@@ -592,7 +592,7 @@ class UnifiedMCPServer:
 
     async def handle_rag_index(self, request_id: int, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Handle RAG index request."""
-        from core.document_processor import DocumentProcessor
+        from rag_cli.core.document_processor import DocumentProcessor
 
         path = arguments.get("path", "")
         recursive = arguments.get("recursive", True)
@@ -607,8 +607,8 @@ class UnifiedMCPServer:
         try:
             # Re-initialize components if needed
             if not self.vector_store:
-                from core.vector_store import get_vector_store
-                from core.embeddings import get_embedding_generator
+                from rag_cli.core.vector_store import get_vector_store
+                from rag_cli.core.embeddings import get_embedding_generator
                 self.vector_store = get_vector_store()
                 self.embedding_model = get_embedding_generator()
 
@@ -851,7 +851,7 @@ class UnifiedMCPServer:
                 }
 
             # Check which hooks are actually available
-            hooks_dir = project_root / "src" / "plugin" / "hooks"
+            hooks_dir = project_root / "src" / "rag_cli_plugin" / "hooks"
             available_hooks = []
             if hooks_dir.exists():
                 for hook_file in hooks_dir.glob("*.py"):
@@ -932,7 +932,7 @@ class UnifiedMCPServer:
 
         try:
             # Use embedded MAF via maf_connector
-            from integrations.maf_connector import get_maf_connector
+            from rag_cli.integrations.maf_connector import get_maf_connector
 
             maf_connector = get_maf_connector()
 
@@ -992,7 +992,7 @@ class UnifiedMCPServer:
         """
         try:
             # Use embedded MAF health check
-            from integrations.maf_connector import get_maf_connector
+            from rag_cli.integrations.maf_connector import get_maf_connector
 
             maf_connector = get_maf_connector()
             health = await maf_connector.health_check()
@@ -1038,7 +1038,7 @@ class UnifiedMCPServer:
 
         try:
             # Import query classifier
-            from core.query_classifier import get_query_classifier
+            from rag_cli.core.query_classifier import get_query_classifier
 
             classifier = get_query_classifier()
             classification = classifier.classify(query)

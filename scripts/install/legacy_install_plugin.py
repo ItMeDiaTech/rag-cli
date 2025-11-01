@@ -108,8 +108,8 @@ def copy_plugin_files(project_root: Path, plugin_dir: Path):
         else:
             print(f"  Warning: {file_path} not found")
 
-    # Copy command files
-    commands_src = project_root / 'src' / 'plugin' / 'commands'
+    # Copy command files (v2.0 structure)
+    commands_src = project_root / 'src' / 'rag_cli_plugin' / 'commands'
     commands_dest = plugin_dir / 'commands'
     if commands_src.exists():
         shutil.copytree(commands_src, commands_dest, dirs_exist_ok=True)
@@ -135,16 +135,21 @@ def update_plugin_json(plugin_dir: Path, project_root: Path):
         # Update paths to use installed package
         config['commands'] = ['./commands/']
 
-        # Ensure MCP server uses installed package and correct module path
+        # Ensure MCP server uses installed package and correct module path (v2.0)
         if 'mcpServers' in config:
             for server_name, server_config in config['mcpServers'].items():
                 # Ensure we're using the module path, not a file path
                 server_config['command'] = 'python'
                 args = server_config.get('args', [])
-                # Check if args point to server.py or any file path
-                if not args or len(args) == 0 or (len(args) == 1 and (args[0].endswith('.py') or '/' in args[0] or '\\' in args[0])):
-                    server_config['args'] = ['-m', 'plugin.mcp.unified_server']
-                
+                # Only update args if they're missing or point to a file (not a module)
+                if not args or len(args) == 0:
+                    # Default to v2.0 module path
+                    server_config['args'] = ['-m', 'rag_cli_plugin.mcp.unified_server']
+                elif len(args) >= 1 and args[0].endswith('.py'):
+                    # Replace file path with module path
+                    server_config['args'] = ['-m', 'rag_cli_plugin.mcp.unified_server']
+                # Otherwise preserve existing module path from plugin.json
+
                 # Set environment variables
                 if 'env' not in server_config:
                     server_config['env'] = {}
@@ -152,7 +157,7 @@ def update_plugin_json(plugin_dir: Path, project_root: Path):
                 server_config['env']['RAG_CLI_MODE'] = 'claude_code'
                 server_config['env']['CLAUDE_PLUGIN_ROOT'] = str(plugin_dir)
                 server_config['env']['RAG_CLI_ROOT'] = str(plugin_dir)
-                
+
                 # Remove cwd if it exists (not needed with module path)
                 if 'cwd' in server_config:
                     del server_config['cwd']
@@ -203,10 +208,9 @@ def verify_installation():
     print_step(6, "Verifying installation...")
 
     try:
-        # Test import
-        import core
-        import monitoring
-        import plugin
+        # Test import (v2.0 structure)
+        import rag_cli
+        import rag_cli_plugin
 
         print_success("Package imports working")
 

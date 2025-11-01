@@ -8,14 +8,8 @@
     "url": "https://github.com/ItMeDiaTech/rag-cli"
   },
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ItMeDiaTech/rag-cli.git"
-  },
+  "repository": "https://github.com/ItMeDiaTech/rag-cli.git",
   "homepage": "https://github.com/ItMeDiaTech/rag-cli",
-  "bugs": {
-    "url": "https://github.com/ItMeDiaTech/rag-cli/issues"
-  },
   "keywords": [
     "rag",
     "retrieval",
@@ -29,9 +23,9 @@
     "claude-code",
     "plugin"
   ],
-  "commands": "./commands",
-  "hooks": "./hooks.json",
-  "skills": "./skills",
+  "commands": "./src/rag_cli_plugin/commands",
+  "hooks": "./.claude-plugin/hooks.json",
+  "skills": "./src/rag_cli_plugin/skills",
   "mcpServers": {
     "rag-cli": {
       "command": "python",
@@ -52,19 +46,6 @@
         "maxRetries": 3,
         "retryDelayMs": 1000
       }
-    }
-  },
-  "requirements": {
-    "python": ">=3.8"
-  },
-  "configuration": {
-    "settingsFile": "config/rag_settings.json",
-    "defaultSettings": {
-      "enabled": false,
-      "auto_trigger_threshold": 5,
-      "context_limit": 3,
-      "relevance_threshold": 0.6,
-      "enable_agent_orchestration": true
     }
   }
 }
