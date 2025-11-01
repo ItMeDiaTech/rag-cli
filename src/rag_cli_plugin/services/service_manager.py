@@ -319,13 +319,20 @@ def start_tcp_server() -> Optional[subprocess.Popen]:
         tcp_log = open(tcp_log_file, 'a', buffering=1)  # Line buffered
         logger.info(f"TCP server output will be logged to {tcp_log_file}")
 
+        # Create sanitized environment (exclude sensitive variables)
+        env = os.environ.copy()
+        # Remove potentially sensitive environment variables that aren't needed
+        sensitive_vars = ['ANTHROPIC_API_KEY', 'TAVILY_API_KEY', 'OPENAI_API_KEY']
+        for var in sensitive_vars:
+            env.pop(var, None)
+
         # Start the process with output redirected to log file
         process = subprocess.Popen(
             ['python', '-m', 'src.monitoring.tcp_server'],
             cwd=str(project_root),
             stdout=tcp_log,
             stderr=subprocess.STDOUT,  # Combine stderr with stdout
-            env=os.environ.copy()
+            env=env
         )
 
         # Wait for server to start with exponential backoff

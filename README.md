@@ -550,6 +550,31 @@ claude:
   api_key_env: ANTHROPIC_API_KEY  # Only needed for standalone
 ```
 
+### Security Best Practices
+
+**Environment Variable Protection:**
+
+1. **Never Commit .env Files**: The `.env` file contains sensitive API keys and should NEVER be committed to version control
+   - Already included in `.gitignore`
+   - Use `config/templates/.env.template` as a reference
+
+2. **File Permissions**: On Unix systems, ensure `.env` has restricted permissions:
+   ```bash
+   chmod 600 .env  # Read/write for owner only
+   ```
+
+3. **API Key Storage**:
+   - Store all API keys in `.env` file only
+   - Never hardcode keys in source code
+   - Use environment variables via `os.getenv()`
+
+4. **Subprocess Security**: RAG-CLI automatically sanitizes environment variables when spawning subprocesses, removing sensitive keys like:
+   - `ANTHROPIC_API_KEY`
+   - `TAVILY_API_KEY`
+   - `OPENAI_API_KEY`
+
+5. **Configuration Files**: User-specific configurations in `config/` are gitignored. Only default templates in `config/defaults/` and `config/templates/` are version controlled.
+
 ## Claude Code Plugin
 
 ### Slash Commands

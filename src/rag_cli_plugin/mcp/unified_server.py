@@ -547,7 +547,7 @@ class UnifiedMCPServer:
             if use_llm and documents and self.assistant:
                 synthesis_start = time.time()
                 response = self.assistant.generate_response(query, documents)
-                (time.time() - synthesis_start) * 1000
+                synthesis_time_ms = (time.time() - synthesis_start) * 1000
                 answer = response.get("answer", "")
 
             # Format results with clean output

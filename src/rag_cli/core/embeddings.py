@@ -587,6 +587,14 @@ class EmbeddingPool:
         """Context manager exit."""
         self.shutdown()
 
+    def __del__(self):
+        """Cleanup on deletion to ensure executor is shut down."""
+        try:
+            if hasattr(self, 'executor') and self.executor:
+                self.executor.shutdown(wait=False)
+        except Exception:
+            pass  # Suppress errors during cleanup
+
 
 def _embedding_worker_init(model_name: str):
     """Initialize embedding model in worker process.
@@ -778,6 +786,14 @@ class ProcessEmbeddingPool:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.shutdown()
+
+    def __del__(self):
+        """Cleanup on deletion to ensure executor is shut down."""
+        try:
+            if hasattr(self, 'executor') and self.executor:
+                self.executor.shutdown(wait=False)
+        except Exception:
+            pass  # Suppress errors during cleanup
 
 
 # Singleton instances
