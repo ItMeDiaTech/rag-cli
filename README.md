@@ -1,4 +1,6 @@
-# RAG-CLI
+# RAG-CLI - STATUS: [NOT FULLY WORKING]
+
+I'm in the process of refractoring and analyzing best practices for plugins since they just came out. It's not in a workable state, but I just started this project a few days ago. Hoping to get it in a working state / runnable state in the next day or two from 11/01/2025. 
 
 A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claude Code plugin. Process documents locally, generate embeddings, store vectors in FAISS, and get AI-powered responses using Claude Haiku.
 
