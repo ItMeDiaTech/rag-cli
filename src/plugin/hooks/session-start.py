@@ -36,6 +36,7 @@ if project_root is None:
 # Strategy 3: Check common installation locations
 if project_root is None:
     potential_paths = [
+        Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli',
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         Path.cwd(),
     ]
