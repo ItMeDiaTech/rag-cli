@@ -27,12 +27,16 @@ def resolve_data_path(relative_path: str) -> str:
     Returns:
         Absolute path resolved to correct base directory
     """
-    claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+    # Check both plugin locations (manual install and GitHub marketplace)
+    plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+    marketplace_dir = Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli'
     project_root = Path(__file__).resolve().parents[2]
 
     # Use plugin directory for data if it exists, otherwise use project directory
-    if claude_plugin_dir.exists():
-        base_dir = claude_plugin_dir
+    if marketplace_dir.exists():
+        base_dir = marketplace_dir
+    elif plugin_dir.exists():
+        base_dir = plugin_dir
     else:
         base_dir = project_root
 

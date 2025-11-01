@@ -45,6 +45,7 @@ def get_allowed_document_paths() -> List[Path]:
     """Get list of allowed base directories for document access."""
     return [
         Path.cwd() / "data" / "documents",
+        Path.home() / ".claude" / "plugins" / "marketplaces" / "rag-cli" / "data" / "documents",
         Path.home() / ".claude" / "plugins" / "rag-cli" / "data" / "documents",
         Path(__file__).resolve().parents[2] / "data" / "documents",
     ]

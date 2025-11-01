@@ -40,7 +40,9 @@ if project_root is None:
 # Strategy 3: Check common installation locations
 if project_root is None:
     potential_paths = [
-        # User's home directory plugin location
+        # GitHub marketplace installation location
+        Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli',
+        # Manual plugin installation location
         Path.home() / '.claude' / 'plugins' / 'rag-cli',
         # Relative to current working directory
         Path.cwd(),

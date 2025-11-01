@@ -167,7 +167,10 @@ class Logger:
         # Priority: plugin directory > project directory
         try:
             # Use expanduser to properly handle ~ on all platforms
-            claude_plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+            # Check both plugin locations (manual install and GitHub marketplace)
+            marketplace_dir = Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli'
+            plugin_dir = Path.home() / '.claude' / 'plugins' / 'rag-cli'
+            claude_plugin_dir = marketplace_dir if marketplace_dir.exists() else plugin_dir
 
             # Verify the path is valid and accessible on Windows
             # Check if we're in a valid RAG-CLI installation
