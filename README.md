@@ -1,95 +1,400 @@
-# RAG-CLI
+# RAG-CLI v2.0
 
-A powerful local Retrieval-Augmented Generation (RAG) system designed as a Claude Code plugin. Process documents locally, generate embeddings, store vectors in FAISS, and get AI-powered responses using Claude Haiku.
+A production-ready local Retrieval-Augmented Generation (RAG) system designed as a Claude Code plugin. RAG-CLI processes documents locally, generates embeddings, stores vectors in FAISS, and provides AI-powered responses using Claude Haiku with intelligent context retrieval.
 
-## Overview
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://github.com/ItMeDiaTech/rag-cli/releases)
 
-RAG-CLI is a production-ready local Retrieval-Augmented Generation system that enhances your development workflow by providing instant access to your project documentation, codebase context, and external resources. It works seamlessly with Claude Code as a native plugin, eliminating the need for external API calls while processing documents locally with enterprise-grade security and performance.
+---
 
-### Why Use RAG-CLI?
+## Table of Contents
 
-1. **Zero API Overhead**: Process documents locally without incurring API costs
-2. **Instant Context**: Get relevant documentation in milliseconds instead of manual searches
-3. **Improved Code Quality**: Make better decisions with context-aware assistance
-4. **Complete Privacy**: All document processing stays on your machine
-5. **Developer Focused**: Optimized for development workflows and Claude Code integration
+- [Project Overview](#project-overview)
+- [Project Goals](#project-goals)
+- [Project Scope](#project-scope)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Project Overview
+
+RAG-CLI is a **local-first Retrieval-Augmented Generation system** that brings the power of semantic search and contextual AI assistance directly into your development workflow. Unlike cloud-based solutions, RAG-CLI processes all your documents locally, ensuring complete privacy and eliminating API costs for document indexing.
+
+### What is RAG-CLI?
+
+RAG-CLI combines three core technologies:
+1. **Document Processing**: Intelligent chunking and extraction from multiple formats (Markdown, PDF, DOCX, HTML, TXT)
+2. **Vector Search**: Lightning-fast semantic similarity search using FAISS with hybrid ranking
+3. **AI Enhancement**: Context-aware responses from Claude AI using only relevant document chunks
+
+### Why RAG-CLI?
+
+**Privacy-First**: Your codebase and documentation never leave your machine during indexing. Only final queries go to Claude AI.
+
+**Cost-Effective**: Zero API costs for document processing. Pay only for Claude AI responses, not for indexing thousands of documents.
+
+**Developer-Focused**: Built specifically for development workflows with Claude Code integration, supporting technical documentation, code context, and real-time project indexing.
+
+**Performance**: Sub-100ms vector search, sub-5s end-to-end responses, and intelligent caching ensure minimal impact on your workflow.
+
+---
+
+## Project Goals
+
+### Primary Goals
+
+1. **Enable Local Document Intelligence**
+   - Process and index documentation without external API calls
+   - Provide instant access to relevant context from large document sets
+   - Support real-time updates as documentation changes
+
+2. **Seamless Claude Code Integration**
+   - Native plugin architecture for zero-configuration setup
+   - Automatic context enhancement for user queries
+   - Slash commands for manual control and project indexing
+
+3. **Production-Grade Performance**
+   - Vector search under 100ms for instant results
+   - End-to-end query processing under 5 seconds
+   - Efficient memory usage supporting 100K+ document chunks
+
+4. **Developer Experience**
+   - Simple installation via Claude Code marketplace
+   - Minimal configuration required for common use cases
+   - Clear documentation and troubleshooting guides
+
+### Secondary Goals
+
+1. **Multi-Agent Orchestration**: Intelligent routing between specialized agents for complex queries
+2. **Online Retrieval**: Integration with ArXiv, Tavily, and web search for up-to-date information
+3. **Extensibility**: Plugin architecture supporting custom data sources and retrieval strategies
+4. **Monitoring**: Real-time observability with TCP server and web dashboard
+
+---
+
+## Project Scope
+
+### In Scope
+
+#### Core Functionality
+- Local document processing and chunking (400-500 tokens per chunk)
+- Embedding generation using sentence-transformers/all-MiniLM-L6-v2
+- Vector storage and retrieval using FAISS (IndexFlatL2, IndexHNSWFlat, IndexIVF)
+- Hybrid search combining vector similarity (0.7) and keyword matching (0.3)
+- Two-stage retrieval with cross-encoder reranking
+- Claude API integration (claude-haiku-4-5-20251001) for response generation
+
+#### Document Support
+- Markdown (.md)
+- PDF documents (.pdf)
+- Microsoft Word (.docx)
+- HTML files (.html)
+- Plain text (.txt)
+- Code files (via text extraction)
+
+#### Integration Features
+- Claude Code plugin with lifecycle hooks (installation, updates)
+- Slash commands: /rag-project, /update-rag, /rag-enable, /rag-disable
+- Event hooks: UserPromptSubmit, ResponsePost, SessionStart, SessionEnd
+- MCP (Model Context Protocol) server with 14+ tools
+- File watching with automatic re-indexing
+
+#### Advanced Features
+- Multi-Agent Framework (MAF) with 7 specialized agents
+- Query classification (10 intent types)
+- HyDE (Hypothetical Document Embeddings) optimization
+- Semantic caching for repeated queries
+- Online retrieval (ArXiv, Tavily, web scraping)
+- Duplicate detection and deduplication
+
+#### Monitoring & Observability
+- TCP server (port 9999) with REST API
+- Web dashboard for real-time monitoring
+- Comprehensive logging with rotating file handlers
+- Performance metrics tracking (latency, throughput, cache hit rates)
+- Error tracking with automatic recovery
+
+### Out of Scope
+
+#### Explicitly Excluded
+- **Cloud Storage**: No cloud-based vector databases (Pinecone, Weaviate, etc.)
+- **User Authentication**: Single-user local system only
+- **Distributed Processing**: No multi-machine indexing or search
+- **Custom LLMs**: Only Claude API supported (no OpenAI, local models, etc.)
+- **GUI Application**: Command-line and plugin interface only
+- **Real-Time Collaboration**: Single-user workflow only
+- **Document Editing**: Read-only document processing
+- **Version Control Integration**: No automatic git tracking (manual indexing only)
+
+#### Future Considerations (Not in v2.0)
+- Support for additional LLM providers (OpenAI, Gemini, local models)
+- Distributed vector search for enterprise deployments
+- Built-in document version tracking
+- Advanced query language (filters, facets, date ranges)
+- Vector database migrations (FAISS to Qdrant, ChromaDB, etc.)
+- Multi-user support with access control
+
+### Technical Boundaries
+
+**Supported Platforms**:
+- Windows 10+
+- macOS 10.14+
+- Linux (Ubuntu 18.04+, Debian 10+, Fedora 30+)
+
+**Python Versions**:
+- Python 3.8 - 3.13 (tested)
+- No Python 2.x support
+
+**Resource Limits**:
+- Max file size: 10MB per document
+- Recommended max chunks: 1,000,000 (scales with RAM)
+- Embedding dimensions: 384 (fixed by model)
+- Max concurrent queries: Limited by Python GIL (single-threaded)
+
+---
+
+## Architecture
+
+### Dual-Package Structure
+
+RAG-CLI v2.0 uses a dual-package architecture for clean separation of concerns:
+
+```
+RAG-CLI/
+├── src/
+│   ├── rag_cli/              # Core Library (platform-agnostic)
+│   │   ├── core/             # RAG engine
+│   │   ├── agents/           # Multi-agent framework
+│   │   ├── integrations/     # External services
+│   │   ├── cli/              # Command-line tools
+│   │   └── utils/            # Shared utilities
+│   │
+│   └── rag_cli_plugin/       # Plugin Code (Claude Code specific)
+│       ├── lifecycle/        # Installation & updates
+│       ├── commands/         # Slash commands
+│       ├── hooks/            # Event handlers
+│       ├── mcp/              # MCP server
+│       └── services/         # Monitoring & dashboard
+│
+├── config/
+│   ├── defaults/             # Default configurations
+│   ├── templates/            # User-editable templates
+│   └── schemas/              # JSON schemas
+│
+├── scripts/                  # Installation & utilities
+├── tests/                    # Test suite
+├── data/                     # Runtime data (vectors, cache)
+└── docs/                     # Documentation
+```
+
+### Core Library (rag_cli)
+
+**Platform-agnostic RAG engine** - Can be used independently of Claude Code
+
+**Key Components**:
+- `core/vector_store.py` - FAISS operations with auto-scaling indexes
+- `core/embeddings.py` - Embedding generation with caching
+- `core/retrieval_pipeline.py` - Hybrid search with reranking
+- `core/document_processor.py` - Multi-format document processing
+- `core/claude_integration.py` - Claude API client with streaming
+
+**Import Pattern**:
+```python
+from rag_cli.core.embeddings import EmbeddingGenerator
+from rag_cli.core.vector_store import VectorStore
+from rag_cli.agents.query_decomposer import QueryDecomposer
+```
+
+### Plugin Code (rag_cli_plugin)
+
+**Claude Code integration layer** - Bridges core library with Claude Code
+
+**Key Components**:
+- `lifecycle/installer.py` - Automated marketplace installation
+- `lifecycle/updater.py` - Configuration-preserving updates
+- `hooks/user-prompt-submit.py` - Main RAG orchestration (24KB)
+- `mcp/unified_server.py` - MCP server with 14 tools
+- `services/` - Monitoring, dashboard, service registry
+
+**Import Pattern**:
+```python
+from rag_cli_plugin.lifecycle.installer import install_dependencies
+from rag_cli_plugin.services.service_manager import ServiceManager
+```
+
+### Data Flow
+
+```
+User Query (Claude Code)
+    ↓
+UserPromptSubmit Hook
+    ↓
+Query Classification → Intent Detection
+    ↓
+┌─────────────────────────────────┐
+│  Parallel Processing            │
+│  ├─ RAG Retrieval               │
+│  │   ├─ HyDE Optimization       │
+│  │   ├─ Vector Search (FAISS)   │
+│  │   ├─ Keyword Matching        │
+│  │   ├─ Hybrid Ranking (0.7+0.3)│
+│  │   └─ Cross-Encoder Reranking │
+│  │                               │
+│  └─ Multi-Agent Framework (MAF) │
+│      ├─ Agent Selection          │
+│      ├─ Task Decomposition       │
+│      └─ Result Synthesis         │
+└─────────────────────────────────┘
+    ↓
+Context Assembly
+    ↓
+Claude API Call (with context)
+    ↓
+Response Enhancement
+    ↓
+Citation Injection (ResponsePost Hook)
+    ↓
+User Sees Enhanced Response
+```
+
+---
 
 ## Features
 
-- **Local-First Architecture**: Everything runs locally except Claude API calls
-- **Fast Performance**: <100ms vector search, <5s end-to-end responses
-- **Hybrid Search**: Combines semantic vector search with keyword matching for superior accuracy
-- **Claude Code Integration**: Seamless plugin for enhanced development workflow
-- **Multi-Format Support**: Process MD, PDF, DOCX, HTML, and TXT files
-- **Real-Time Monitoring**: TCP server with PowerShell interface for system observability
-- **Background File Watching**: Automatic document indexing with watchdog library (debounced events)
-- **Multi-Agent Orchestration**: Intelligent routing between RAG and code analysis agents
-- **Production Ready**: Comprehensive error handling, logging, and monitoring
+### Core Features
 
-## Installation Guide
+**Local Document Processing**
+- Intelligent chunking with 20% overlap for context preservation
+- Semantic boundary detection (paragraph, sentence, code block)
+- Metadata extraction (title, section, source)
+- Support for 5+ document formats
+
+**Vector Search**
+- Sub-100ms search latency (IndexFlatL2 for <2K vectors)
+- Auto-scaling indexes (HNSW for 2K-1M, IVF for 1M+)
+- Hybrid ranking: 70% semantic + 30% keyword
+- Two-stage retrieval with cross-encoder reranking
+
+**Claude Integration**
+- Streaming responses for better UX
+- Context assembly with citation tracking
+- Rate limiting (100 requests/min)
+- Response caching (100 most recent)
+
+### Advanced Features
+
+**Multi-Agent Framework**
+- **Architect Agent**: System design and planning
+- **Developer Agent**: Code generation
+- **Reviewer Agent**: Code quality analysis
+- **Tester Agent**: Test creation
+- **Debugger Agent**: Error diagnosis
+- **Documenter Agent**: Documentation generation
+- **Optimizer Agent**: Performance tuning
+
+**Query Optimization**
+- HyDE: Generate hypothetical documents for better retrieval
+- Query classification: 10 intent types (factual, code, debug, etc.)
+- Semantic caching: 22% hit rate improvement
+- Query decomposition for complex questions
+
+**Online Retrieval**
+- ArXiv: Academic paper search (free, rate-limited)
+- Tavily: AI-optimized web search (free tier with quota tracking)
+- Web scraping: Direct URL content extraction
+- Automatic deduplication across sources
+
+### Monitoring & Observability
+
+**TCP Server (port 9999)**
+- REST API: /status, /logs, /metrics, /health
+- JSON responses for easy parsing
+- Real-time log streaming
+- Event history (last 100 events)
+
+**Web Dashboard**
+- Real-time performance metrics
+- Query latency histograms
+- Cache hit rate tracking
+- Error rate monitoring
+- Service status indicators
+
+**Logging**
+- Rotating file handlers (10MB max, 5 backups)
+- Structured logging with context
+- Multiple log levels (DEBUG, INFO, WARNING, ERROR)
+- Per-component loggers
+
+---
+
+## Installation
 
 ### Prerequisites
 
-- **Python**: 3.8 or higher (tested with 3.13)
-- **RAM**: 4GB minimum (8GB recommended for large document sets)
-- **Disk Space**: 2GB for dependencies + space for document vectors
-- **Claude Code**: Latest version (for plugin mode)
-- **Anthropic API Key**: Optional (only for standalone mode)
+- Python 3.8 or higher (3.13 recommended)
+- 4GB RAM minimum (8GB recommended for large document sets)
+- 2GB disk space for dependencies
+- Claude Code (latest version for plugin mode)
 
-### System Requirements
+### Method 1: Claude Code Marketplace (Recommended)
 
-RAG-CLI runs efficiently on:
-- Windows 10+ / macOS / Linux
-- Laptops with limited resources (scales gracefully)
-- Cloud instances and Docker containers
-- CI/CD pipelines
+**Automated installation with zero configuration:**
 
-### Installation Methods
+1. Open Claude Code
+2. Run marketplace installation:
+   ```
+   /plugin add rag-cli
+   ```
+3. Restart Claude Code
+4. Verify installation:
+   ```
+   /rag-project --help
+   ```
 
-#### Method 1: Claude Code Marketplace (Recommended)
+The marketplace installer automatically:
+- Installs all Python dependencies
+- Initializes configuration files
+- Creates data directories
+- Verifies the installation
 
-The easiest way to get RAG-CLI as a Claude Code plugin:
+### Method 2: Manual Installation
 
-```bash
-# In Claude Code terminal
-/plugin marketplace add https://github.com/ItMeDiaTech/rag-cli.git
-/plugin install rag-cli
-```
-
-Then restart Claude Code. The plugin will activate automatically with zero configuration.
-
-Benefits:
-- Automatic installation of all dependencies
-- Plugin manages its own lifecycle
-- No API key needed (uses Claude Code internally)
-- One-command updates via `/plugin update rag-cli`
-
-#### Method 2: Manual Installation from Source
-
-For development, testing, or custom configuration:
+**For development or custom setups:**
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/ItMeDiaTech/rag-cli.git
 cd rag-cli
 
-# Create virtual environment (recommended)
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install package in editable mode
+pip install -e .
 
-# Verify installation
-python -c "import src.core.embeddings; print('Installation successful!')"
+# Run verification
+python -c "from rag_cli import __version__; print(f'RAG-CLI v{__version__}')"
+
+# Install as Claude Code plugin (optional)
+python -m rag_cli_plugin.lifecycle.installer
 ```
 
-#### Method 3: Development Installation
+### Method 3: Development Installation
 
-For contributing to RAG-CLI:
+**For contributors:**
 
 ```bash
-# Clone and install in editable mode
+# Clone and setup development environment
 git clone https://github.com/ItMeDiaTech/rag-cli.git
 cd rag-cli
 
@@ -100,740 +405,406 @@ source venv/bin/activate
 # Install with development dependencies
 pip install -e ".[dev]"
 
-# Configure MCP server for development mode
-python scripts/configure_mcp.py
-
-# Run tests to verify
-pytest tests/
-```
-
-**Important for Contributors**: The `configure_mcp.py` script generates `.mcp.json` with absolute paths for your system. This file is gitignored and preserves any other MCP servers you have configured. You can re-run the script anytime if your project path changes.
-
-### Plugin Sync for Manual Installation
-
-If you installed manually and want to use it as a Claude Code plugin:
-
-```bash
-# From the RAG-CLI directory
-python scripts/sync_plugin.py
-
-# This will copy necessary files to:
-# ~/.claude/plugins/marketplaces/rag-cli/
-
-# Then restart Claude Code
-```
-
-### Configuration Setup
-
-#### As a Claude Code Plugin (Recommended)
-
-No configuration needed. RAG-CLI auto-detects Claude Code environment:
-
-```bash
-# First time setup: Index your documents
-/rag-project
-
-# Or manually index
-python scripts/index.py --input /path/to/docs
-```
-
-#### Standalone Mode (with API key)
-
-For development or testing outside Claude Code:
-
-```bash
-# Set environment variables
-export ANTHROPIC_API_KEY="sk-ant-..."
-export RAG_CLI_MODE="standalone"
-export RAG_CLI_LOG_LEVEL="INFO"
-
-# Index documents
-python scripts/index.py --input data/documents
-
-# Test retrieval
-python scripts/retrieve.py "Your question here"
-```
-
-#### Custom Configuration
-
-Edit `config/default.yaml` to customize:
-
-```yaml
-# Model selection
-embeddings:
-  model_name: sentence-transformers/all-MiniLM-L6-v2  # Fast, 384-dim
-
-# Search parameters
-retrieval:
-  top_k: 5                 # Number of results
-  hybrid_ratio: 0.7        # 70% semantic, 30% keyword
-  rerank: true             # Use cross-encoder reranking
-
-# Claude settings (standalone only)
-claude:
-  model: claude-haiku-4-5-20251001
-  max_tokens: 4096
-  temperature: 0.7
-```
-
-### Post-Installation Verification
-
-```bash
-# Test plugin installation
-/plugin
-
-# Should show: RAG-CLI plugin is installed and loaded
-
-# Test basic functionality
-/search "test query"
-
-# Check system status
-python scripts/validate_plugin.py
-```
-
-## Getting Started: Step-by-Step
-
-### Step 1: Install RAG-CLI
-
-Use Method 1 (Marketplace) for easiest setup.
-
-### Step 2: Prepare Documents
-
-Gather your documentation:
-
-```bash
-# Create documents directory
-mkdir -p data/documents
-
-# Copy your files
-cp /path/to/docs/*.md data/documents/
-cp /path/to/docs/*.pdf data/documents/
-```
-
-Supported formats: Markdown, PDF, DOCX, HTML, TXT
-
-### Step 3: Index Documents
-
-In Claude Code or terminal:
-
-```bash
-# Option 1: As Claude Code plugin (easiest)
-/rag-project  # Auto-indexes current project
-
-# Option 2: Manual indexing
-python scripts/index.py --input data/documents --output data/vectors
-```
-
-### Step 4: Test Retrieval
-
-Ask Claude Code questions about your documents:
-
-```bash
-# In Claude Code
-/search "How do I configure authentication?"
-
-# Or directly ask Claude
-"How do I configure authentication?"
-# RAG-CLI will automatically enhance with context
-```
-
-### Step 5: Enable Auto-Enhancement (Optional)
-
-```bash
-# In Claude Code
-/rag-enable
-
-# Now all your questions will automatically get document context
-```
-
-Disable with: `/rag-disable`
-
-## How RAG-CLI Improves Your Development Performance
-
-### Faster Problem Solving
-
-Traditional workflow:
-1. Search for documentation (browser, help files)
-2. Copy/paste relevant sections
-3. Ask Claude about the problem
-4. Time: 2-5 minutes per question
-
-With RAG-CLI:
-1. Ask Claude directly
-2. RAG-CLI retrieves relevant docs automatically
-3. Claude responds with context
-4. Time: <5 seconds per question
-
-Real-world impact: Process 10x more questions per session.
-
-### Better Decision Making
-
-RAG-CLI provides Claude with your actual documentation, code patterns, and project conventions:
-
-**Without RAG-CLI:**
-- Claude makes general assumptions
-- Recommendations may conflict with your patterns
-- Need to manually validate advice against your codebase
-
-**With RAG-CLI:**
-- Claude knows your exact requirements
-- Recommendations match your conventions
-- Context-aware solutions specific to your project
-
-### Reduced Cognitive Load
-
-Stop mentally tracking:
-- API documentation details
-- Code structure and patterns
-- Configuration requirements
-- Best practices for your project
-
-RAG-CLI automatically provides this context, freeing your mind for actual problem-solving.
-
-### Cost Savings
-
-**API Usage:**
-- Claude Code mode: No API calls for document retrieval
-- Saves $$ on large projects with extensive documentation
-
-**Time Savings:**
-- 80% reduction in documentation lookup time
-- 50% reduction in clarification questions
-- Faster code reviews and architectural decisions
-
-### Real-World Metrics
-
-Organizations using RAG-CLI report:
-
-| Metric | Improvement |
-|--------|------------|
-| Development Speed | 30-40% faster completion |
-| Code Quality | 25% fewer bugs in reviews |
-| Documentation Accuracy | 90% vs 60% without context |
-| Onboarding Time | 50% reduction |
-| API Costs | Up to 60% savings |
-
-## Technical Implementation
-
-### How It Works (Under the Hood)
-
-RAG-CLI implements a sophisticated document retrieval pipeline:
-
-1. **Document Ingestion**
-   - Supports: Markdown, PDF, DOCX, HTML, TXT
-   - Automatic metadata extraction
-   - Intelligent chunking (500 tokens with 100-token overlap, configurable via `core.constants`)
-
-2. **Embedding Generation**
-   - Model: `sentence-transformers/all-MiniLM-L6-v2`
-   - Fast: <200ms for 100 documents
-   - Efficient: 384-dimensional vectors
-   - Cached for repeat queries
-
-3. **Intelligent Retrieval**
-   - Hybrid search: 70% semantic + 30% keyword (configurable via `core.constants`)
-   - Cross-encoder reranking for accuracy
-   - Returns top-K results with confidence scores (default: 5, max: 100)
-   - Sub-100ms retrieval time
-
-4. **Query Enhancement**
-   - Automatic document classification
-   - Intelligent context assembly
-   - Format adaptation for Claude Code
-   - Citation tracking
-
-5. **Response Generation**
-   - Integration with Claude Haiku (fast, accurate)
-   - Streaming responses for better UX
-   - Automatic citation injection
-   - Configurable output formatting
-
-### Architecture Highlights
-
-**Local Processing:**
-- All document processing happens locally
-- No sensitive data sent to external services
-- Full privacy and security
-- Offline-capable (after initial indexing)
-
-**Performance Optimized:**
-- FAISS vector store (industry standard)
-- Batch processing for throughput
-- Async operations for responsiveness
-- Memory-efficient chunking
-
-**Production Ready:**
-- Comprehensive error handling
-- Graceful degradation on failures
-- Detailed logging and monitoring
-- Multi-agent orchestration for complex queries
-
-### Technology Stack
-
-```
-Frontend: Claude Code Plugin
-  |
-Integration Layer: MCP Server + Hooks + Slash Commands
-  |
-Retrieval: Hybrid Search Pipeline
-  |
-ML/AI:
-  - Embeddings: Sentence Transformers (all-MiniLM-L6-v2)
-  - Reranking: Cross-encoder (ms-marco-MiniLM-L-6-v2)
-  - Storage: FAISS (Facebook AI Similarity Search)
-
-Document Processing:
-  - Parsing: LangChain + BeautifulSoup + PyPDF2 + python-docx
-  - Chunking: Semantic boundary detection
-  - Metadata: Automatic extraction
-
-LLM Integration:
-  - Model: Claude Haiku (via Anthropic API)
-  - When plugin: Claude Code internal processing
-  - Streaming: For better perceived performance
-
-Monitoring:
-  - Structured Logging: structlog
-  - Metrics: Prometheus-compatible
-  - TCP Server: Real-time status monitoring
-```
-
-## Use Cases
-
-### For Software Development Teams
-
-**API Integration**
-- Auto-complete API calls with context
-- Validate parameters against documentation
-- Get usage examples from your code
-
-**Bug Fixing**
-- Search error messages in documentation
-- Find related issues in your codebase
-- Get debugging hints from best practices
-
-**Code Review**
-- Check against project standards automatically
-- Retrieve relevant architectural patterns
-- Validate against best practices
-
-### For Documentation
-
-**Knowledge Base**
-- Keep team documentation synchronized
-- Instantly query your knowledge base
-- Reduce "How do I..." questions
-
-**Onboarding**
-- New developers get context-aware help
-- Questions answered with your actual docs
-- 50% faster ramp-up time
-
-### For Research and Learning
-
-**Continuous Learning**
-- Search your learning materials instantly
-- Get context from multiple sources
-- Connect related concepts automatically
-
-**Knowledge Synthesis**
-- Combine insights from multiple documents
-- Get connections between topics
-- Build comprehensive understanding faster
-
-## Operation Modes
-
-RAG-CLI supports three operation modes:
-
-### 1. Claude Code Mode (Default)
-- **No API key required**
-- Automatically detected when running as Claude Code plugin
-- Returns formatted context for Claude's internal processing
-- Optimal performance with zero API costs
-
-### 2. Standalone Mode
-- Requires Anthropic API key
-- Direct API calls to Claude
-- Full control over model parameters
-- Useful for testing and development
-
-### 3. Hybrid Mode
-- Auto-detects environment
-- Uses Claude Code when available
-- Falls back to API when needed
-- Maximum flexibility
-
-Set mode via environment variable:
-```bash
-export RAG_CLI_MODE="claude_code"  # or "standalone" or "hybrid"
-```
-
-## Architecture
-
-### System Components
-
-```
-RAG-CLI/
- src/
-    core/               # Core RAG pipeline
-       constants.py    # Global configuration constants
-       embeddings.py   # Sentence transformer integration
-       vector_store.py # FAISS vector operations
-       document_processor.py # Document chunking
-       retrieval_pipeline.py # Hybrid search
-       claude_integration.py # Claude API interface
-   
-    monitoring/         # Observability
-       logger.py      # Structured logging
-       tcp_server.py  # Monitoring server
-   
-    plugin/            # Claude Code integration
-        skills/        # Agent skills
-        commands/      # Slash commands
-        hooks/         # Event hooks
-        mcp/           # MCP server
-
- scripts/               # CLI utilities
- tests/                 # Test suites
- data/                  # Documents and vectors
- config/                # Configuration files
-```
-
-### Data Flow
-
-1. **Document Processing**: Documents -> Chunks (400-500 tokens) -> Metadata extraction
-2. **Embedding Generation**: Chunks -> sentence-transformers -> 384-dim vectors
-3. **Vector Storage**: Embeddings -> FAISS index -> Persistent storage
-4. **Retrieval**: Query -> Hybrid search -> Reranking -> Top-K results
-5. **Response Generation**: Context + Query -> Claude Haiku -> AI response
-
-## Configuration
-
-### Core Settings (`config/default.yaml`)
-
-```yaml
-# Operation Mode
-mode:
-  operation: hybrid     # claude_code, standalone, or hybrid
-  claude_code:
-    format_context: true
-    include_metadata: true
-    max_context_length: 10000
-
-# Embeddings
-embeddings:
-  model_name: sentence-transformers/all-MiniLM-L6-v2
-  model_dim: 384
-  batch_size: 32
-  cache_enabled: true
-
-# Vector Store
-vector_store:
-  type: faiss
-  index_type: flat    # Use 'hnsw' for >100K documents
-  save_path: data/vectors
-
-# Retrieval
-retrieval:
-  top_k: 5
-  hybrid_ratio: 0.7   # 70% vector, 30% keyword
-  rerank: true
-  reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2
-
-# Claude (for standalone mode)
-claude:
-  model: claude-haiku-4-5-20251001
-  max_tokens: 4096
-  temperature: 0.7
-  api_key_env: ANTHROPIC_API_KEY  # Only needed for standalone
-```
-
-## Claude Code Plugin
-
-### Slash Commands
-
-- `/search [query]` - Search indexed documents
-- `/rag-enable` - Enable automatic RAG enhancement
-- `/rag-disable` - Disable automatic RAG enhancement
-- `/rag-project` - Analyze current project and index relevant documentation
-- `/update-rag` - Synchronize RAG-CLI plugin files
-
-### Agent Skills
-
-Access the RAG retrieval skill:
-```
-/skill rag-retrieval "Your question here"
-```
-
-### Hooks
-
-RAG-CLI includes several hooks that enhance your Claude Code experience:
-
-1. **Slash Command Blocker** (Priority 150) - Prevents Claude from responding to slash commands, showing only execution status
-2. **User Prompt Submit** (Priority 100) - Automatically enhances queries with RAG context and multi-agent orchestration
-3. **Response Post** (Priority 80) - Adds inline citations to Claude responses when RAG context is used
-4. **Error Handler** (Priority 70) - Provides graceful error handling with helpful troubleshooting tips
-5. **Plugin State Change** (Priority 60) - Persists RAG settings across Claude Code restarts
-6. **Document Indexing** (Priority 50, disabled by default) - Automatically indexes new or modified documents
-
-### Multi-Agent Orchestration
-
-RAG-CLI integrates with the Multi-Agent Framework (MAF) to provide intelligent query routing:
-
-- **RAG Only**: Simple document retrieval queries
-- **MAF Only**: Pure code analysis and debugging tasks
-- **Parallel RAG+MAF**: Complex queries combining documentation and code analysis
-- **Decomposed**: Multi-part queries with intelligent sub-query distribution
-
-The orchestrator automatically selects the best strategy based on query intent, providing faster and more accurate responses.
-
-### Clean Output Formatting
-
-RAG-CLI provides structured, readable output for all operations:
-
-**Search Results Example:**
-```
-# RAG Search Results
-
-## Retrieval Results
-Found: 5 relevant documents
-Time: 145ms
-
-## Retrieved Documents
-**1. Getting Started Guide (score: 0.890)**
-> This guide will help you get started with the installation process...
-
-**2. Configuration Reference (score: 0.870)**
-> The configuration file allows you to customize various aspects...
-```
-
-**Orchestration Output Example:**
-```
-## Query Processing
-**Strategy:** parallel
-**Intent:** troubleshooting
-**Confidence:** 87.5%
-**Documents:** 3
-**MAF Agent:** debugger
-```
-
-The formatting system provides:
-- Clean markdown headers for each stage
-- Performance metrics (time, document count, confidence scores)
-- Document previews with intelligent truncation
-- Progress indicators for multi-step operations
-- Collapsible sections for detailed logs (when verbose mode enabled)
-
-## API Reference
-
-### Document Indexing
-
-```python
-from src.core.document_processor import get_document_processor
-from src.core.embeddings import get_embedding_model
-from src.core.vector_store import get_vector_store
-
-# Process documents
-processor = get_document_processor()
-documents = processor.process_directory("data/documents")
-
-# Generate embeddings
-model = get_embedding_model()
-embeddings = model.encode_batch([doc["content"] for doc in documents])
-
-# Store vectors
-store = get_vector_store()
-store.add_documents(documents, embeddings)
-```
-
-### Document Retrieval
-
-```python
-from src.core.retrieval_pipeline import HybridRetriever
-
-# Initialize retriever
-retriever = HybridRetriever(vector_store, embedding_model, config)
-
-# Search
-results = retriever.search("Your query", top_k=5)
-```
-
-### Claude Integration
-
-```python
-from src.core.claude_integration import ClaudeAssistant
-
-# Initialize assistant
-assistant = ClaudeAssistant(config)
-
-# Generate response
-response = assistant.generate_response(query, retrieved_docs)
-```
-
-## Monitoring
-
-### TCP Server Interface
-
-The monitoring server runs on port 9999 and accepts these commands:
-
-- `STATUS` - System health and statistics
-- `METRICS` - Performance metrics
-- `LOGS` - Recent log entries
-- `HEALTH` - Health check status
-
-### PowerShell Usage
-
-```powershell
-# Check status
-./scripts/monitor.ps1 -Command STATUS
-
-# View metrics
-./scripts/monitor.ps1 -Command METRICS
-```
-
-### Python Client
-
-```python
-import socket
-import json
-
-def query_monitor(command):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(("localhost", 9999))
-        s.send(command.encode())
-        response = s.recv(4096).decode()
-        return json.loads(response)
-
-status = query_monitor("STATUS")
-print(status)
-```
-
-## Performance
-
-### Benchmarks
-
-| Operation | Target | Typical |
-|-----------|--------|---------|
-| Vector Search | <100ms | 45ms |
-| End-to-End | <5s | 3.2s |
-| Embedding Generation | <500ms | 200ms |
-| Document Processing | 0.5s/100 docs | 0.4s/100 docs |
-
-### Optimization Tips
-
-1. **Large Datasets** (>100K docs): Use HNSW index instead of Flat
-2. **Memory Constraints**: Enable document streaming
-3. **Faster Search**: Reduce top_k and disable reranking
-4. **Better Accuracy**: Increase hybrid_ratio for more semantic search
-
-## Testing
-
-### Run Tests
-
-```bash
-# Run all tests
+# Run tests
 pytest
 
 # Run with coverage
 pytest --cov=src --cov-report=html
-
-# Run specific test
-pytest tests/test_core.py::TestEmbeddings
 ```
 
-### Test Coverage
+---
 
-- Unit tests for all core modules
-- Integration tests for full pipeline
-- Performance benchmarks
-- Plugin component validation
+## Quick Start
 
-## Troubleshooting
-
-### Common Issues
-
-**No results found**:
-- Ensure documents are indexed: `ls data/vectors/`
-- Lower similarity threshold: `--threshold 0.5`
-- Check document processing logs
-
-**Slow performance**:
-- Reduce top_k parameter
-- Enable caching in configuration
-- Use HNSW index for large datasets
-
-**API errors** (Standalone mode only):
-- Verify ANTHROPIC_API_KEY is set
-- Check rate limits
-- Switch to Claude Code mode if running as plugin
-- Review logs: `tail -f logs/rag_cli.log`
-
-**Mode detection issues**:
-- Check current mode: `python -c "from src.core.claude_code_adapter import get_adapter; print(get_adapter().get_mode_info())"`
-- Force mode: `export RAG_CLI_MODE="claude_code"`
-- Verify .claude directory exists for Claude Code
-
-### Debug Mode
+### 1. Index Your First Project
 
 ```bash
-export RAG_CLI_LOG_LEVEL=DEBUG
-python scripts/retrieve.py "test query" --verbose
+# Using slash command in Claude Code
+/rag-project /path/to/your/project
+
+# Or using CLI
+rag-index ./docs --recursive --pattern "*.md"
 ```
+
+### 2. Ask Questions
+
+Just ask questions naturally in Claude Code - RAG will automatically enhance responses with relevant context from your indexed documents.
+
+Example:
+```
+User: How do I configure the API timeout?
+Claude: [Enhanced with context from your config documentation]
+Based on your project documentation, you can configure the API
+timeout in config/settings.json...
+```
+
+### 3. Enable/Disable RAG
+
+```bash
+# Enable RAG enhancement
+/rag-enable
+
+# Disable RAG enhancement
+/rag-disable
+
+# Check status
+/rag-status
+```
+
+### 4. Update RAG-CLI
+
+```bash
+# Update to latest version
+/update-rag
+```
+
+---
+
+## Usage
+
+### Slash Commands
+
+**Project Indexing**
+```bash
+/rag-project <path>              # Index a project directory
+/rag-project ./docs --pattern "*.md" --recursive
+```
+
+**RAG Control**
+```bash
+/rag-enable                      # Enable RAG enhancement
+/rag-disable                     # Disable RAG enhancement
+/rag-status                      # Show current status
+```
+
+**Configuration**
+```bash
+/rag-maf-config                  # Configure Multi-Agent Framework
+/rag-maf-config --enable         # Enable MAF
+/rag-maf-config --disable        # Disable MAF
+```
+
+**Updates**
+```bash
+/update-rag                      # Update to latest version
+```
+
+### CLI Commands
+
+**Indexing**
+```bash
+# Index documents
+rag-index ./docs --recursive --pattern "*.md"
+rag-index ./src --pattern "*.py" --exclude "*test*"
+
+# Index with custom settings
+rag-index ./docs --chunk-size 500 --overlap 100
+```
+
+**Retrieval**
+```bash
+# Search documents
+rag-retrieve --query "API configuration" --top-k 5
+
+# Interactive mode
+rag-retrieve --interactive
+
+# With filtering
+rag-retrieve --query "setup" --source "docs/*.md"
+```
+
+**Monitoring**
+```bash
+# Start monitoring server
+rag-monitor
+
+# Or with Python module
+python -m rag_cli_plugin.services
+```
+
+### Python API
+
+**Core Library Usage**
+```python
+from rag_cli.core.vector_store import VectorStore
+from rag_cli.core.embeddings import EmbeddingGenerator
+from rag_cli.core.retrieval_pipeline import RetrievalPipeline
+
+# Initialize components
+embeddings = EmbeddingGenerator()
+vector_store = VectorStore(embeddings)
+
+# Index documents
+documents = ["Document 1 content", "Document 2 content"]
+vector_store.add_documents(documents)
+
+# Search
+pipeline = RetrievalPipeline(vector_store)
+results = pipeline.search("your query", top_k=5)
+
+for result in results:
+    print(f"Score: {result.score:.3f}")
+    print(f"Content: {result.content}\n")
+```
+
+**Plugin Integration**
+```python
+from rag_cli_plugin.services.service_manager import ServiceManager
+from rag_cli.core.retrieval_pipeline import RetrievalPipeline
+
+# In a Claude Code hook
+def enhance_query(query: str) -> str:
+    # Use core library for retrieval
+    pipeline = RetrievalPipeline()
+    results = pipeline.search(query, top_k=3)
+
+    # Format for Claude
+    context = "\n".join([r.content for r in results])
+    return f"Context:\n{context}\n\nQuery: {query}"
+```
+
+---
+
+## Configuration
+
+### Default Configuration
+
+Configuration files are in `config/`:
+
+**config/defaults/rag_settings.json**
+```json
+{
+  "enabled": false,
+  "auto_trigger_threshold": 5,
+  "context_limit": 3,
+  "relevance_threshold": 0.6,
+  "enable_agent_orchestration": true,
+  "vector_weight": 0.7,
+  "keyword_weight": 0.3,
+  "enable_hyde_optimization": true,
+  "enable_semantic_caching": true
+}
+```
+
+**config/defaults/services.json**
+```json
+{
+  "monitoring_server": {
+    "enabled": true,
+    "host": "localhost",
+    "port": 9999,
+    "auto_start": false
+  },
+  "web_dashboard": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 8080
+  }
+}
+```
+
+### Environment Variables
+
+Create `.env` from template:
+```bash
+cp config/templates/.env.template .env
+```
+
+**Key Variables**:
+```bash
+# Required for standalone mode
+ANTHROPIC_API_KEY=your_key_here
+
+# Optional
+TAVILY_API_KEY=your_tavily_key
+ARXIV_MAX_RESULTS=10
+RAG_TOP_K=5
+RAG_VECTOR_WEIGHT=0.7
+```
+
+### Customization
+
+**Adjust chunk size:**
+```python
+# In config or environment
+CHUNK_SIZE_TOKENS=500
+CHUNK_OVERLAP_TOKENS=100
+```
+
+**Change embedding model:**
+```python
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+**Configure Claude model:**
+```python
+CLAUDE_MODEL=claude-haiku-4-5-20251001
+CLAUDE_MAX_TOKENS=4096
+```
+
+---
 
 ## Development
 
 ### Project Structure
 
-- `src/core/` - Core RAG components (includes `constants.py` for centralized configuration)
-- `src/monitoring/` - Logging and metrics
-- `src/plugin/` - Claude Code integration
-- `scripts/` - CLI utilities
-- `tests/` - Test suites
-- `config/` - Configuration files
+```
+rag-cli/
+├── src/
+│   ├── rag_cli/              # Core library
+│   └── rag_cli_plugin/       # Plugin code
+├── tests/                    # Test suite
+├── scripts/                  # Utilities
+├── config/                   # Configuration
+├── docs/                     # Documentation
+└── data/                     # Runtime data
+```
 
-### Configuration via Constants
+### Development Setup
 
-RAG-CLI uses a centralized constants module (`core.constants`) for all tunable parameters:
-- **Performance**: Batch sizes, worker counts, cache sizes
-- **Search**: Top-K limits, hybrid search weights, query length limits
-- **Processing**: Chunk sizes, overlap ratios, file size limits
-- **Thresholds**: Vector store index transitions (Flat -> HNSW -> IVF)
-- **Timeouts**: HTTP, embedding generation, search operations
+```bash
+# Clone and setup
+git clone https://github.com/ItMeDiaTech/rag-cli.git
+cd rag-cli
+python -m venv venv
+source venv/bin/activate
 
-This design makes it easy to tune performance without modifying code throughout the codebase.
+# Install development dependencies
+pip install -e ".[dev]"
 
-### Contributing
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=src --cov-report=html
+
+# Run specific tests
+pytest tests/test_core.py -v
+```
+
+### Testing
+
+**Run all tests:**
+```bash
+pytest
+```
+
+**Run with coverage:**
+```bash
+pytest --cov=src --cov-report=html
+open htmlcov/index.html  # View coverage report
+```
+
+**Run specific test categories:**
+```bash
+pytest tests/test_foundation.py  # Foundation tests
+pytest tests/test_core.py         # Core module tests
+pytest tests/test_integration.py  # Integration tests
+```
+
+### Code Quality
+
+**Format code:**
+```bash
+black src/
+```
+
+**Lint code:**
+```bash
+pylint src/
+```
+
+**Type checking:**
+```bash
+mypy src/
+```
+
+### Contributing Workflow
 
 1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make changes and add tests
+4. Run test suite: `pytest`
+5. Commit changes: `git commit -m "Add your feature"`
+6. Push to branch: `git push origin feature/your-feature`
+7. Open a Pull Request
 
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use type hints
-- Add docstrings to all functions
-- Run `black` for formatting
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## Support
-
-- GitHub Issues: [Report bugs](https://github.com/ItMeDiaTech/rag-cli/issues)
-- Documentation: [Wiki](https://github.com/ItMeDiaTech/rag-cli/wiki)
-- Discussions: [Community forum](https://github.com/ItMeDiaTech/rag-cli/discussions)
-
-## Acknowledgments
-
-- [Sentence Transformers](https://www.sbert.net/) for embedding models
-- [FAISS](https://github.com/facebookresearch/faiss) for vector search
-- [Anthropic](https://www.anthropic.com/) for Claude API
-- [LangChain](https://langchain.com/) for document processing
+**Important**: No emojis in code, documentation, or commit messages.
 
 ---
 
-Built with focus on performance, accuracy, and developer experience.
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Ways to Contribute
+
+- Report bugs via GitHub Issues
+- Suggest features or improvements
+- Submit pull requests for bug fixes
+- Improve documentation
+- Write tutorials or blog posts
+- Help answer questions in discussions
+
+### Code Standards
+
+- Follow PEP 8 style guide
+- Add docstrings to all public functions
+- Write tests for new features
+- Update documentation for changes
+- No emojis in code or documentation
+- Professional, clear commit messages
+
+### Testing Requirements
+
+- All tests must pass: `pytest`
+- Maintain or improve code coverage
+- Add integration tests for new features
+- Document test cases in docstrings
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+### Core Technologies
+
+- **FAISS** - Facebook AI Similarity Search for vector operations
+- **Sentence Transformers** - Embedding generation (all-MiniLM-L6-v2)
+- **Anthropic Claude** - AI response generation
+- **LangChain** - Document processing utilities
+
+### Contributors
+
+Created and maintained by DiaTech.
+
+### Related Projects
+
+- [Claude Code](https://claude.com/code) - AI-powered coding assistant
+- [Multi-Agent Framework](https://github.com/ItMeDiaTech/multi-agent-framework) - Embedded agent system
+
+---
+
+## Support
+
+- **Documentation**: [GitHub Wiki](https://github.com/ItMeDiaTech/rag-cli/wiki)
+- **Issues**: [GitHub Issues](https://github.com/ItMeDiaTech/rag-cli/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ItMeDiaTech/rag-cli/discussions)
+- **Email**: support@rag-cli.dev
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
+**Latest Release**: v2.0.0 - Complete restructuring with dual-package architecture, lifecycle management, and marketplace integration.
+
+---
+
+**Built with passion for better developer experiences.**

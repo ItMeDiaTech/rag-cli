@@ -1,0 +1,28 @@
+{
+  "mode": "inline_warning",
+  "modes": {
+    "inline_warning": {
+      "description": "Show warning but continue processing",
+      "show_error_details": false,
+      "fallback_to_no_rag": true
+    },
+    "silent_fallback": {
+      "description": "Silently fall back to non-RAG responses",
+      "show_error_details": false,
+      "fallback_to_no_rag": true,
+      "log_errors": true
+    },
+    "block_query": {
+      "description": "Block query and show error message",
+      "show_error_details": true,
+      "fallback_to_no_rag": false
+    }
+  },
+  "retry_config": {
+    "max_retries": 2,
+    "retry_delay_ms": 500,
+    "exponential_backoff": true
+  },
+  "timeout_ms": 5000,
+  "log_level": "WARNING"
+}

@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "post_install": {
+      "command": "python",
+      "args": [
+        "-m",
+        "rag_cli_plugin.lifecycle.installer",
+        "--mode", "marketplace"
+      ],
+      "timeout": 60000,
+      "required": true,
+      "description": "Install dependencies and initialize RAG-CLI configuration"
+    },
+    "pre_update": {
+      "command": "python",
+      "args": [
+        "-m",
+        "rag_cli_plugin.lifecycle.updater",
+        "--mode", "pre"
+      ],
+      "timeout": 30000,
+      "required": false,
+      "description": "Backup configuration before update"
+    },
+    "post_update": {
+      "command": "python",
+      "args": [
+        "-m",
+        "rag_cli_plugin.lifecycle.updater",
+        "--mode", "post"
+      ],
+      "timeout": 60000,
+      "required": true,
+      "description": "Reinstall dependencies and migrate configuration"
+    }
+  }
+}

@@ -16,71 +16,117 @@ Focus on clear, professional documentation without decorative elements.
 
 ## Project Overview
 
-RAG-CLI is a local Retrieval-Augmented Generation system designed as a Claude Code plugin. It processes documents locally, generates embeddings, stores vectors in FAISS, and uses claude-haiku-4-5-20251001 for response generation.
+RAG-CLI v2.0 is a local Retrieval-Augmented Generation system designed as a Claude Code plugin. It processes documents locally, generates embeddings, stores vectors in FAISS, and uses claude-haiku-4-5-20251001 for response generation.
 
-## Project Structure
+This version features a complete restructure with clean separation between core library and plugin code, marketplace-ready lifecycle management, and improved maintainability.
+
+## Project Structure (v2.0)
 
 ```
 RAG-CLI/
- src/                             # Package root (installed as Python package)
-    core/                        # Core RAG functionality
-       constants.py             # Centralized configuration constants
-       document_processor.py    # Document chunking (400-500 tokens)
-       embeddings.py            # sentence-transformers/all-MiniLM-L6-v2
-       vector_store.py          # FAISS operations
-       retrieval_pipeline.py    # Hybrid search + reranking
-       claude_integration.py    # claude-haiku-4-5-20251001 interface
-    monitoring/                  # Monitoring and observability
-       logger.py                # Comprehensive logging
-       metrics.py               # Performance tracking
-       tcp_server.py            # REST API (port 9999)
-       __main__.py              # Entry point for rag-monitor
-    cli/                         # Command-line tools
-       index.py                 # Document indexing (rag-index)
-       retrieve.py              # Retrieval CLI (rag-retrieve)
-    agents/                      # Multi-agent framework
-       base_agent.py            # Agent base class
-       query_decomposer.py      # Query decomposition
-       result_synthesizer.py    # Result synthesis
-    integrations/                # External integrations
-       arxiv_connector.py       # ArXiv integration
-       tavily_connector.py      # Tavily search
-       maf_connector.py         # Multi-agent framework
-    plugin/                      # Claude Code plugin components
-        commands/                # Slash commands (.md + .py)
-        hooks/                   # Event hooks (.py)
-        skills/                  # Agent skills
-        mcp/                     # MCP server
- scripts/                         # Utility scripts
-    fix_imports.py               # Import fixer
-    remove_syspath.py            # sys.path cleaner
-    verify_installation.py       # Installation verifier
- tests/                           # Test suite
-    test_foundation.py           # Foundation tests
-    test_core.py                 # Core module tests
-    test_integration.py          # Integration tests
- data/                            # Data storage
-    documents/                   # Source documents
-    vectors/                     # FAISS indexes
- config/                          # Configuration files
-    rag_settings.json           # RAG settings
- .claude-plugin/                  # Plugin metadata
-    plugin.json                  # Plugin configuration
-    hooks.json                   # Hook configurations
- requirements.txt                 # Python dependencies
- setup.py                         # Package setup (distutils)
- pyproject.toml                   # Package setup (PEP 517/518)
- install_plugin.py                # Plugin installation script
- pytest.ini                       # Test configuration
+ src/
+    rag_cli/                          # CORE LIBRARY (plugin-agnostic)
+       __init__.py                   # Version: 2.0.0
+       core/                         # Core RAG functionality
+          constants.py              # Centralized configuration
+          document_processor.py     # Document chunking
+          embeddings.py             # Embedding generation
+          vector_store.py           # FAISS operations
+          retrieval_pipeline.py     # Hybrid search + reranking
+          claude_integration.py     # Claude API integration
+          [30+ other core modules]
+       agents/                       # Multi-agent framework
+          base_agent.py             # Agent base class
+          query_decomposer.py       # Query decomposition
+          result_synthesizer.py     # Result synthesis
+          maf/                      # Multi-Agent Framework
+       integrations/                 # External integrations
+          arxiv_connector.py        # ArXiv integration
+          tavily_connector.py       # Tavily search
+          maf_connector.py          # MAF integration
+       cli/                          # Command-line tools
+          index.py                  # rag-index command
+          retrieve.py               # rag-retrieve command
+       utils/                        # Shared utilities
+
+    rag_cli_plugin/                   # PLUGIN CODE (Claude Code specific)
+       __init__.py                   # Version: 2.0.0
+       lifecycle/                    # Lifecycle management
+          installer.py              # Marketplace installation
+          updater.py                # Update handling
+       commands/                     # Slash commands
+          update_rag.py             # /update-rag command
+          rag_project_indexer.py    # /rag-project command
+          [other commands]
+       hooks/                        # Event hooks
+          user-prompt-submit.py     # Main RAG orchestration
+          document-indexing.py      # Auto-indexing
+          session-start.py          # Session initialization
+          [other hooks]
+       mcp/                          # MCP server
+          unified_server.py         # Single unified MCP server
+       services/                     # Plugin services
+          service_manager.py        # Service registry
+          dashboard.py              # Web dashboard
+          tcp_server.py             # Monitoring server
+          [monitoring modules]
+       skills/                       # Agent skills
+
+ config/                              # Configuration
+    defaults/                        # Default configurations
+       mcp.json                     # MCP server config
+       rag_settings.json            # RAG settings
+       services.json                # Service settings
+       [other defaults]
+    templates/                       # User-editable templates
+       .env.template                # Environment template
+       citation_config.json.template
+    schemas/                         # JSON schemas
+       settings.schema.json         # Settings validation
+
+ scripts/                             # Scripts
+    install/                         # Installation scripts
+    update/                          # Update scripts
+    utils/                           # Utility scripts
+       update_imports_v2.py         # Import updater
+       update_plugin_imports.py     # Plugin import updater
+
+ .claude-plugin/                      # Plugin metadata
+    plugin.json                     # Plugin configuration (v2.0.0)
+    hooks.json                      # Hook configurations
+    lifecycle.json                  # Lifecycle hooks (NEW)
+    commands/                       # Command documentation
+
+ data/                                # Runtime data
+    vectors/                        # FAISS indexes
+    cache/                          # Query cache
+    documents/                      # Source documents
+
+ logs/                                # Application logs
+ tests/                               # Test suite
+ docs/                                # Documentation
+
+ pyproject.toml                       # Package configuration (v2.0.0)
+ requirements.txt                     # Python dependencies
+ README.md                            # Project README
+ LICENSE                              # MIT License
+ CHANGELOG.md                         # Version history
 ```
 
 ## Package Structure
 
-RAG-CLI uses a **src-layout** package structure. All imports use the pattern:
-- `from core.config import get_config` (NOT `from src.core.config`)
-- `from monitoring.logger import get_logger` (NOT `from src.monitoring.logger`)
+RAG-CLI v2.0 uses a **dual-package src-layout** structure:
 
-This allows the package to be installed properly with pip and work seamlessly as a Claude Code plugin.
+1. **Core Library (rag_cli)**: Platform-agnostic RAG engine
+   - `from rag_cli.core.X import Y`
+   - `from rag_cli.agents.X import Y`
+   - `from rag_cli.integrations.X import Y`
+
+2. **Plugin Code (rag_cli_plugin)**: Claude Code integration
+   - `from rag_cli_plugin.services.X import Y`
+   - `from rag_cli_plugin.lifecycle.X import Y`
+
+This separation allows the core RAG engine to be used independently while keeping Claude Code-specific code isolated.
 
 ## Development Commands
 
@@ -206,22 +252,30 @@ All magic numbers throughout the codebase should reference these constants for c
 - Metrics retention: `METRICS_HISTORY_SIZE` (1000)
 - Connection caching: `TCP_CHECK_CACHE_SECONDS` (30)
 
-## Import Guidelines
+## Import Guidelines (v2.0)
 
-All imports should use package-relative imports (NOT src. prefix):
+All imports MUST use the new dual-package structure:
 
 ```python
-# Correct imports
+# CORRECT - Core library imports
+from rag_cli.core.config import get_config
+from rag_cli.core.embeddings import EmbeddingGenerator
+from rag_cli.agents.base_agent import BaseAgent
+from rag_cli.integrations.tavily_connector import TavilyConnector
+
+# CORRECT - Plugin imports
+from rag_cli_plugin.services.service_manager import ServiceManager
+from rag_cli_plugin.lifecycle.installer import install_dependencies
+from rag_cli_plugin.mcp.unified_server import MCPServer
+
+# INCORRECT - Old v1.x imports (DO NOT USE)
 from core.config import get_config
 from monitoring.logger import get_logger
 from plugin.mcp.unified_server import MCPServer
-
-# Incorrect imports (DO NOT USE)
 from src.core.config import get_config
-from src.monitoring.logger import get_logger
 ```
 
-The package is installed using pip, so `src/` directory structure is not preserved in the installed package.
+The package is installed using pip with both `rag_cli` and `rag_cli_plugin` as top-level packages.
 
 ## Git Commit Checkpoints
 
