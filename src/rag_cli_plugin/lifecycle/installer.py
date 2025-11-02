@@ -168,6 +168,16 @@ def verify_installation() -> bool:
     print("Verifying installation...")
 
     try:
+        # Set up sys.path before importing modules
+        plugin_root = get_plugin_root()
+        plugin_root_str = str(plugin_root)
+        src_dir_str = str(plugin_root / "src")
+        
+        if plugin_root_str not in sys.path:
+            sys.path.insert(0, plugin_root_str)
+        if src_dir_str not in sys.path:
+            sys.path.insert(0, src_dir_str)
+        
         # Try importing core modules
         from rag_cli.core import vector_store, embeddings
         print("  Core library imports OK")

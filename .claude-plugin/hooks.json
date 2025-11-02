@@ -10,7 +10,11 @@
             "priority": 150,
             "enabled": true,
             "description": "Prevents Claude from responding to slash commands, showing only execution status"
-          },
+          }
+        ]
+      },
+      {
+        "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/src/rag_cli_plugin/hooks/user-prompt-submit.py",
@@ -46,7 +50,11 @@
             "priority": 70,
             "enabled": true,
             "description": "Provides graceful error handling with helpful troubleshooting tips"
-          },
+          }
+        ]
+      },
+      {
+        "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/src/rag_cli_plugin/hooks/plugin-state-change.py",

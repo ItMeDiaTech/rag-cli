@@ -20,8 +20,21 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Import path resolution utilities
-from path_utils import setup_sys_path
+# Import path resolution utilities (relative import for hook context)
+try:
+    from path_utils import setup_sys_path
+except ImportError:
+    # Fallback for absolute import if relative fails
+    import importlib.util
+    hook_dir = Path(__file__).parent
+    path_utils_path = hook_dir / 'path_utils.py'
+    spec = importlib.util.spec_from_file_location('path_utils', path_utils_path)
+    path_utils = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(path_utils)
+    setup_sys_path = path_utils.setup_sys_path
+
+# Set up sys.path before importing other modules
+setup_sys_path()
 
 from rag_cli_plugin.services.logger import get_logger
 
