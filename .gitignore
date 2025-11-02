@@ -44,7 +44,9 @@ env/
 Thumbs.db
 
 # Data directories (keep structure, ignore contents)
-data/documents/*
+# Recursively ignore all documents and subdirectories
+data/documents/**
+!data/documents/
 !data/documents/.gitkeep
 data/vectors/*
 !data/vectors/.gitkeep
@@ -77,3 +79,7 @@ logs/
 /CLAUDE.md
 /requirements-lock.txt
 nul
+/config/langflow-1.6.5-constraints.txt
+/docs/LANGFLOW_COMPAT.md
+/DEPENDENCY_UPGRADE_SUMMARY.md
+/UPGRADE_VERIFICATION.md
