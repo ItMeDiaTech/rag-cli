@@ -48,12 +48,20 @@ class VectorMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
+        # Convert nested datetime objects in metadata to ISO format
+        serialized_metadata = {}
+        for key, value in self.metadata.items():
+            if isinstance(value, datetime):
+                serialized_metadata[key] = value.isoformat()
+            else:
+                serialized_metadata[key] = value
+
         return {
             'id': self.id,
             'text': self.text,
             'source': self.source,
             'timestamp': self.timestamp.isoformat(),
-            'metadata': self.metadata
+            'metadata': serialized_metadata
         }
 
     @classmethod

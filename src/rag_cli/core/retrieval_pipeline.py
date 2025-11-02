@@ -38,6 +38,12 @@ from rag_cli.core.semantic_cache import get_semantic_cache
 from rag_cli.core.hyde import get_hyde_generator
 from rag_cli.core.query_classifier import QueryClassification
 
+# Optional plugin integration (metrics collector from plugin)
+try:
+    from rag_cli_plugin.services.logger import get_metrics_collector
+    metrics_collector = get_metrics_collector()
+except ImportError:
+    metrics_collector = None
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
@@ -794,59 +800,62 @@ class HybridRetriever:
                                 enhanced_length=len(query))
 
                     # Emit reasoning for HyDE
-                    metrics_collector.record_reasoning_event(
-                        reasoning="Applied HyDE (Hypothetical Document Embeddings) to improve retrieval. "
-                        f"Generated hypothetical answer using {hyde_result.method} method "
-                        f"with {hyde_result.confidence:.0%} confidence. "
-                        "This technique improves accuracy by 10-15% for technical queries.",
-                        component="retrieval_pipeline",
-                        context={
-                            "method": hyde_result.method,
-                            "confidence": hyde_result.confidence,
-                            "original_query": original_query[:100]
-                        }
-                    )
+                    if metrics_collector:
+                        metrics_collector.record_reasoning_event(
+                            reasoning="Applied HyDE (Hypothetical Document Embeddings) to improve retrieval. "
+                            f"Generated hypothetical answer using {hyde_result.method} method "
+                            f"with {hyde_result.confidence:.0%} confidence. "
+                            "This technique improves accuracy by 10-15% for technical queries.",
+                            component="retrieval_pipeline",
+                            context={
+                                "method": hyde_result.method,
+                                "confidence": hyde_result.confidence,
+                                "original_query": original_query[:100]
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"HyDE generation failed, using original query: {e}")
                     query = original_query
 
             # Emit activity event: search started
-            metrics_collector.record_activity_event(
-                activity="search_started",
-                component="retrieval_pipeline",
-                metadata={
-                    "query_length": len(query),
-                    "top_k": top_k,
-                    "use_reranker": self.use_reranker,
-                    "use_hyde": hyde_result is not None,
-                    "vector_weight": self.vector_weight,
-                    "keyword_weight": self.keyword_weight,
-                    "async_mode": True
-                }
-            )
+            if metrics_collector:
+                metrics_collector.record_activity_event(
+                    activity="search_started",
+                    component="retrieval_pipeline",
+                    metadata={
+                        "query_length": len(query),
+                        "top_k": top_k,
+                        "use_reranker": self.use_reranker,
+                        "use_hyde": hyde_result is not None,
+                        "vector_weight": self.vector_weight,
+                        "keyword_weight": self.keyword_weight,
+                        "async_mode": True
+                    }
+                )
 
             # Emit reasoning for search strategy
             hyde_info = f" HyDE {'enabled' if hyde_result else 'not applied'}."
-            metrics_collector.record_reasoning_event(
-                reasoning="Using ASYNC hybrid search with PARALLEL vector + keyword retrieval. "
-                f"{self.vector_weight:.0%} vector weight and "
-                f"{self.keyword_weight:.0%} keyword weight. "
-                f"Reranking {'enabled' if self.use_reranker else 'disabled'}. "
-                f"{hyde_info} "
-                f"Will retrieve {self.initial_candidates} initial candidates and rerank to top {top_k}. "
-                "Expected 30-40% latency reduction vs serial execution.",
-                component="retrieval_pipeline",
-                context={
-                    "strategy": "hybrid_async",
-                    "parallel_operations": ["vector_search", "keyword_search"],
-                    "vector_weight": self.vector_weight,
-                    "keyword_weight": self.keyword_weight,
-                    "use_reranker": self.use_reranker,
-                    "use_hyde": hyde_result is not None,
-                    "initial_candidates": self.initial_candidates,
-                    "final_results": top_k
-                }
-            )
+            if metrics_collector:
+                metrics_collector.record_reasoning_event(
+                    reasoning="Using ASYNC hybrid search with PARALLEL vector + keyword retrieval. "
+                    f"{self.vector_weight:.0%} vector weight and "
+                    f"{self.keyword_weight:.0%} keyword weight. "
+                    f"Reranking {'enabled' if self.use_reranker else 'disabled'}. "
+                    f"{hyde_info} "
+                    f"Will retrieve {self.initial_candidates} initial candidates and rerank to top {top_k}. "
+                    "Expected 30-40% latency reduction vs serial execution.",
+                    component="retrieval_pipeline",
+                    context={
+                        "strategy": "hybrid_async",
+                        "parallel_operations": ["vector_search", "keyword_search"],
+                        "vector_weight": self.vector_weight,
+                        "keyword_weight": self.keyword_weight,
+                        "use_reranker": self.use_reranker,
+                        "use_hyde": hyde_result is not None,
+                        "initial_candidates": self.initial_candidates,
+                        "final_results": top_k
+                    }
+                )
 
             # Generate query embedding
             with time_operation("query_embedding"):
@@ -894,14 +903,15 @@ class HybridRetriever:
             # Check if online fallback is needed
             if self.online_retriever and self.online_retriever.should_fetch_online(final_results, query):
                 logger.info("Local results insufficient, fetching from online sources")
-                metrics_collector.record_activity_event(
-                    activity="online_fallback_triggered",
-                    component="retrieval_pipeline",
-                    metadata={
-                        "local_results": len(final_results),
-                        "query": query[:100]
-                    }
-                )
+                if metrics_collector:
+                    metrics_collector.record_activity_event(
+                        activity="online_fallback_triggered",
+                        component="retrieval_pipeline",
+                        metadata={
+                            "local_results": len(final_results),
+                            "query": query[:100]
+                        }
+                    )
 
                 try:
                     # Track error if query contains error pattern
@@ -960,22 +970,24 @@ class HybridRetriever:
                                 logger.info(f"Indexing {len(docs_to_index)} unique online documents")
                                 # Queue for background indexing
                                 # For now, just log - full indexing would be done in background thread
-                                metrics_collector.record_activity_event(
-                                    activity="online_docs_queued_for_indexing",
-                                    component="retrieval_pipeline",
-                                    metadata={"count": len(docs_to_index)}
-                                )
+                                if metrics_collector:
+                                    metrics_collector.record_activity_event(
+                                        activity="online_docs_queued_for_indexing",
+                                        component="retrieval_pipeline",
+                                        metadata={"count": len(docs_to_index)}
+                                    )
 
                         # Re-sort all results by score
                         final_results.sort(key=lambda r: r.score, reverse=True)
 
                 except Exception as e:
                     logger.error(f"Error during online retrieval: {e}")
-                    metrics_collector.record_activity_event(
-                        activity="online_fallback_error",
-                        component="retrieval_pipeline",
-                        metadata={"error": str(e)}
-                    )
+                    if metrics_collector:
+                        metrics_collector.record_activity_event(
+                            activity="online_fallback_error",
+                            component="retrieval_pipeline",
+                            metadata={"error": str(e)}
+                        )
 
             # Cache results in semantic cache
             if use_cache and self.cache and final_results:
@@ -998,18 +1010,19 @@ class HybridRetriever:
             metrics.record_gauge("retrieval_results", len(final_results))
 
             # Emit activity event: retrieval completed
-            metrics_collector.record_activity_event(
-                activity="retrieval_completed",
-                component="retrieval_pipeline",
-                metadata={
-                    "query_length": len(query),
-                    "results_count": len(final_results),
-                    "elapsed_ms": elapsed * 1000,
-                    "avg_score": sum(r.score for r in final_results) / len(final_results) if final_results else 0,
-                    "top_sources": [r.source for r in final_results[:3]],
-                    "async_mode": True
-                }
-            )
+            if metrics_collector:
+                metrics_collector.record_activity_event(
+                    activity="retrieval_completed",
+                    component="retrieval_pipeline",
+                    metadata={
+                        "query_length": len(query),
+                        "results_count": len(final_results),
+                        "elapsed_ms": elapsed * 1000,
+                        "avg_score": sum(r.score for r in final_results) / len(final_results) if final_results else 0,
+                        "top_sources": [r.source for r in final_results[:3]],
+                        "async_mode": True
+                    }
+                )
 
             return final_results
 

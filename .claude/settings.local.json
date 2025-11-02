@@ -33,5 +33,5 @@
     "ask": []
   },
   "enabledMcpjsonServers": [],
-  "outputStyle": "technical-rag-focused"
+  "outputStyle": "default"
 }

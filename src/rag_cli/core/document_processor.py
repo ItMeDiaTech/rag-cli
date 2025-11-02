@@ -399,7 +399,7 @@ class DocumentProcessor:
             'filename': file_path.name,
             'file_path': str(file_path),
             'file_size': file_path.stat().st_size,
-            'modified_time': datetime.fromtimestamp(file_path.stat().st_mtime),
+            'modified_time': datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
             'char_count': len(content),
             'token_count': self._token_length(content),
             'line_count': content.count('\n') + 1

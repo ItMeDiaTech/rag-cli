@@ -301,6 +301,15 @@ class MetricsCollector:
 metrics_collector = MetricsCollector()
 
 
+def get_metrics_collector() -> MetricsCollector:
+    """Get global metrics collector instance.
+
+    Returns:
+        MetricsCollector: Global metrics collector instance
+    """
+    return metrics_collector
+
+
 class MonitoringServer:
     """TCP monitoring server."""
 
