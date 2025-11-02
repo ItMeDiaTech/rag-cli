@@ -12,7 +12,7 @@ from typing import Optional, Tuple
 from dataclasses import dataclass
 from collections import OrderedDict
 
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 from rag_cli.core.claude_code_adapter import get_adapter
 
 logger = get_logger(__name__)

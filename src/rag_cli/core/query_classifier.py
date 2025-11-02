@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

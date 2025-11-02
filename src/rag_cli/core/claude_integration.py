@@ -24,7 +24,7 @@ from rag_cli.core.retrieval_pipeline import RetrievalResult
 from rag_cli.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from rag_cli.core.prompt_templates import get_prompt_manager
 from rag_cli.core.query_classifier import QueryClassification
-from rag_cli_plugin.services.logger import get_logger, get_metrics_logger, log_api_call
+from rag_cli.utils.logger import get_logger, get_metrics_logger, log_api_call
 
 
 logger = get_logger(__name__)

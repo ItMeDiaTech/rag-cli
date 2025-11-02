@@ -33,7 +33,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 import threading
 
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

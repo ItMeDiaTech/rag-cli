@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import requests
 
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

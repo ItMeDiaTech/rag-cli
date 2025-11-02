@@ -22,7 +22,7 @@ from rag_cli.core.embeddings import get_embedding_generator
 from rag_cli.core.vector_store import get_vector_store
 from rag_cli.core.retrieval_pipeline import get_retriever
 from rag_cli.core.claude_integration import get_claude_integration
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 
 # Fix Windows console encoding issues
 if sys.platform == 'win32':

@@ -34,8 +34,7 @@ from rag_cli.core.query_classifier import get_query_classifier, QueryIntent, Que
 from rag_cli.integrations.maf_connector import get_maf_connector, MAFResult
 from rag_cli.agents.query_decomposer import get_query_decomposer, DecompositionResult
 from rag_cli.agents.result_synthesizer import get_result_synthesizer, SynthesisResult
-from rag_cli_plugin.services.logger import get_logger, get_metrics_logger
-from rag_cli_plugin.services.output_formatter import OutputFormatter
+from rag_cli.utils.logger import get_logger, get_metrics_logger
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()

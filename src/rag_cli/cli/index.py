@@ -20,7 +20,7 @@ from rag_cli.core.document_processor import get_document_processor
 from rag_cli.core.embeddings import get_embedding_generator
 from rag_cli.core.vector_store import get_vector_store
 from rag_cli.core.retrieval_pipeline import get_retriever
-from rag_cli_plugin.services.logger import get_logger
+from rag_cli.utils.logger import get_logger
 
 console = Console()
 logger = get_logger(__name__)
