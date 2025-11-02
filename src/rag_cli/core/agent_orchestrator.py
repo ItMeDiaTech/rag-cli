@@ -28,6 +28,7 @@ import asyncio
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
+from datetime import datetime
 
 from rag_cli.core.retrieval_pipeline import get_retriever
 from rag_cli.core.query_classifier import get_query_classifier, QueryIntent, QueryClassification, TechnicalDepth
@@ -327,15 +328,21 @@ class AgentOrchestrator:
             rerank_timeout=3.0
         )
 
-        # For troubleshooting, route to MAF Debugger
-        maf_task = self.maf_connector.execute_debugger(
-            error_message=query,
-            context="User query analysis"
+        # For troubleshooting, use multi-agent debugging workflow
+        # This runs debugger + developer in parallel for better analysis
+        maf_task = self.maf_connector.execute_workflow(
+            workflow_name='debugging',
+            task_data={
+                'error_message': query,
+                'context': 'User query analysis',
+                'requirement': f'Analyze and provide solution for: {query}'
+            },
+            timeout=self.maf_timeout
         )
 
         # Wait for both with timeout protection
         try:
-            rag_results, maf_result = await asyncio.gather(
+            rag_results, maf_workflow_result = await asyncio.gather(
                 rag_task,
                 maf_task,
                 return_exceptions=True
@@ -346,8 +353,14 @@ class AgentOrchestrator:
                 logger.error(f"RAG retrieval failed: {rag_results}")
                 rag_results = []
 
-            if isinstance(maf_result, Exception):
-                logger.error(f"MAF execution failed: {maf_result}")
+            if isinstance(maf_workflow_result, Exception):
+                logger.error(f"MAF workflow failed: {maf_workflow_result}")
+                maf_workflow_result = None
+                maf_result = None
+            elif maf_workflow_result:
+                # Extract MAF result from workflow
+                maf_result = self._convert_workflow_to_maf_result(maf_workflow_result)
+            else:
                 maf_result = None
 
         except Exception as e:
@@ -529,8 +542,8 @@ class AgentOrchestrator:
             }
         )
 
-        # Step 2: Execute all sub-queries in parallel
-        logger.info(f"Executing {len(decomposition.sub_queries)} sub-queries in parallel")
+        # Step 2: Execute all sub-queries in parallel + MAF architecture workflow
+        logger.info(f"Executing {len(decomposition.sub_queries)} sub-queries in parallel with MAF architecture workflow")
 
         # Create retrieval tasks for each sub-query
         retrieval_tasks = []
@@ -543,12 +556,30 @@ class AgentOrchestrator:
             )
             retrieval_tasks.append(task)
 
-        # Execute all in parallel
+        # Add MAF architecture workflow for complex analysis
+        # This runs architect + developer + reviewer in sequence
+        maf_workflow_task = self.maf_connector.execute_workflow(
+            workflow_name='architecture',
+            task_data={
+                'query': query,
+                'sub_queries': [sq.text for sq in decomposition.sub_queries],
+                'complexity': 'complex',
+                'requirement': f'Comprehensive analysis for: {query}'
+            },
+            timeout=self.maf_timeout
+        )
+
+        # Execute all in parallel: RAG sub-queries + MAF workflow
         try:
-            sub_query_results = await asyncio.gather(
+            all_results = await asyncio.gather(
                 *retrieval_tasks,
+                maf_workflow_task,
                 return_exceptions=True
             )
+
+            # Separate MAF result from RAG results
+            sub_query_results = all_results[:-1]  # All but last
+            maf_workflow_result = all_results[-1]  # Last item
 
             # Handle exceptions
             valid_results = []
@@ -560,6 +591,18 @@ class AgentOrchestrator:
                     valid_results.append(result)
 
             sub_query_results = valid_results
+
+            # Process MAF workflow result
+            if isinstance(maf_workflow_result, Exception):
+                logger.error(f"MAF architecture workflow failed: {maf_workflow_result}")
+                maf_result = None
+            elif maf_workflow_result:
+                maf_result = self._convert_workflow_to_maf_result(maf_workflow_result)
+                logger.info(f"MAF architecture workflow completed",
+                           agents=maf_workflow_result.get('agents_executed', []),
+                           success_rate=f"{maf_workflow_result.get('success_rate', 0):.0%}")
+            else:
+                maf_result = None
 
         except Exception as e:
             logger.error(f"Parallel sub-query execution failed: {e}")
@@ -640,7 +683,7 @@ class AgentOrchestrator:
             confidence=synthesis.confidence,
             strategy_used=RoutingStrategy.DECOMPOSED,
             rag_results=synthesis.merged_results,
-            maf_result=None,
+            maf_result=maf_result if 'maf_result' in locals() else None,
             decomposition_result=decomposition,
             synthesis_result=synthesis,
             metadata={
@@ -648,8 +691,43 @@ class AgentOrchestrator:
                 'total_results_collected': synthesis.total_input_results,
                 'duplicates_removed': synthesis.duplicates_removed,
                 'deduplication_rate': synthesis.metadata.get('deduplication_rate', 0),
-                'decomposition_strategy': decomposition.strategy_used.value
+                'decomposition_strategy': decomposition.strategy_used.value,
+                'maf_workflow_used': maf_result is not None if 'maf_result' in locals() else False,
+                'maf_agents': maf_result.metadata.get('agents', []) if 'maf_result' in locals() and maf_result else []
             }
+        )
+
+    def _convert_workflow_to_maf_result(self, workflow_result: Dict[str, Any]) -> MAFResult:
+        """Convert workflow result to MAFResult format.
+
+        Args:
+            workflow_result: Dictionary from execute_workflow()
+
+        Returns:
+            MAFResult object
+        """
+        # Combine summaries from all agents
+        summary = workflow_result.get('summary', '')
+        success_rate = workflow_result.get('success_rate', 0.0)
+        agents_executed = workflow_result.get('agents_executed', [])
+
+        # Create a combined MAFResult
+        return MAFResult(
+            status='completed' if success_rate > 0.5 else 'partial',
+            content=summary,
+            confidence=success_rate,
+            agent_name=f"workflow:{workflow_result['workflow_name']}",
+            execution_time=sum(
+                r['execution_time']
+                for r in workflow_result.get('agent_results', {}).values()
+            ),
+            metadata={
+                'workflow_name': workflow_result['workflow_name'],
+                'agents': agents_executed,
+                'success_rate': success_rate,
+                'strategy': workflow_result.get('strategy', 'unknown')
+            },
+            timestamp=datetime.now()
         )
 
     def _format_rag_response(self, results: List) -> str:

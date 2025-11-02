@@ -16,6 +16,7 @@ USAGE:
 """
 
 import asyncio
+import time
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
@@ -52,14 +53,14 @@ class MAFConnector:
 
         # Try to import embedded MAF components
         try:
-            from agents.maf.agents.debugger import DebuggerAgent
-            from agents.maf.agents.developer import DeveloperAgent
-            from agents.maf.agents.reviewer import ReviewerAgent
-            from agents.maf.agents.tester import TesterAgent
-            from agents.maf.agents.architect import ArchitectAgent
-            from agents.maf.agents.documenter import DocumenterAgent
-            from agents.maf.agents.optimizer import OptimizerAgent
-            from agents.maf.core.agent import AgentConfig
+            from rag_cli.agents.maf.agents.debugger import DebuggerAgent
+            from rag_cli.agents.maf.agents.developer import DeveloperAgent
+            from rag_cli.agents.maf.agents.reviewer import ReviewerAgent
+            from rag_cli.agents.maf.agents.tester import TesterAgent
+            from rag_cli.agents.maf.agents.architect import ArchitectAgent
+            from rag_cli.agents.maf.agents.documenter import DocumenterAgent
+            from rag_cli.agents.maf.agents.optimizer import OptimizerAgent
+            from rag_cli.agents.maf.core.agent import AgentConfig
 
             self.AgentConfig = AgentConfig
             self.agents_map = {
@@ -179,11 +180,24 @@ class MAFConnector:
         Returns:
             Agent's response/analysis
         """
-        # Call agent's process method if available
+        # Generate task ID
+        task_id = f"task_{int(time.time())}"
+
+        # Format task dictionary
+        task = {
+            'type': task_data.get('type', 'general'),
+            'description': task_description,
+            **task_data
+        }
+
+        # Call agent's process method with correct signature
         if hasattr(agent, 'process'):
-            response = await agent.process(task_description) if asyncio.iscoroutinefunction(agent.process) \
-                else agent.process(task_description)
-            if isinstance(response, dict) and 'result' in response:
+            response = await agent.process(task_id, task, context={})
+
+            # Extract result from AgentResponse
+            if hasattr(response, 'result'):
+                return str(response.result)
+            elif isinstance(response, dict) and 'result' in response:
                 return str(response['result'])
             return str(response)
         else:
@@ -270,6 +284,191 @@ class MAFConnector:
         }
 
         return await self.execute_agent('architect', task_data, timeout=20.0)
+
+    async def execute_multiple_agents(
+        self,
+        agents: List[str],
+        task_data: Dict[str, Any],
+        strategy: str = 'parallel',
+        timeout: float = 45.0
+    ) -> Dict[str, Optional[MAFResult]]:
+        """Execute multiple MAF agents concurrently or sequentially.
+
+        Args:
+            agents: List of agent names to execute
+            task_data: Task data shared across agents
+            strategy: Execution strategy ('parallel', 'sequential')
+            timeout: Overall timeout for all agents
+
+        Returns:
+            Dictionary mapping agent names to their MAFResults
+        """
+        if not self.maf_available:
+            logger.warning("MAF not available for multi-agent execution")
+            return {agent: None for agent in agents}
+
+        logger.info(f"Executing {len(agents)} MAF agents with {strategy} strategy",
+                   agents=agents)
+
+        results = {}
+
+        if strategy == 'parallel':
+            # Execute all agents concurrently
+            tasks = [
+                self.execute_agent(agent, task_data.copy(), timeout=timeout/len(agents))
+                for agent in agents
+            ]
+
+            try:
+                agent_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                for agent, result in zip(agents, agent_results):
+                    if isinstance(result, Exception):
+                        logger.error(f"Agent {agent} failed: {result}")
+                        results[agent] = None
+                    else:
+                        results[agent] = result
+                        logger.debug(f"Agent {agent} completed successfully")
+
+            except Exception as e:
+                logger.error(f"Multi-agent parallel execution failed: {e}")
+                for agent in agents:
+                    results[agent] = None
+
+        else:  # sequential
+            # Execute agents one at a time
+            for agent in agents:
+                try:
+                    result = await self.execute_agent(agent, task_data.copy(),
+                                                     timeout=timeout/len(agents))
+                    results[agent] = result
+                    logger.debug(f"Agent {agent} completed")
+                except Exception as e:
+                    logger.error(f"Agent {agent} failed: {e}")
+                    results[agent] = None
+
+        # Log summary
+        successful = sum(1 for r in results.values() if r is not None)
+        logger.info(f"Multi-agent execution complete: {successful}/{len(agents)} succeeded")
+
+        return results
+
+    async def execute_workflow(
+        self,
+        workflow_name: str,
+        task_data: Dict[str, Any],
+        timeout: float = 60.0
+    ) -> Optional[Dict[str, Any]]:
+        """Execute a predefined MAF workflow with multiple agents.
+
+        Workflows define which agents to run and how to combine their results.
+
+        Args:
+            workflow_name: Name of workflow ('code_review', 'debugging', 'architecture')
+            task_data: Input data for the workflow
+            timeout: Workflow execution timeout
+
+        Returns:
+            Combined workflow results or None if failed
+        """
+        if not self.maf_available:
+            logger.warning(f"MAF not available for workflow '{workflow_name}'")
+            return None
+
+        # Define workflow patterns
+        workflows = {
+            'code_review': {
+                'agents': ['developer', 'reviewer', 'tester'],
+                'strategy': 'parallel',
+                'description': 'Comprehensive code review with development, review, and testing'
+            },
+            'debugging': {
+                'agents': ['debugger', 'developer'],
+                'strategy': 'sequential',
+                'description': 'Debug error, then provide fix implementation'
+            },
+            'architecture': {
+                'agents': ['architect', 'developer', 'reviewer'],
+                'strategy': 'sequential',
+                'description': 'Design architecture, implement, then review'
+            },
+            'optimization': {
+                'agents': ['optimizer', 'reviewer', 'tester'],
+                'strategy': 'parallel',
+                'description': 'Optimize code and validate improvements'
+            },
+            'comprehensive': {
+                'agents': ['architect', 'developer', 'reviewer', 'tester', 'documenter'],
+                'strategy': 'sequential',
+                'description': 'Full development lifecycle'
+            }
+        }
+
+        if workflow_name not in workflows:
+            logger.error(f"Unknown workflow: {workflow_name}")
+            return None
+
+        workflow = workflows[workflow_name]
+        logger.info(
+            f"Executing workflow '{workflow_name}'",
+            agents=workflow['agents'],
+            strategy=workflow['strategy']
+        )
+
+        # Execute agents
+        results = await self.execute_multiple_agents(
+            agents=workflow['agents'],
+            task_data=task_data,
+            strategy=workflow['strategy'],
+            timeout=timeout
+        )
+
+        # Combine results
+        workflow_result = {
+            'workflow_name': workflow_name,
+            'description': workflow['description'],
+            'strategy': workflow['strategy'],
+            'agents_executed': list(results.keys()),
+            'agent_results': {},
+            'summary': self._synthesize_workflow_results(results),
+            'success_rate': sum(1 for r in results.values() if r) / len(results) if results else 0.0
+        }
+
+        for agent, result in results.items():
+            if result:
+                workflow_result['agent_results'][agent] = {
+                    'status': result.status,
+                    'content': result.content,
+                    'confidence': result.confidence,
+                    'execution_time': result.execution_time
+                }
+
+        logger.info(
+            f"Workflow '{workflow_name}' completed",
+            success_rate=f"{workflow_result['success_rate']:.0%}"
+        )
+
+        return workflow_result
+
+    def _synthesize_workflow_results(self, results: Dict[str, Optional[MAFResult]]) -> str:
+        """Synthesize results from multiple agents into a summary.
+
+        Args:
+            results: Dictionary of agent results
+
+        Returns:
+            Synthesized summary text
+        """
+        successful_results = {k: v for k, v in results.items() if v and v.status == 'completed'}
+
+        if not successful_results:
+            return "All agents failed to produce results."
+
+        summary_parts = []
+        for agent, result in successful_results.items():
+            summary_parts.append(f"[{agent.upper()}] {result.content[:200]}...")
+
+        return "\n\n".join(summary_parts)
 
     def _format_task_for_agent(self, agent_name: str, task_data: Dict[str, Any]) -> str:
         """Format task data into natural language description for MAF.

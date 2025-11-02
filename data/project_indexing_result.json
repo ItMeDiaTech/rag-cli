@@ -42,6 +42,27 @@
       "version": null,
       "confidence": 1.0,
       "source_file": "pyproject.toml"
+    },
+    {
+      "name": "JavaScript",
+      "type": "language",
+      "version": null,
+      "confidence": 0.8,
+      "source_file": "file_analysis (6 files)"
+    },
+    {
+      "name": "C++",
+      "type": "language",
+      "version": null,
+      "confidence": 0.8,
+      "source_file": "file_analysis (63 files)"
+    },
+    {
+      "name": "C",
+      "type": "language",
+      "version": null,
+      "confidence": 0.8,
+      "source_file": "file_analysis (28 files)"
     }
   ],
   "sources": [
@@ -82,6 +103,12 @@
       "doc_type": "official"
     },
     {
+      "name": "JavaScript",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "priority": 1,
+      "doc_type": "official"
+    },
+    {
       "name": "Python",
       "url": "https://realpython.com/",
       "priority": 2,
@@ -90,6 +117,12 @@
     {
       "name": "Python",
       "url": "https://realpython.com/",
+      "priority": 2,
+      "doc_type": "tutorial"
+    },
+    {
+      "name": "JavaScript",
+      "url": "https://javascript.info/",
       "priority": 2,
       "doc_type": "tutorial"
     }
@@ -100,58 +133,72 @@
       "documents_added": 1,
       "success": true,
       "error": null,
-      "duration_seconds": 47.78322124481201
+      "duration_seconds": 47.767709732055664
     },
     {
       "source": "LangChain",
       "documents_added": 3,
       "success": true,
       "error": null,
-      "duration_seconds": 52.63720345497131
+      "duration_seconds": 53.134714126586914
     },
     {
       "source": "NumPy",
       "documents_added": 224,
       "success": true,
       "error": null,
-      "duration_seconds": 502.9918999671936
+      "duration_seconds": 503.82172298431396
     },
     {
       "source": "Anthropic SDK",
-      "documents_added": 217,
+      "documents_added": 218,
       "success": true,
       "error": null,
-      "duration_seconds": 402.2619478702545
+      "duration_seconds": 402.4139738082886
     },
     {
       "source": "Flask",
       "documents_added": 5,
       "success": true,
       "error": null,
-      "duration_seconds": 48.917969703674316
+      "duration_seconds": 48.436575174331665
     },
     {
       "source": "Python",
       "documents_added": 1,
       "success": true,
       "error": null,
-      "duration_seconds": 42.96899127960205
+      "duration_seconds": 42.89718723297119
+    },
+    {
+      "source": "JavaScript",
+      "documents_added": 367,
+      "success": true,
+      "error": null,
+      "duration_seconds": 435.9413983821869
     },
     {
       "source": "Python",
-      "documents_added": 621,
+      "documents_added": 581,
       "success": true,
       "error": null,
-      "duration_seconds": 702.704601764679
+      "duration_seconds": 718.7760524749756
     },
     {
       "source": "Python",
-      "documents_added": 621,
+      "documents_added": 522,
       "success": true,
       "error": null,
-      "duration_seconds": 599.5126938819885
+      "duration_seconds": 606.910807132721
+    },
+    {
+      "source": "JavaScript",
+      "documents_added": 157,
+      "success": true,
+      "error": null,
+      "duration_seconds": 412.3199586868286
     }
   ],
-  "total_documents": 1693,
-  "duration_seconds": 2400.9247274398804
+  "total_documents": 2079,
+  "duration_seconds": 3278.7989180088043
 }

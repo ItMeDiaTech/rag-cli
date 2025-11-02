@@ -20,7 +20,40 @@
     "show_notifications": true,
     "execution_strategy": "always_parallel",
     "timeout_seconds": 30,
-    "max_parallel_agents": 3
+    "max_parallel_agents": 3,
+    "workflows": {
+      "enable_workflows": true,
+      "debugging": {
+        "enabled": true,
+        "agents": ["debugger", "developer"],
+        "strategy": "sequential",
+        "timeout": 45
+      },
+      "code_review": {
+        "enabled": true,
+        "agents": ["developer", "reviewer", "tester"],
+        "strategy": "parallel",
+        "timeout": 60
+      },
+      "architecture": {
+        "enabled": true,
+        "agents": ["architect", "developer", "reviewer"],
+        "strategy": "sequential",
+        "timeout": 60
+      },
+      "optimization": {
+        "enabled": true,
+        "agents": ["optimizer", "reviewer", "tester"],
+        "strategy": "parallel",
+        "timeout": 45
+      },
+      "comprehensive": {
+        "enabled": false,
+        "agents": ["architect", "developer", "reviewer", "tester", "documenter"],
+        "strategy": "sequential",
+        "timeout": 90
+      }
+    }
   },
   "metadata": {
     "last_updated": "2025-10-30T00:00:00Z",
