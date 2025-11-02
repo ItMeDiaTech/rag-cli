@@ -16,7 +16,7 @@ Focus on clear, professional documentation without decorative elements.
 
 ## Project Overview
 
-RAG-CLI v2.0 is a local Retrieval-Augmented Generation system designed as a Claude Code plugin. It processes documents locally, generates embeddings, stores vectors in FAISS, and uses claude-haiku-4-5-20251001 for response generation.
+RAG-CLI v2.0 is a local Retrieval-Augmented Generation system designed as a Claude Code plugin. It processes documents locally, generates embeddings, stores vectors in ChromaDB, and uses claude-haiku-4-5-20251001 for response generation.
 
 This version features a complete restructure with clean separation between core library and plugin code, marketplace-ready lifecycle management, and improved maintainability.
 
@@ -31,7 +31,7 @@ RAG-CLI/
           constants.py              # Centralized configuration
           document_processor.py     # Document chunking
           embeddings.py             # Embedding generation
-          vector_store.py           # FAISS operations
+          vector_store.py           # ChromaDB operations
           retrieval_pipeline.py     # Hybrid search + reranking
           claude_integration.py     # Claude API integration
           [30+ other core modules]
@@ -98,7 +98,7 @@ RAG-CLI/
     commands/                       # Command documentation
 
  data/                                # Runtime data
-    vectors/                        # FAISS indexes
+    vectors/                        # ChromaDB indexes
     cache/                          # Query cache
     documents/                      # Source documents
 
@@ -216,16 +216,16 @@ All magic numbers throughout the codebase should reference these constants for c
 - Max file size: `MAX_FILE_SIZE_MB` (10 MB)
 
 ### 2. Embeddings (core/embeddings.py)
-- Model: sentence-transformers/all-MiniLM-L6-v2
+- Model: sentence-transformers/all-MiniLM-L6-v2 (v5.1+)
 - Dimensions: 384
 - Batch processing: `DEFAULT_BATCH_SIZE` (32)
 - LRU cache for repeated queries: `EMBEDDING_CACHE_SIZE` (1000)
 
 ### 3. Vector Store (core/vector_store.py)
-- FAISS IndexFlatL2 for <`HNSW_THRESHOLD_VECTORS` (2000 vectors)
-- FAISS IndexHNSWFlat for 2K-1M vectors (threshold: `HNSW_THRESHOLD_VECTORS`)
-- FAISS IVF for >`IVF_THRESHOLD_VECTORS` (1M+ vectors)
-- Save/load functionality with automatic metadata_dict rebuilding
+- ChromaDB PersistentClient for <`HNSW_THRESHOLD_VECTORS` (2000 vectors)
+- ChromaDB HNSW (built-in) for 2K-1M vectors (threshold: `HNSW_THRESHOLD_VECTORS`)
+- ChromaDB IVF for >`IVF_THRESHOLD_VECTORS` (1M+ vectors)
+- Native persistence (automatic save/load)
 - Metadata storage with pickle
 
 ### 4. Retrieval Pipeline (core/retrieval_pipeline.py)
@@ -301,7 +301,7 @@ Use conventional commits:
 
 1. **Local-first**: Everything runs locally except Claude API and online research calls
 2. **Lightweight model**: all-MiniLM-L6-v2 for speed (0.5s/100 docs)
-3. **FAISS for development**: Simple, fast, no persistence complexity
+3. **ChromaDB for development**: Simple, fast, no persistence complexity
 4. **Hybrid retrieval**: Better accuracy than pure vector search
 5. **Streaming responses**: Improved perceived performance
 6. **TCP monitoring**: PowerShell-friendly interface
@@ -327,7 +327,7 @@ Target metrics:
 - [ ] Initialize git repository
 - [ ] Implement document processor
 - [ ] Build embedding system
-- [ ] Create FAISS vector store
+- [ ] Create ChromaDB vector store
 - [ ] Develop retrieval pipeline
 - [ ] Integrate Claude API
 - [ ] Add monitoring server
@@ -353,9 +353,9 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 embedding = model.encode("test query")
 print(f"Embedding shape: {embedding.shape}")  # Should be (384,)
 
-# Test FAISS
+# Test ChromaDB
 import faiss
-index = faiss.IndexFlatL2(384)
+index = faiss.PersistentClient(384)
 index.add(embedding.reshape(1, -1))
 D, I = index.search(embedding.reshape(1, -1), 1)
 print(f"Search result: distance={D[0][0]}, index={I[0][0]}")  # Should be ~0, 0
@@ -365,4 +365,4 @@ print(f"Search result: distance={D[0][0]}, index={I[0][0]}")  # Should be ~0, 0
 
 - Full specifications: `RAG-implementation.md`
 - Claude Code plugin docs: https://docs.claude.com/en/docs/claude-code/
-- FAISS documentation: https://github.com/facebookresearch/faiss/wiki
+- ChromaDB documentation: https://github.com/facebookresearch/faiss/wiki

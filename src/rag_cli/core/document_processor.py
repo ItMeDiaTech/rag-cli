@@ -20,9 +20,9 @@ import multiprocessing as mp
 
 # Document parsing imports
 try:
-    import PyPDF2
+    import pypdf
 except ImportError:
-    PyPDF2 = None
+    pypdf = None
 try:
     import docx
 except ImportError:
@@ -319,9 +319,9 @@ class DocumentProcessor:
         text_parts = []
 
         with open(file_path, 'rb') as f:
-            if PyPDF2 is None:
-                raise ImportError("PyPDF2 is required for PDF processing. Install with: pip install PyPDF2")
-            pdf_reader = PyPDF2.PdfReader(f)
+            if pypdf is None:
+                raise ImportError("pypdf is required for PDF processing. Install with: pip install pypdf")
+            pdf_reader = pypdf.PdfReader(f)
             num_pages = len(pdf_reader.pages)
 
             for page_num in range(num_pages):

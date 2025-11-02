@@ -19,7 +19,7 @@ import numpy as np
 from collections import defaultdict, OrderedDict
 
 # BM25 for keyword search
-from rank_bm25 import BM25Okapi
+import bm25s
 
 # Cross-encoder for reranking
 from sentence_transformers import CrossEncoder
@@ -307,7 +307,7 @@ class HybridRetriever:
         tokenized_docs = [doc.lower().split() for doc in documents]
 
         # Create BM25 index
-        self.bm25_index = BM25Okapi(tokenized_docs)
+        self.bm25_index = bm25s.BM25(tokenized_docs)
         self.bm25_documents = documents
         self.bm25_doc_ids = doc_ids
 

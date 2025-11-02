@@ -1,46 +1,46 @@
 # Core Dependencies
 # =================
-# Python 3.13+ compatible versions
+# Python 3.13+ compatible versions with NumPy 2.0 support
 # NOTE: For production deployments, use requirements-lock.txt with exact versions
 # This file uses minimum version specifiers for flexibility in development
 # Run 'pip freeze > requirements-lock.txt' after installation to lock versions
 
 # Document Processing
-langchain>=0.1.0,<0.3.0
-langchain-community>=0.0.10,<0.1.0
-PyPDF2>=3.0.0,<4.0.0
-python-docx>=1.0.0,<2.0.0
+langchain>=1.0.0,<2.0.0
+langchain-community>=0.4.0,<1.0.0
+pypdf>=6.1.0,<7.0.0
+python-docx>=1.2.0,<2.0.0
 beautifulsoup4>=4.12.0,<5.0.0
 lxml>=5.0.0,<6.0.0
 markdown>=3.5.0,<4.0.0
 
 # Embeddings & Vector Store
-# Updated for Python 3.13 compatibility
-sentence-transformers>=3.0.0,<4.0.0
-faiss-cpu>=1.9.0,<2.0.0
-torch>=2.6.0  # 2.6+ supports Python 3.13, compatible with latest sentence-transformers
-transformers>=4.36.0,<5.0.0
-numpy>=1.24.0,<2.0.0  # Pin before 2.0 breaking changes
+# Updated for Python 3.13 and NumPy 2.0 compatibility via ChromaDB
+sentence-transformers>=5.1.0,<6.0.0
+chromadb>=0.5.22,<1.0.0
+torch>=2.8.0,<3.0.0
+transformers>=4.41.0,<5.0.0
+numpy>=2.2.0,<3.0.0
 
 # Retrieval
-rank-bm25>=0.2.2,<1.0.0
+bm25s>=0.1.0,<1.0.0
 
 # Claude Integration
-anthropic>=0.18.0,<1.0.0
+anthropic>=0.72.0,<1.0.0
 python-dotenv>=1.0.0,<2.0.0
 
 # Monitoring & Logging
 flask>=3.0.0,<4.0.0
 flask-cors>=4.0.0,<5.0.0
 waitress>=3.0.0,<4.0.0
-prometheus-client>=0.19.0,<1.0.0
+prometheus-client>=0.23.0,<1.0.0
 structlog>=24.1.0,<25.0.0
 psutil>=5.9.0,<6.0.0
 
 # CLI Tools
-click>=8.1.0,<9.0.0
+typer>=0.9.0,<1.0.0
 tqdm>=4.65.0,<5.0.0
-rich>=13.0.0,<14.0.0
+rich>=14.2.0,<15.0.0
 
 # Configuration
 pyyaml>=6.0,<7.0
@@ -62,11 +62,11 @@ mypy>=1.7.0,<2.0.0
 pre-commit>=3.5.0,<4.0.0
 
 # Utilities
-aiofiles>=23.0.0,<24.0.0  # Async file I/O for MAF
+aiofiles>=24.1.0,<25.0.0
 aiohttp>=3.9.1,<4.0.0
 requests>=2.31.0,<3.0.0
-tenacity>=8.2.0,<9.0.0  # Exponential backoff and retry logic
-watchdog>=4.0.0,<5.0.0  # File system event monitoring
+tenacity>=8.2.0,<9.0.0
+watchdog>=4.0.0,<5.0.0
 
 # Online Documentation Retrieval
 trafilatura>=2.0.0,<3.0.0

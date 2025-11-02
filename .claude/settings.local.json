@@ -27,7 +27,7 @@
       "Bash(/dev/null)",
       "Bash(findstr:*)",
       "Bash(awk:*)",
-      "Bash(find:*)",
+      "Bash(*:*)",
       "Bash(for:*)",
       "Bash(do)",
       "Bash(if [ -f \"$file\" ])",
@@ -35,7 +35,9 @@
       "Bash(echo:*)",
       "Bash(else)",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(pip freeze:*)",
+      "Bash(requirements-lock.txt)"
     ],
     "deny": [],
     "ask": []
