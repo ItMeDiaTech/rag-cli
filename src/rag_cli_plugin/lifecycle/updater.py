@@ -110,12 +110,64 @@ def update_dependencies() -> bool:
         return False
 
 
+def migrate_mcp_config() -> bool:
+    """Migrate MCP configuration from v1.x to v2.0 structure."""
+    import os
+    from pathlib import Path
+
+    # Find Claude Code MCP config directory
+    claude_home = Path.home() / ".claude"
+    mcp_config = claude_home / "mcp" / "rag-cli.json"
+
+    if not mcp_config.exists():
+        print("  No MCP config found to migrate")
+        return True
+
+    try:
+        # Read current config
+        with open(mcp_config, 'r') as f:
+            config = json.load(f)
+
+        # Check if migration is needed
+        args = config.get('args', [])
+        if len(args) >= 2 and args[1] == "src.plugin.mcp.unified_server":
+            print("  Migrating MCP config from v1.x to v2.0...")
+
+            # Update module path
+            config['args'][1] = "rag_cli_plugin.mcp.unified_server"
+
+            # Ensure PYTHONPATH is set
+            env = config.get('env', {})
+            if 'PYTHONPATH' not in env:
+                cwd = config.get('cwd', '')
+                if cwd:
+                    env['PYTHONPATH'] = str(Path(cwd) / 'src')
+                    config['env'] = env
+
+            # Write updated config
+            with open(mcp_config, 'w') as f:
+                json.dump(config, f, indent=2)
+
+            print(f"  MCP config migrated: {mcp_config}")
+            return True
+        else:
+            print("  MCP config already up to date")
+            return True
+
+    except Exception as e:
+        print(f"  Warning: Failed to migrate MCP config: {e}")
+        return False
+
+
 def migrate_configuration(old_version: str, new_version: str) -> bool:
     """Migrate configuration between versions if needed."""
     plugin_root = get_plugin_root()
     config_dir = plugin_root / "config"
 
     print(f"Checking configuration migration from {old_version} to {new_version}...")
+
+    # Migrate MCP config from v1.x to v2.0
+    mcp_success = migrate_mcp_config()
 
     # Add version-specific migration logic here
     # For now, just verify configs exist
@@ -135,12 +187,12 @@ def migrate_configuration(old_version: str, new_version: str) -> bool:
             else:
                 all_exist = False
 
-    if all_exist:
+    if all_exist and mcp_success:
         print("  Configuration migration complete")
     else:
         print("  Configuration migration completed with warnings")
 
-    return all_exist
+    return all_exist and mcp_success
 
 
 def run_pre_update() -> int:

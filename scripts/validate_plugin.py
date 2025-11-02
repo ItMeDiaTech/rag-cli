@@ -172,13 +172,24 @@ def validate_hooks_json() -> Tuple[bool, List[str]]:
             continue
 
         for i, hook_entry in enumerate(hooks_array):
-            # Validate required fields for each hook
-            if 'name' not in hook_entry:
-                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'name' field")
-            if 'script' not in hook_entry:
-                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'script' field")
-            if 'priority' not in hook_entry:
-                errors.append(f"hooks.json hooks.{event_type}[{i}] missing 'priority' field")
+            # Validate required 'hooks' array (Claude Code spec)
+            if 'hooks' not in hook_entry:
+                errors.append(f"hooks.json hooks.{event_type}[{i}] missing required 'hooks' array")
+                continue
+
+            if not isinstance(hook_entry['hooks'], list):
+                errors.append(f"hooks.json hooks.{event_type}[{i}].hooks must be an array")
+                continue
+
+            # Validate each hook in the hooks array
+            for j, hook in enumerate(hook_entry['hooks']):
+                if 'type' not in hook:
+                    errors.append(f"hooks.json hooks.{event_type}[{i}].hooks[{j}] missing 'type' field")
+                elif hook['type'] not in ['command', 'validation', 'notification']:
+                    errors.append(f"hooks.json hooks.{event_type}[{i}].hooks[{j}] invalid type '{hook['type']}'. Valid: command, validation, notification")
+
+                if 'command' not in hook:
+                    errors.append(f"hooks.json hooks.{event_type}[{i}].hooks[{j}] missing 'command' field")
 
     return len(errors) == 0, errors
 
