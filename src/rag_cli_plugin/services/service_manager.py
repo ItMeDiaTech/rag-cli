@@ -26,13 +26,13 @@ logger = get_logger(__name__)
 SERVICES_CONFIG = {
     'tcp_server': {
         'name': 'TCP Monitoring Server',
-        'module': 'src.monitoring.tcp_server',
+        'module': 'rag_cli_plugin.services.tcp_server',
         'port': 9999,
         'required': True,
     },
     'web_dashboard': {
         'name': 'Web Dashboard',
-        'module': 'src.monitoring.web_dashboard',
+        'module': 'rag_cli_plugin.services.web_dashboard',
         'port': 5000,
         'args': '5000',
         'required': False,

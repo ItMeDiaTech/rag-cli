@@ -431,7 +431,7 @@ class MonitoringServer:
 
     def _get_status(self) -> str:
         """Get system status."""
-        from core.vector_store import get_vector_store
+        from rag_cli.core.vector_store import get_vector_store
         from datetime import datetime
 
         try:

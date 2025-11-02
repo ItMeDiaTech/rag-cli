@@ -8,7 +8,7 @@ import re
 from typing import List, Dict
 from dataclasses import dataclass
 
-from monitoring.logger import get_logger
+from rag_cli_plugin.services.logger import get_logger
 
 logger = get_logger(__name__)
 

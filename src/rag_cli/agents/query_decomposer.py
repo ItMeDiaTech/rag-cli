@@ -22,7 +22,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from monitoring.logger import get_logger
+from rag_cli_plugin.services.logger import get_logger
 from rag_cli.integrations.maf_connector import get_maf_connector
 
 logger = get_logger(__name__)

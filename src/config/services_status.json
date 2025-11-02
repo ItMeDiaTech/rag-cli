@@ -1,0 +1,12 @@
+{
+  "tcp_server": {
+    "running": true,
+    "pid": null,
+    "started_at": null
+  },
+  "web_dashboard": {
+    "running": true,
+    "pid": null,
+    "started_at": null
+  }
+}

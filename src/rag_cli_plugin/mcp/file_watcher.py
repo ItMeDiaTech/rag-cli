@@ -273,10 +273,10 @@ async def index_document_callback(file_path: Path) -> bool:
     try:
         logger.info(f"Indexing document: {file_path}")
 
-        from core.config import get_config
-        from core.document_processor import DocumentProcessor
-        from core.vector_store import get_vector_store
-        from core.embeddings import get_embedding_generator
+        from rag_cli.core.config import get_config
+        from rag_cli.core.document_processor import DocumentProcessor
+        from rag_cli.core.vector_store import get_vector_store
+        from rag_cli.core.embeddings import get_embedding_generator
 
         # Initialize components
         config = get_config()

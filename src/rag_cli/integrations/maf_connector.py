@@ -20,7 +20,7 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 
-from monitoring.logger import get_logger
+from rag_cli_plugin.services.logger import get_logger
 
 logger = get_logger(__name__)
 

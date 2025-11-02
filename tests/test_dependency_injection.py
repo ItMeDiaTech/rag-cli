@@ -1,7 +1,7 @@
 """Tests for dependency injection framework."""
 
 import pytest
-from core.dependency_injection import (
+from rag_cli.core.dependency_injection import (
     DIContainer,
     Provider,
     Lifecycle,

@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 from pathlib import Path
 
-from monitoring.logger import get_logger
+from rag_cli_plugin.services.logger import get_logger
 
 logger = get_logger(__name__)
 

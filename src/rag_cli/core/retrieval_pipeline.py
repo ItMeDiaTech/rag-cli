@@ -29,11 +29,11 @@ from rag_cli.core.embeddings import get_embedding_generator
 from rag_cli.core.vector_store import get_vector_store
 from rag_cli.core.document_processor import DocumentChunk, get_document_processor
 from rag_cli.core.async_utils import safe_asyncio_run
-from monitoring.logger import get_logger, get_metrics_logger, log_execution_time
-from monitoring.tcp_server import metrics_collector
-from monitoring.latency_tracker import get_latency_tracker, time_operation
+from rag_cli_plugin.services.logger import get_logger, get_metrics_logger, log_execution_time
+from rag_cli_plugin.services.tcp_server import metrics_collector
+from rag_cli_plugin.services.latency_tracker import get_latency_tracker, time_operation
 from rag_cli.core.online_retriever import OnlineRetriever
-from monitoring.error_tracker import get_error_tracker
+from rag_cli_plugin.services.error_tracker import get_error_tracker
 from rag_cli.core.duplicate_detector import get_duplicate_detector
 from rag_cli.core.semantic_cache import get_semantic_cache
 from rag_cli.core.hyde import get_hyde_generator

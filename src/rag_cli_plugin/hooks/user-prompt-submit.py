@@ -31,8 +31,8 @@ else:
 if project_root is None:
     current = hook_file.parent
     for _ in range(10):  # Search up to 10 levels
-        # Check if this is the RAG-CLI root (has src/core and src/monitoring)
-        if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
+        # Check if this is the RAG-CLI root (has src/rag_cli and src/rag_cli_plugin)
+        if (current / 'src' / 'rag_cli' / 'core').exists() and (current / 'src' / 'rag_cli_plugin' / 'services').exists():
             project_root = current
             break
         current = current.parent
@@ -49,16 +49,16 @@ if project_root is None:
     ]
 
     for path in potential_paths:
-        if path.exists() and (path / 'src' / 'core').exists():
+        if path.exists() and (path / 'src' / 'rag_cli' / 'core').exists():
             project_root = path
             break
 
 # Strategy 4: Last resort - relative to hook file location
 if project_root is None:
-    # Assume hook is in src/plugin/hooks/, so project root is 3 levels up
+    # Assume hook is in src/rag_cli_plugin/hooks/, so project root is 3 levels up
     project_root = hook_file.parents[3]
     # Validate this actually looks like project root
-    if not (project_root / 'src' / 'core').exists():
+    if not (project_root / 'src' / 'rag_cli' / 'core').exists():
         # If validation fails, raise clear error
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
@@ -235,7 +235,7 @@ def should_enhance_query(query: str, settings: Dict[str, Any]) -> Tuple[bool, Op
 
     # Import query classifier
     try:
-        from core.query_classifier import get_query_classifier
+        from rag_cli.core.query_classifier import get_query_classifier
     except ImportError:
         logger.warning("Query classifier not available, falling back to basic filtering")
         # Fallback to basic word count check
@@ -504,7 +504,7 @@ def _orchestrate_retrieval(query: str, settings: Dict[str, Any],
     Raises:
         Exception: If orchestration fails (caller should handle)
     """
-    from core.agent_orchestrator import AgentOrchestrator
+    from rag_cli.core.agent_orchestrator import AgentOrchestrator
 
     orchestrator = AgentOrchestrator()
 

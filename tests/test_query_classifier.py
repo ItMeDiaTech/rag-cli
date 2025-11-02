@@ -4,7 +4,7 @@ Tests intent detection, entity extraction, confidence scoring, and edge cases.
 """
 
 import pytest
-from core.query_classifier import (
+from rag_cli.core.query_classifier import (
     QueryClassifier,
     QueryIntent,
     TechnicalDepth,

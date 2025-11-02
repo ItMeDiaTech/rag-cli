@@ -118,7 +118,7 @@ def initialize_resources() -> bool:
     """
     try:
         # Check if vector store exists
-        from core.config import get_config
+        from rag_cli.core.config import get_config
 
         config = get_config()
         index_path = Path(config.vector_store.save_path)
@@ -129,7 +129,7 @@ def initialize_resources() -> bool:
 
         # Try to load vector store to verify it's accessible
         try:
-            from core.vector_store import get_vector_store
+            from rag_cli.core.vector_store import get_vector_store
             vector_store = get_vector_store()
             doc_count = vector_store.count()
             logger.info(f"Vector store loaded: {doc_count} documents")

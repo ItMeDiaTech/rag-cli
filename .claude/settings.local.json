@@ -17,7 +17,17 @@
       "Bash(dir /B \"C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI\")",
       "Bash(dir /B \"C:\\Users\\DiaTech\\Pictures\\DiaTech\\Programs\\DocHub\\development\\RAG-CLI\\src\")",
       "Read(//c/Users/DiaTech/.claude/plugins/marketplaces/rag-cli/.claude-plugin/**)",
-      "Read(//c/Users/DiaTech/.claude/**)"
+      "Read(//c/Users/DiaTech/.claude/**)",
+      "Bash(dir:*)",
+      "Bash(xcopy:*)",
+      "Bash(git rm:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)",
+      "Bash(env)",
+      "Bash(/dev/null)",
+      "Bash(findstr:*)",
+      "Bash(awk:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

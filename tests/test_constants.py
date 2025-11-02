@@ -1,7 +1,7 @@
 """Tests for constants module."""
 
 import pytest
-from core import constants
+from rag_cli.core import constants
 
 
 class TestCacheConstants:

@@ -30,7 +30,7 @@ except ImportError:
     AIOFILES_AVAILABLE = False
 
 from rag_cli.core.config import get_config
-from monitoring.logger import get_logger, get_metrics_logger, log_execution_time
+from rag_cli_plugin.services.logger import get_logger, get_metrics_logger, log_execution_time
 
 
 logger = get_logger(__name__)

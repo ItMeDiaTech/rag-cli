@@ -62,6 +62,7 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["rag_cli*"]
+exclude = ["*.tests", "*.tests.*", "tests.*", "tests", "__pycache__", "*.pyc"]
 
 [tool.setuptools.package-data]
 "*" = [

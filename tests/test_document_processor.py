@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch, MagicMock
 import tempfile
 import shutil
 
-from core.document_processor import (
+from rag_cli.core.document_processor import (
     DocumentProcessor,
     Document,
     DocumentChunk,

@@ -18,8 +18,38 @@ include requirements.txt
 include requirements-minimal.txt
 include requirements-lock.txt
 
+# Exclude old v1.x directories (safety measure - already deleted from repo)
+global-exclude src/core
+global-exclude src/plugin
+global-exclude src/monitoring
+global-exclude src/agents
+global-exclude src/cli
+global-exclude src/integrations
+
 # Exclude compiled Python files
 global-exclude *.pyc
 global-exclude __pycache__
 global-exclude *.pyo
 global-exclude .DS_Store
+
+# Exclude backup and temporary files
+global-exclude *.backup
+global-exclude *.bak
+global-exclude *.tmp
+global-exclude *.swp
+global-exclude *~
+
+# Exclude test artifacts and development files
+global-exclude .pytest_cache
+global-exclude .coverage
+global-exclude htmlcov
+global-exclude .tox
+prune tests
+
+# Exclude logs and runtime data
+prune logs
+prune src/logs
+prune src/config
+prune data/vectors
+prune data/cache
+prune data/documents
