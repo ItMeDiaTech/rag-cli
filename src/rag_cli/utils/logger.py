@@ -10,6 +10,7 @@ import sys
 import json
 import logging
 import logging.handlers
+import platform
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict, Any
@@ -92,6 +93,65 @@ class TextFormatter(logging.Formatter):
             message += f"\n{self.formatException(record.exc_info)}"
 
         return message
+
+
+def create_file_handler(
+    log_file: Path,
+    max_bytes: int = 10485760,
+    backup_count: int = 5,
+    level: int = logging.INFO,
+    formatter: Optional[logging.Formatter] = None
+) -> logging.Handler:
+    """Create a Windows-safe file handler for logging.
+
+    On Windows, uses TimedRotatingFileHandler with process-specific log files
+    to avoid file locking issues. On other platforms, uses RotatingFileHandler.
+
+    Args:
+        log_file: Path to log file
+        max_bytes: Maximum bytes per log file (for RotatingFileHandler)
+        backup_count: Number of backup files to keep
+        level: Logging level
+        formatter: Optional formatter to use
+
+    Returns:
+        Configured file handler
+    """
+    is_windows = platform.system() == 'Windows'
+
+    if is_windows:
+        # On Windows, use TimedRotatingFileHandler to avoid file locking issues
+        # Also add process ID to filename for multi-process safety
+        log_dir = log_file.parent
+        log_name = log_file.stem
+        log_ext = log_file.suffix
+
+        # Add process ID to log filename for multi-process safety
+        pid = os.getpid()
+        process_log_file = log_dir / f"{log_name}.{pid}{log_ext}"
+
+        # Use daily rotation which is less prone to locking issues
+        file_handler = logging.handlers.TimedRotatingFileHandler(
+            str(process_log_file),
+            when='midnight',
+            interval=1,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+    else:
+        # On non-Windows, use standard RotatingFileHandler
+        file_handler = logging.handlers.RotatingFileHandler(
+            str(log_file),
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+
+    file_handler.setLevel(level)
+    if formatter:
+        file_handler.setFormatter(formatter)
+
+    return file_handler
 
 
 class Logger:
@@ -210,18 +270,11 @@ class Logger:
             console_handler.setFormatter(console_formatter)
             root_logger.addHandler(console_handler)
 
-        # File handler with rotation
+        # File handler with rotation (Windows-safe)
         log_format = log_config.get('log_format', 'json')
         rotation = log_config.get('log_rotation', {})
         max_bytes = rotation.get('max_bytes', 10485760)
         backup_count = rotation.get('backup_count', 5)
-
-        file_handler = logging.handlers.RotatingFileHandler(
-            str(log_file),
-            maxBytes=max_bytes,
-            backupCount=backup_count
-        )
-        file_handler.setLevel(level)
 
         if log_format == "json":
             file_formatter = JSONFormatter()
@@ -229,7 +282,15 @@ class Logger:
             file_formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-        file_handler.setFormatter(file_formatter)
+
+        # Use Windows-safe file handler factory
+        file_handler = create_file_handler(
+            log_file=log_file,
+            max_bytes=max_bytes,
+            backup_count=backup_count,
+            level=level,
+            formatter=file_formatter
+        )
         root_logger.addHandler(file_handler)
 
         # Configure structlog

@@ -28,7 +28,7 @@ else:
 if project_root is None:
     current = hook_file.parent
     for _ in range(10):  # Search up to 10 levels
-        if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
+        if (current / 'src' / 'rag_cli' / 'core').exists() and (current / 'src' / 'rag_cli_plugin' / 'services').exists():
             project_root = current
             break
         current = current.parent
@@ -42,14 +42,14 @@ if project_root is None:
     ]
 
     for path in potential_paths:
-        if path.exists() and (path / 'src' / 'core').exists():
+        if path.exists() and (path / 'src' / 'rag_cli' / 'core').exists():
             project_root = path
             break
 
 # Strategy 4: Last resort - relative to hook file location
 if project_root is None:
     project_root = hook_file.parents[3]
-    if not (project_root / 'src' / 'core').exists():
+    if not (project_root / 'src' / 'rag_cli' / 'core').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
             "Please set RAG_CLI_ROOT environment variable to the project directory."
@@ -119,7 +119,7 @@ def initialize_resources() -> bool:
 
         # Try to start monitoring services
         try:
-            from monitoring.service_manager import ensure_services_running
+            from rag_cli_plugin.services.service_manager import ensure_services_running
             ensure_services_running()
             logger.info("Monitoring services started for session")
         except Exception as e:

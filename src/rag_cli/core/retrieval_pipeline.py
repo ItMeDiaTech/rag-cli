@@ -40,9 +40,10 @@ from rag_cli.core.query_classifier import QueryClassification
 
 # Optional plugin integration (metrics collector from plugin)
 try:
-    from rag_cli_plugin.services.logger import get_metrics_collector
+    from rag_cli_plugin.services.tcp_server import get_metrics_collector
     metrics_collector = get_metrics_collector()
-except ImportError:
+except (ImportError, Exception) as e:
+    # Gracefully handle if plugin is not available or initialization fails
     metrics_collector = None
 
 logger = get_logger(__name__)

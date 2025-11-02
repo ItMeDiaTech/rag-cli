@@ -23,6 +23,18 @@ import numpy as np
 import faiss
 import threading
 
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles datetime and VectorMetadata objects."""
+
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        elif hasattr(obj, 'to_dict'):
+            # Handle objects with to_dict() method (like VectorMetadata)
+            return obj.to_dict()
+        return super().default(obj)
+
 try:
     import aiofiles
     AIOFILES_AVAILABLE = True
@@ -48,13 +60,20 @@ class VectorMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
-        # Convert nested datetime objects in metadata to ISO format
-        serialized_metadata = {}
-        for key, value in self.metadata.items():
+
+        def serialize_value(value):
+            """Recursively serialize values, converting datetime to ISO format."""
             if isinstance(value, datetime):
-                serialized_metadata[key] = value.isoformat()
+                return value.isoformat()
+            elif isinstance(value, dict):
+                return {k: serialize_value(v) for k, v in value.items()}
+            elif isinstance(value, (list, tuple)):
+                return [serialize_value(item) for item in value]
             else:
-                serialized_metadata[key] = value
+                return value
+
+        # Recursively convert all datetime objects in metadata
+        serialized_metadata = serialize_value(self.metadata)
 
         return {
             'id': self.id,
@@ -464,10 +483,10 @@ class FAISSVectorStore:
             # Save index
             faiss.write_index(self.index, index_path)
 
-            # Save metadata as JSON
+            # Save metadata as JSON with custom encoder for datetime handling
             with open(meta_path, 'w', encoding='utf-8') as f:
                 metadata_dicts = [m.to_dict() for m in self.metadata]
-                json.dump(metadata_dicts, f, indent=2, ensure_ascii=False)
+                json.dump(metadata_dicts, f, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
 
             logger.info(
                 "Vector store saved",
@@ -524,9 +543,9 @@ class FAISSVectorStore:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, faiss.write_index, self.index, index_path)
 
-            # Save metadata asynchronously using aiofiles
+            # Save metadata asynchronously using aiofiles with custom encoder
             metadata_dicts = [m.to_dict() for m in self.metadata]
-            json_str = json.dumps(metadata_dicts, indent=2, ensure_ascii=False)
+            json_str = json.dumps(metadata_dicts, indent=2, ensure_ascii=False, cls=DateTimeEncoder)
 
             async with aiofiles.open(meta_path, 'w', encoding='utf-8') as f:
                 await f.write(json_str)

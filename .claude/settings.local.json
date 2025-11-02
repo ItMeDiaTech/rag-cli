@@ -27,7 +27,15 @@
       "Bash(/dev/null)",
       "Bash(findstr:*)",
       "Bash(awk:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(for:*)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(echo:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

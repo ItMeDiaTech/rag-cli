@@ -17,6 +17,9 @@ import time
 import structlog
 from structlog.processors import JSONRenderer, TimeStamper, add_log_level
 
+# Import Windows-safe file handler from core logger
+from rag_cli.utils.logger import create_file_handler
+
 
 class JSONFormatter(logging.Formatter):
     """Custom JSON formatter for standard logging."""
@@ -262,20 +265,21 @@ class Logger:
             max_bytes = getattr(rotation, 'max_bytes', 10485760)
             backup_count = getattr(rotation, 'backup_count', 5)
 
-        file_handler = logging.handlers.RotatingFileHandler(
-            str(log_file),
-            maxBytes=max_bytes,
-            backupCount=backup_count
-        )
-        file_handler.setLevel(level)
-
         if log_format == "json":
             file_formatter = JSONFormatter()
         else:
             file_formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
-        file_handler.setFormatter(file_formatter)
+
+        # Use Windows-safe file handler factory
+        file_handler = create_file_handler(
+            log_file=log_file,
+            max_bytes=max_bytes,
+            backup_count=backup_count,
+            level=level,
+            formatter=file_formatter
+        )
         root_logger.addHandler(file_handler)
 
         # Add metrics collector handler for dashboard log streaming
