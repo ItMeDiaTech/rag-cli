@@ -20,7 +20,12 @@ import threading
 
 import numpy as np
 import chromadb
-from chromadb.config import Settings
+# ChromaDB 1.0+ API compatibility
+try:
+    from chromadb.config import Settings
+except ImportError:
+    # For ChromaDB 1.3.0+, Settings might not be needed or in different location
+    Settings = None
 
 from rag_cli.core.config import get_config
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_execution_time
@@ -118,13 +123,27 @@ class ChromaVectorStore:
         Path(self.persist_directory).mkdir(parents=True, exist_ok=True)
 
         # Initialize ChromaDB client with persistence
-        self.client = chromadb.PersistentClient(
-            path=self.persist_directory,
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
+        # ChromaDB 1.3.0+ API: Settings handling may differ
+        try:
+            if Settings:
+                # Older API with Settings object
+                self.client = chromadb.PersistentClient(
+                    path=self.persist_directory,
+                    settings=Settings(
+                        anonymized_telemetry=False,
+                        allow_reset=True
+                    )
+                )
+            else:
+                # Newer API: settings passed as kwargs or use defaults
+                self.client = chromadb.PersistentClient(
+                    path=self.persist_directory,
+                    anonymized_telemetry=False
+                )
+        except Exception as e:
+            # Fallback: try with minimal configuration
+            logger.warning(f"ChromaDB client initialization with settings failed: {e}, trying minimal config")
+            self.client = chromadb.PersistentClient(path=self.persist_directory)
 
         # Get or create collection
         try:

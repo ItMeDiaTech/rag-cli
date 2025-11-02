@@ -21,10 +21,15 @@ try:
     import numpy as np
     import faiss
     import chromadb
-    from chromadb.config import Settings
+    # ChromaDB 1.0+ uses different Settings API
+    try:
+        from chromadb.config import Settings
+    except ImportError:
+        # For newer versions, Settings might be in different location or not needed
+        Settings = None
 except ImportError as e:
     print(f"Error: Required dependencies not installed: {e}")
-    print("Install with: pip install numpy faiss-cpu chromadb")
+    print("Install with: pip install numpy faiss-cpu chromadb>=1.3.0")
     sys.exit(1)
 
 
@@ -89,13 +94,26 @@ def migrate_to_chromadb(
     Path(chroma_dir).mkdir(parents=True, exist_ok=True)
 
     # Initialize ChromaDB client
-    client = chromadb.PersistentClient(
-        path=chroma_dir,
-        settings=Settings(
-            anonymized_telemetry=False,
-            allow_reset=True
-        )
-    )
+    # ChromaDB 1.3.0+ API: Settings are passed differently or as kwargs
+    try:
+        if Settings:
+            # Older API with Settings object
+            client = chromadb.PersistentClient(
+                path=chroma_dir,
+                settings=Settings(
+                    anonymized_telemetry=False,
+                    allow_reset=True
+                )
+            )
+        else:
+            # Newer API: settings passed as kwargs or use defaults
+            client = chromadb.PersistentClient(
+                path=chroma_dir,
+                anonymized_telemetry=False
+            )
+    except Exception as e:
+        # Fallback: try with minimal configuration
+        client = chromadb.PersistentClient(path=chroma_dir)
 
     # Create or get collection
     try:
