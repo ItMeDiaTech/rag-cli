@@ -90,6 +90,74 @@ def load_settings() -> Dict[str, Any]:
         logger.error(f"Failed to load settings: {e}")
         return {}
 
+def health_check_chromadb() -> Dict[str, Any]:
+    """Perform comprehensive ChromaDB health check.
+
+    Returns:
+        Dictionary with health check results
+    """
+    health_status = {
+        "healthy": False,
+        "vector_count": 0,
+        "collection_exists": False,
+        "can_query": False,
+        "persist_directory": None,
+        "errors": []
+    }
+
+    try:
+        from rag_cli.core.vector_store import get_vector_store
+
+        # Initialize vector store (creates if doesn't exist)
+        vector_store = get_vector_store()
+
+        # Check collection exists
+        if vector_store.collection:
+            health_status["collection_exists"] = True
+            health_status["persist_directory"] = vector_store.persist_directory
+
+            # Get vector count
+            try:
+                count = vector_store.collection.count()
+                health_status["vector_count"] = count
+                logger.info(f"ChromaDB health check: {count} vectors in collection")
+
+                # Test query capability (if vectors exist)
+                if count > 0:
+                    try:
+                        # Peek at first few vectors to verify read access
+                        peek_result = vector_store.collection.peek(limit=1)
+                        if peek_result and peek_result.get('ids'):
+                            health_status["can_query"] = True
+                            logger.debug("ChromaDB query test passed")
+                        else:
+                            health_status["errors"].append("Collection peek returned no results")
+                    except Exception as e:
+                        health_status["errors"].append(f"Query test failed: {str(e)}")
+                else:
+                    # Empty collection is valid, just no vectors yet
+                    health_status["can_query"] = True
+                    logger.info("ChromaDB collection is empty - ready for indexing")
+
+            except Exception as e:
+                health_status["errors"].append(f"Could not get vector count: {str(e)}")
+
+            # Overall health status
+            health_status["healthy"] = (
+                health_status["collection_exists"] and
+                (health_status["can_query"] or health_status["vector_count"] == 0)
+            )
+
+        else:
+            health_status["errors"].append("Collection does not exist")
+
+    except Exception as e:
+        health_status["errors"].append(f"Vector store initialization failed: {str(e)}")
+        logger.error(f"ChromaDB health check failed: {e}")
+
+    return health_status
+
+
 def initialize_resources() -> bool:
     """Initialize RAG resources (vector store, services, etc.).
 
@@ -97,25 +165,23 @@ def initialize_resources() -> bool:
         True if successful, False otherwise
     """
     try:
-        # Check if vector store exists
-        from rag_cli.core.config import get_config
+        # Perform ChromaDB health check
+        health = health_check_chromadb()
 
-        config = get_config()
-        index_path = Path(config.vector_store.save_path)
-
-        if not index_path.exists():
-            logger.info("Vector store not yet initialized - will be created on first indexing")
-            return True
-
-        # Try to load vector store to verify it's accessible
-        try:
-            from rag_cli.core.vector_store import get_vector_store
-            vector_store = get_vector_store()
-            doc_count = vector_store.count()
-            logger.info(f"Vector store loaded successfully: {doc_count} documents available")
-        except Exception as e:
-            logger.warning(f"Could not load vector store: {e}")
-            return True  # Not critical for session start
+        if health["healthy"]:
+            logger.info(
+                "ChromaDB health check passed",
+                vectors=health["vector_count"],
+                persist_dir=health["persist_directory"]
+            )
+        else:
+            logger.warning(
+                "ChromaDB health check issues",
+                errors=health["errors"]
+            )
+            # Still return True - collection will be created on first use
+            if not health["collection_exists"]:
+                logger.info("ChromaDB collection will be created on first indexing")
 
         # Try to start monitoring services
         try:

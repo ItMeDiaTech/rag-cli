@@ -252,6 +252,201 @@ All magic numbers throughout the codebase should reference these constants for c
 - Metrics retention: `METRICS_HISTORY_SIZE` (1000)
 - Connection caching: `TCP_CHECK_CACHE_SECONDS` (30)
 
+## ChromaDB Persistence and Document Update Best Practices (v2.0+)
+
+This section documents the enhanced persistence and update strategies implemented in v2.0 to ensure reliable document management across sessions.
+
+### Core Enhancements
+
+#### 1. Automatic Persistence
+- ChromaDB PersistentClient automatically saves all changes
+- No manual save() or load() calls required
+- Data persists to: `data/vectors/chroma_db/`
+- Singleton pattern ensures single source of truth per session
+- Graceful shutdown in session-end hook saves duplicate registry
+
+#### 2. Upsert Functionality (`vector_store.py:270-361`)
+Use `upsert()` instead of `add()` when re-indexing documents to prevent duplicates:
+
+```python
+# PREFERRED: Update existing or insert new
+vector_store.upsert(
+    embeddings=embeddings,
+    texts=texts,
+    ids=optional_ids,  # If None, auto-generates
+    metadata=metadata,
+    sources=sources
+)
+
+# OLD WAY: Always adds, creates duplicates on re-index
+vector_store.add(embeddings, texts, metadata, sources)
+```
+
+**When to use upsert():**
+- Re-indexing updated documents
+- Correcting indexed content
+- Maintaining document versions
+- Any scenario where the same source may be indexed multiple times
+
+#### 3. Source-Based Operations (`vector_store.py:492-612`)
+
+**Get all vectors from a source:**
+```python
+# Returns List[VectorMetadata]
+vectors = vector_store.get_by_source("path/to/document.md")
+print(f"Found {len(vectors)} chunks from document")
+```
+
+**Delete all vectors from a source:**
+```python
+# Useful before re-indexing a modified file
+deleted_count = vector_store.delete_by_source("path/to/document.md")
+```
+
+**Replace all vectors from a source:**
+```python
+# Combines delete + add in one operation
+new_ids = vector_store.update_by_source(
+    source="path/to/document.md",
+    embeddings=new_embeddings,
+    texts=new_texts,
+    metadata=new_metadata
+)
+```
+
+#### 4. Duplicate Detection Integration (`cli/index.py:124-181`)
+
+The indexing pipeline now integrates content hash-based duplicate detection:
+
+**Incremental Indexing (skip unchanged documents):**
+```bash
+rag-index ./docs --recursive --incremental
+```
+
+This mode:
+- Computes SHA-256 hash of each document
+- Skips documents with matching content hash
+- Only processes new or changed documents
+- Updates duplicate registry on completion
+
+**Update Mode (replace changed documents):**
+```bash
+rag-index ./docs --recursive --update
+```
+
+This mode:
+- Detects documents with changed content
+- Deletes old chunks from changed sources
+- Uses upsert() to add new chunks
+- Maintains duplicate registry consistency
+
+**Combine both modes:**
+```bash
+rag-index ./docs --recursive --incremental --update
+```
+
+#### 5. Metadata Validation (`vector_store.py:186-225`)
+
+All metadata is validated before storage:
+- Checks for reserved ChromaDB keys (id, embedding, document, etc.)
+- Validates metadata is JSON-serializable
+- Warns about large metadata (>10KB)
+- Prevents invalid metadata from corrupting the index
+
+#### 6. Session Lifecycle Management
+
+**Session Start (`hooks/session-start.py:93-199`):**
+- Performs comprehensive ChromaDB health check
+- Verifies collection accessibility
+- Tests query capability with peek()
+- Reports vector count and status
+- Non-blocking: allows session to continue even if issues detected
+
+**Session End (`hooks/session-end.py:130-169`):**
+- Saves duplicate detector registry
+- Logs final vector count
+- Allows ChromaDB auto-persistence to complete
+- Cleans up temporary cache files
+- Graceful shutdown prevents data loss
+
+### Best Practices Summary
+
+1. **Always use upsert() for re-indexing:**
+   ```python
+   # Good: Update existing entries
+   vector_store.upsert(embeddings, texts, sources=sources)
+
+   # Bad: Creates duplicates on re-index
+   vector_store.add(embeddings, texts, sources=sources)
+   ```
+
+2. **Use source-based operations for document management:**
+   ```python
+   # Check if document is indexed
+   existing = vector_store.get_by_source("doc.md")
+
+   # Delete before re-indexing (if not using upsert)
+   if existing:
+       vector_store.delete_by_source("doc.md")
+
+   # Or use update_by_source for atomic replace
+   vector_store.update_by_source("doc.md", new_embeddings, new_texts)
+   ```
+
+3. **Use incremental indexing for large document sets:**
+   ```bash
+   # First time: full index
+   rag-index ./docs --recursive
+
+   # Subsequent updates: only changed documents
+   rag-index ./docs --recursive --incremental --update
+   ```
+
+4. **Trust automatic persistence:**
+   - No need to call save() or load()
+   - ChromaDB handles persistence automatically
+   - Session hooks ensure clean shutdown
+   - Data survives across sessions
+
+5. **Monitor duplicate registry:**
+   - Location: `data/vectors/content_hashes.json`
+   - Updated automatically during indexing
+   - Cleaned up by session-end hook
+   - Used for incremental indexing decisions
+
+### Testing Persistence
+
+Run the test suite to verify persistence and updates:
+```bash
+python test/test_chromadb_persistence.py
+```
+
+Tests verify:
+- Automatic persistence across operations
+- Upsert replaces existing vectors
+- Source-based operations work correctly
+- Duplicate detection prevents re-processing
+- Health checks detect collection issues
+
+### Troubleshooting
+
+**Issue: Duplicates in index after re-indexing**
+- Solution: Use `--update` flag or upsert() instead of add()
+
+**Issue: "Collection does not exist" error**
+- Solution: Normal on first run - collection created automatically
+- If persistent: Check persist_directory permissions
+
+**Issue: Vectors not persisting across sessions**
+- Solution: Verify persist_directory exists and is writable
+- Check session-end hook executed successfully
+- Review logs for ChromaDB errors
+
+**Issue: Incremental indexing still processes all documents**
+- Solution: Ensure duplicate_detector registry exists
+- Check if document content actually changed
+- Verify content hashing is working (see logs)
+
 ## Import Guidelines (v2.0)
 
 All imports MUST use the new dual-package structure:

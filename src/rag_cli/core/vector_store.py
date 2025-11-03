@@ -183,6 +183,47 @@ class ChromaVectorStore:
             logger.warning(f"Could not initialize counter from existing data: {e}")
             return 0
 
+    def _validate_metadata(self, metadata: List[Dict[str, Any]], texts: List[str], sources: Optional[List[str]] = None) -> None:
+        """Validate metadata before adding to vector store.
+
+        Args:
+            metadata: List of metadata dictionaries to validate
+            texts: List of text content (for length validation)
+            sources: Optional list of source identifiers
+
+        Raises:
+            ValueError: If metadata is invalid
+        """
+        if not metadata:
+            return
+
+        # Reserved ChromaDB keys that shouldn't be in custom metadata
+        reserved_keys = {'id', 'ids', 'embedding', 'embeddings', 'document', 'documents',
+                        'metadata', 'metadatas', 'distance', 'distances'}
+
+        for i, meta in enumerate(metadata):
+            if not isinstance(meta, dict):
+                raise ValueError(f"Metadata at index {i} must be a dictionary, got {type(meta)}")
+
+            # Check for reserved keys
+            for key in meta.keys():
+                if key in reserved_keys:
+                    raise ValueError(f"Metadata contains reserved key '{key}' at index {i}")
+
+                # Warn about internal prefixes
+                if key.startswith('custom_'):
+                    logger.warning(f"Metadata key '{key}' at index {i} starts with 'custom_' prefix - this will be double-prefixed")
+
+            # Validate metadata size (ChromaDB has limits)
+            try:
+                serialized = json.dumps(meta)
+                if len(serialized) > 10000:  # 10KB limit per metadata entry
+                    logger.warning(f"Metadata at index {i} is large ({len(serialized)} bytes) - consider reducing size")
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"Metadata at index {i} contains non-serializable data: {e}")
+
+        logger.debug(f"Validated {len(metadata)} metadata entries")
+
     @log_execution_time
     def add(
         self,
@@ -205,6 +246,10 @@ class ChromaVectorStore:
         with self._lock:
             if len(embeddings) != len(texts):
                 raise ValueError("Number of embeddings must match number of texts")
+
+            # Validate metadata
+            if metadata:
+                self._validate_metadata(metadata, texts, sources)
 
             # Ensure embeddings are float32 and 2D
             embeddings = np.array(embeddings, dtype=np.float32)
@@ -263,6 +308,103 @@ class ChromaVectorStore:
                 total_vectors=total_vectors
             )
             metrics.record_count("vectors_added", num_vectors)
+            metrics.record_gauge("total_vectors", total_vectors)
+
+            return ids
+
+    @log_execution_time
+    def upsert(
+        self,
+        embeddings: np.ndarray,
+        texts: List[str],
+        ids: Optional[List[str]] = None,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        sources: Optional[List[str]] = None
+    ) -> List[str]:
+        """Upsert vectors with metadata (update if exists, insert if new).
+
+        This method is preferred over add() when re-indexing documents or
+        updating existing content to avoid creating duplicates.
+
+        Args:
+            embeddings: Vector embeddings to upsert
+            texts: Text content for each vector
+            ids: Optional IDs to use (if None, auto-generates)
+            metadata: Optional metadata for each vector
+            sources: Optional source identifiers
+
+        Returns:
+            List of IDs that were upserted
+        """
+        with self._lock:
+            if len(embeddings) != len(texts):
+                raise ValueError("Number of embeddings must match number of texts")
+
+            # Validate metadata
+            if metadata:
+                self._validate_metadata(metadata, texts, sources)
+
+            # Ensure embeddings are float32 and 2D
+            embeddings = np.array(embeddings, dtype=np.float32)
+            if len(embeddings.shape) == 1:
+                embeddings = embeddings.reshape(1, -1)
+
+            num_vectors = len(embeddings)
+            start_time = time.time()
+
+            # Generate or validate IDs
+            if ids is None:
+                ids = []
+                for i in range(num_vectors):
+                    vector_id = f"vec_{self.id_counter:08d}"
+                    ids.append(vector_id)
+                    self.id_counter += 1
+            else:
+                if len(ids) != num_vectors:
+                    raise ValueError("Number of IDs must match number of vectors")
+
+            # Prepare metadata for ChromaDB
+            chroma_metadata = []
+            for i in range(num_vectors):
+                meta = {
+                    "text": texts[i],
+                    "source": sources[i] if sources else "unknown",
+                    "timestamp": datetime.now().isoformat()
+                }
+                # Add custom metadata if provided
+                if metadata and i < len(metadata):
+                    # Flatten nested metadata - ChromaDB requires flat dict
+                    custom_meta = metadata[i]
+                    for key, value in custom_meta.items():
+                        # Convert complex types to JSON strings
+                        if isinstance(value, (dict, list)):
+                            meta[f"custom_{key}"] = json.dumps(value)
+                        else:
+                            meta[f"custom_{key}"] = str(value)
+
+                chroma_metadata.append(meta)
+
+            # Upsert to ChromaDB (automatically persisted)
+            self.collection.upsert(
+                ids=ids,
+                embeddings=embeddings.tolist(),
+                documents=texts,
+                metadatas=chroma_metadata
+            )
+
+            # Record metrics
+            elapsed = time.time() - start_time
+            vectors_per_second = num_vectors / elapsed if elapsed > 0 else 0
+            total_vectors = self.collection.count()
+
+            logger.info(
+                "Upserted vectors to ChromaDB",
+                count=num_vectors,
+                elapsed_seconds=elapsed,
+                vectors_per_second=vectors_per_second,
+                total_vectors=total_vectors
+            )
+            metrics.record_count("vectors_upserted", num_vectors)
             metrics.record_gauge("total_vectors", total_vectors)
 
             return ids
@@ -395,6 +537,128 @@ class ChromaVectorStore:
         except Exception as e:
             logger.error(f"Error getting vector by ID: {e}")
             return None
+
+    def get_by_source(self, source: str) -> List[VectorMetadata]:
+        """Get all vectors from a specific source.
+
+        Useful for finding all chunks from a particular document
+        or checking if a source has been indexed.
+
+        Args:
+            source: Source identifier to search for
+
+        Returns:
+            List of vector metadata from the source
+        """
+        try:
+            results = self.collection.get(
+                where={"source": source},
+                include=["metadatas", "documents"]
+            )
+
+            vectors = []
+            if results and results['ids'] and len(results['ids']) > 0:
+                for i, (id_, metadata_dict, document) in enumerate(zip(
+                    results['ids'],
+                    results['metadatas'],
+                    results['documents']
+                )):
+                    # Extract custom metadata
+                    custom_metadata = {}
+                    for key, value in metadata_dict.items():
+                        if key.startswith("custom_"):
+                            original_key = key[7:]
+                            try:
+                                custom_metadata[original_key] = json.loads(value)
+                            except (json.JSONDecodeError, TypeError):
+                                custom_metadata[original_key] = value
+
+                    vectors.append(VectorMetadata(
+                        id=id_,
+                        text=metadata_dict.get("text", document),
+                        source=metadata_dict.get("source", "unknown"),
+                        timestamp=datetime.fromisoformat(metadata_dict.get("timestamp", datetime.now().isoformat())),
+                        metadata=custom_metadata
+                    ))
+
+            logger.debug(f"Found {len(vectors)} vectors from source: {source}")
+            return vectors
+
+        except Exception as e:
+            logger.error(f"Error getting vectors by source: {e}")
+            return []
+
+    def delete_by_source(self, source: str) -> int:
+        """Delete all vectors from a specific source.
+
+        Useful for removing all chunks from a document before re-indexing
+        or cleaning up deleted files.
+
+        Args:
+            source: Source identifier to delete
+
+        Returns:
+            Number of vectors deleted
+        """
+        try:
+            with self._lock:
+                # Get all IDs for this source
+                results = self.collection.get(
+                    where={"source": source},
+                    include=[]
+                )
+
+                if not results or not results['ids'] or len(results['ids']) == 0:
+                    logger.debug(f"No vectors found for source: {source}")
+                    return 0
+
+                vector_ids = results['ids']
+                self.collection.delete(ids=vector_ids)
+
+                deleted_count = len(vector_ids)
+                logger.info(f"Deleted {deleted_count} vectors from source: {source}")
+                metrics.record_count("vectors_deleted_by_source", deleted_count)
+
+                return deleted_count
+
+        except Exception as e:
+            logger.error(f"Error deleting vectors by source: {e}")
+            return 0
+
+    def update_by_source(
+        self,
+        source: str,
+        embeddings: np.ndarray,
+        texts: List[str],
+        metadata: Optional[List[Dict[str, Any]]] = None
+    ) -> List[str]:
+        """Replace all vectors from a source with new content.
+
+        This is a convenience method that combines delete_by_source()
+        and add() in a single operation. Useful for re-indexing updated documents.
+
+        Args:
+            source: Source identifier to update
+            embeddings: New vector embeddings
+            texts: New text content
+            metadata: Optional metadata for new vectors
+
+        Returns:
+            List of new vector IDs
+        """
+        with self._lock:
+            # Delete existing vectors from this source
+            deleted_count = self.delete_by_source(source)
+            logger.info(f"Replaced {deleted_count} existing vectors for source: {source}")
+
+            # Add new vectors
+            sources = [source] * len(texts)
+            new_ids = self.add(embeddings, texts, metadata=metadata, sources=sources)
+
+            logger.info(f"Added {len(new_ids)} new vectors for source: {source}")
+            metrics.record_count("vectors_updated_by_source", len(new_ids))
+
+            return new_ids
 
     def delete(self, vector_ids: List[str]) -> int:
         """Delete vectors by ID.

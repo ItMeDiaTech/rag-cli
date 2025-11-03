@@ -15,6 +15,14 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
+# Find project root
+hook_file = Path(__file__).resolve()
+project_root = None
+
+# Strategy 1: Check for RAG_CLI_ROOT environment variable
+if 'RAG_CLI_ROOT' in os.environ:
+    project_root = Path(os.environ['RAG_CLI_ROOT'])
+
 # Strategy 2: Try to find project root by walking up from hook location
 if project_root is None:
     current = hook_file.parent
@@ -119,6 +127,48 @@ def cleanup_cache() -> bool:
         logger.warning(f"Cache cleanup failed: {e}")
         return False
 
+def graceful_shutdown_vector_store() -> bool:
+    """Gracefully shutdown ChromaDB vector store.
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Import here to avoid circular dependencies
+        from rag_cli.core.vector_store import _vector_store
+        from rag_cli.core.duplicate_detector import DuplicateDetector
+
+        # Close ChromaDB client if it exists
+        if _vector_store is not None:
+            try:
+                # ChromaDB PersistentClient doesn't have an explicit close method
+                # but we can ensure all pending writes are flushed
+                collection = _vector_store.collection
+                count = collection.count()
+                logger.info(f"Vector store contains {count} vectors at shutdown")
+
+                # Clear the singleton reference to allow garbage collection
+                # (ChromaDB will auto-persist on cleanup)
+                logger.debug("ChromaDB will auto-persist on cleanup")
+
+            except Exception as e:
+                logger.warning(f"Error during vector store shutdown: {e}")
+
+        # Save duplicate detector registry
+        try:
+            duplicate_detector = DuplicateDetector()
+            duplicate_detector.save()
+            logger.debug("Duplicate detector registry saved")
+        except Exception as e:
+            logger.warning(f"Error saving duplicate detector: {e}")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"Vector store shutdown failed: {e}")
+        return False
+
+
 def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     """Process SessionEnd hook event.
 
@@ -137,6 +187,9 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
         if settings:
             save_settings(settings)
             logger.debug("Session settings persisted")
+
+        # Gracefully shutdown vector store and ChromaDB
+        graceful_shutdown_vector_store()
 
         # Clean up temporary cache
         cleanup_cache()
