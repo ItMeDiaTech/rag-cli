@@ -6,7 +6,7 @@ when the response was enhanced with RAG context.
 
 Metadata:
   priority: 80
-  enabled: true
+  enabled: True
   triggers: ["response_generated"]
 """
 

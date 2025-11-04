@@ -6,7 +6,7 @@ into the RAG knowledge base.
 
 Metadata:
   priority: 50
-  enabled: false  # Disabled by default, enable via configuration
+  enabled: False  # Disabled by default, enable via configuration
   triggers: ["file_created", "file_modified"]
 """
 

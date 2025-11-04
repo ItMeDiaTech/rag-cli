@@ -6,7 +6,7 @@ showing inline warnings with fix instructions (no emojis).
 
 Metadata:
   priority: 70
-  enabled: true
+  enabled: True
   triggers: ["error_occurred"]
 """
 

@@ -54,7 +54,7 @@ if project_root is None:
             "Please set RAG_CLI_ROOT environment variable to the project directory."
         )
 
-sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / 'src'))
 
 from rag_cli_plugin.services.logger import get_logger
 

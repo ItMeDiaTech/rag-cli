@@ -7,7 +7,7 @@ Returns a brief one-line status message to the user on completion.
 
 Metadata:
   priority: 150
-  enabled: true
+  enabled: True
   triggers: ["UserPromptSubmit"]
 """
 

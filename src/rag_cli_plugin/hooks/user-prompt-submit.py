@@ -66,7 +66,7 @@ if project_root is None:
             "Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
         )
 
-sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / 'src'))
 
 from rag_cli.core.config import get_config
 from rag_cli.core.vector_store import get_vector_store
@@ -86,21 +86,30 @@ SETTINGS_FILE = project_root / "config" / "rag_settings.json"
 # TCP Server URL for event submission
 TCP_SERVER_URL = "http://localhost:9999"
 
-# Cache TCP server availability to avoid repeated checks
+# Cache TCP server availability to avoid repeated checks with exponential backoff
 _tcp_server_available = None
 _tcp_check_time = 0
+_tcp_consecutive_failures = 0
+_tcp_backoff_until = 0
 
 def check_tcp_server_available() -> bool:
-    """Check if TCP server is available.
+    """Check if TCP server is available with exponential backoff on failures.
 
     Uses caching to avoid repeated connection attempts within a short time window.
+    Implements exponential backoff: after consecutive failures, wait progressively
+    longer before retrying (30s, 60s, 120s, max 240s).
 
     Returns:
         True if server is reachable, False otherwise
     """
-    global _tcp_server_available, _tcp_check_time
+    global _tcp_server_available, _tcp_check_time, _tcp_consecutive_failures, _tcp_backoff_until
 
     current_time = time.time()
+
+    # Check if in backoff period
+    if current_time < _tcp_backoff_until:
+        logger.debug(f"TCP server in backoff period (until {_tcp_backoff_until - current_time:.1f}s)")
+        return False
 
     # Use cached result if check was recent
     if _tcp_server_available is not None and (current_time - _tcp_check_time) < TCP_CHECK_CACHE_SECONDS:
@@ -117,8 +126,11 @@ def check_tcp_server_available() -> bool:
         )
 
         with urllib.request.urlopen(req, timeout=0.5) as response:
+            # Success - reset failure count
             _tcp_server_available = (response.status == 200)
             _tcp_check_time = current_time
+            _tcp_consecutive_failures = 0
+            _tcp_backoff_until = 0
             return _tcp_server_available
 
     except (urllib.error.URLError, urllib.error.HTTPError, ConnectionError, TimeoutError, OSError) as e:
@@ -126,6 +138,15 @@ def check_tcp_server_available() -> bool:
         logger.debug(f"TCP server not reachable: {type(e).__name__}")
         _tcp_server_available = False
         _tcp_check_time = current_time
+
+        # Increment failure count and calculate backoff
+        _tcp_consecutive_failures += 1
+        backoff_seconds = min(TCP_CHECK_CACHE_SECONDS * (2 ** (_tcp_consecutive_failures - 1)), 240)
+        _tcp_backoff_until = current_time + backoff_seconds
+
+        if _tcp_consecutive_failures > 1:
+            logger.debug(f"TCP server check failed {_tcp_consecutive_failures} times, backing off for {backoff_seconds}s")
+
         return False
 
 def submit_event_to_server(event_type: str, data: Dict[str, Any]) -> bool:
@@ -437,9 +458,22 @@ def _validate_and_extract_query(event: Dict[str, Any]) -> Optional[str]:
     Returns:
         Query string if valid, None otherwise
     """
+    # Check if already processed - prevent infinite loop
+    metadata = event.get("metadata", {})
+    if metadata.get("rag_enhanced"):
+        logger.debug("Event already processed by RAG, skipping")
+        return None
+    
+    # Check if slash command was blocked - skip RAG enhancement
+    if metadata.get("slash_command_blocked"):
+        logger.debug("Slash command blocked, skipping RAG enhancement")
+        return None
+    
     query = event.get("prompt", "")
     if not query:
+        logger.debug("Empty prompt, skipping")
         return None
+    
     return query
 
 
@@ -718,6 +752,17 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
     logger.info("Hook execution started", hook="UserPromptSubmit")
 
     try:
+        # Early return: Check if already processed to prevent infinite loop
+        metadata = event.get("metadata", {})
+        if metadata.get("rag_enhanced"):
+            logger.debug("Event already processed by RAG, skipping re-processing")
+            return event
+        
+        # Early return: Check if slash command was blocked
+        if metadata.get("slash_command_blocked"):
+            logger.debug("Slash command blocked, skipping RAG enhancement")
+            return event
+        
         # Step 1: Start monitoring services
         _start_monitoring_services(logger)
 

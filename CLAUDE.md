@@ -556,8 +556,36 @@ D, I = index.search(embedding.reshape(1, -1), 1)
 print(f"Search result: distance={D[0][0]}, index={I[0][0]}")  # Should be ~0, 0
 ```
 
+## Known Issues and Limitations
+
+### PostToolUse Hook Disabled (Claude Code Framework Bug)
+
+The PostToolUse hook (`src/rag_cli_plugin/hooks/response-post.py`) is currently disabled due to a JSON parsing bug in the Claude Code plugin framework.
+
+**Impact:**
+- RAG functionality works normally
+- Context retrieval and injection is unaffected
+- Citations are not automatically added to responses
+
+**Workaround:**
+- Hook is disabled in `.claude-plugin/hooks.json` (line 40: `"enabled": false`)
+- System remains stable and fully functional
+- Users can manually request source information if needed
+
+**Resolution:**
+- Waiting for Claude Code framework update to fix JSON parsing
+- Do not re-enable this hook until the framework bug is resolved
+- See `KNOWN_ISSUES.md` for detailed information and testing instructions
+
+**For Developers:**
+- Do NOT modify the hook's enabled status without testing
+- The hook code is functional in isolation (unit tests pass)
+- Issue is specific to the plugin framework's PostToolUse processing
+- Alternative citation methods can be explored via UserPromptSubmit hook
+
 ## References
 
 - Full specifications: `RAG-implementation.md`
+- Known issues and workarounds: `KNOWN_ISSUES.md`
 - Claude Code plugin docs: https://docs.claude.com/en/docs/claude-code/
 - ChromaDB documentation: https://github.com/facebookresearch/faiss/wiki

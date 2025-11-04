@@ -851,8 +851,10 @@ MIT License - see LICENSE file for details.
 ## Support
 
 - GitHub Issues: [Report bugs](https://github.com/ItMeDiaTech/rag-cli/issues)
+- Known Issues: [KNOWN_ISSUES.md](KNOWN_ISSUES.md) - Current limitations and workarounds
 - Documentation: [Wiki](https://github.com/ItMeDiaTech/rag-cli/wiki)
 - Discussions: [Community forum](https://github.com/ItMeDiaTech/rag-cli/discussions)
+- Security: [SECURITY.md](SECURITY.md) - API key management and security best practices
 
 ## Acknowledgments
 

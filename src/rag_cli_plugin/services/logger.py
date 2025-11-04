@@ -21,23 +21,58 @@ from structlog.processors import JSONRenderer, TimeStamper, add_log_level
 from rag_cli.utils.logger import create_file_handler
 
 
+def redact_sensitive_data(text: str) -> str:
+    """Redact sensitive information from log messages.
+
+    Args:
+        text: Text that might contain sensitive data
+
+    Returns:
+        Text with sensitive data redacted
+    """
+    import re
+
+    # Redact API keys and tokens
+    # Pattern: key=value or "key":"value" or key: value
+    sensitive_patterns = [
+        (r'(api[\s_-]?key\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
+        (r'(token\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
+        (r'(secret\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
+        (r'(password\s*[:=]\s*["\']?)([^\s"\']{8,})(["\']?)', r'\1***REDACTED***\3'),
+        # Redact Bearer tokens
+        (r'(Bearer\s+)([a-zA-Z0-9_\-\.]{20,})', r'\1***REDACTED***'),
+        # Redact email addresses (optional, might be too aggressive)
+        # (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '***EMAIL_REDACTED***'),
+    ]
+
+    redacted_text = text
+    for pattern, replacement in sensitive_patterns:
+        redacted_text = re.sub(pattern, replacement, redacted_text, flags=re.IGNORECASE)
+
+    return redacted_text
+
+
 class JSONFormatter(logging.Formatter):
-    """Custom JSON formatter for standard logging."""
+    """Custom JSON formatter for standard logging with sensitive data redaction."""
 
     def format(self, record: logging.LogRecord) -> str:
-        """Format log record as JSON.
+        """Format log record as JSON with sensitive data redacted.
 
         Args:
             record: Log record to format
 
         Returns:
-            JSON formatted string
+            JSON formatted string with sensitive data redacted
         """
+        # Redact sensitive data from message
+        original_message = record.getMessage()
+        redacted_message = redact_sensitive_data(original_message)
+
         log_data = {
             "timestamp": datetime.utcnow().isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": redacted_message,
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
@@ -45,22 +80,27 @@ class JSONFormatter(logging.Formatter):
 
         # Add exception info if present
         if record.exc_info:
-            log_data["exception"] = self.formatException(record.exc_info)
+            exception_text = self.formatException(record.exc_info)
+            log_data["exception"] = redact_sensitive_data(exception_text)
 
-        # Add extra fields
+        # Add extra fields (also redact these)
         for key, value in record.__dict__.items():
             if key not in ["name", "msg", "args", "created", "filename", "funcName",
                            "levelname", "levelno", "lineno", "module", "exc_info",
                            "exc_text", "stack_info", "pathname", "processName",
                            "process", "relativeCreated", "thread", "threadName",
                            "getMessage", "message"]:
-                log_data[key] = value
+                # Redact string values in extra fields
+                if isinstance(value, str):
+                    log_data[key] = redact_sensitive_data(value)
+                else:
+                    log_data[key] = value
 
         return json.dumps(log_data)
 
 
 class TextFormatter(logging.Formatter):
-    """Enhanced text formatter with colors for console output."""
+    """Enhanced text formatter with colors for console output and sensitive data redaction."""
 
     COLORS = {
         'DEBUG': '\033[36m',    # Cyan
@@ -72,26 +112,31 @@ class TextFormatter(logging.Formatter):
     }
 
     def format(self, record: logging.LogRecord) -> str:
-        """Format log record with colors for console.
+        """Format log record with colors for console and redact sensitive data.
 
         Args:
             record: Log record to format
 
         Returns:
-            Formatted string with colors
+            Formatted string with colors and sensitive data redacted
         """
         if sys.stdout.isatty():  # Only add colors if outputting to terminal
             levelname = f"{self.COLORS.get(record.levelname, '')}{record.levelname}{self.COLORS['RESET']}"
         else:
             levelname = record.levelname
 
+        # Redact sensitive data from message
+        original_message = record.getMessage()
+        redacted_message = redact_sensitive_data(original_message)
+
         # Create formatted message
         timestamp = datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S')
-        message = f"[{timestamp}] {levelname:8} | {record.name:20} | {record.getMessage()}"
+        message = f"[{timestamp}] {levelname:8} | {record.name:20} | {redacted_message}"
 
-        # Add exception info if present
+        # Add exception info if present (also redacted)
         if record.exc_info:
-            message += f"\n{self.formatException(record.exc_info)}"
+            exception_text = self.formatException(record.exc_info)
+            message += f"\n{redact_sensitive_data(exception_text)}"
 
         return message
 

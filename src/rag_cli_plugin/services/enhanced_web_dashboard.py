@@ -329,7 +329,8 @@ def get_status():
         try:
             response = requests.get(f'http://localhost:{TCP_SERVER_PORT}/status', timeout=2)
             tcp_data = response.json() if response.status_code == 200 else {}
-        except:
+        except (requests.RequestException, ConnectionError, TimeoutError, OSError) as e:
+            logger.debug(f"TCP server not available: {e}")
             tcp_data = {}
 
         # Merge with enhanced metrics

@@ -259,24 +259,31 @@ class HybridRetriever:
         """Automatically build BM25 index from existing vector store (thread-safe)."""
         with self.bm25_lock:
             try:
-                # Get all metadata from vector store
-                if not hasattr(self.vector_store, 'metadata') or not self.vector_store.metadata:
-                    logger.debug("No metadata in vector store, skipping BM25 auto-build")
-                    return
-
                 # Skip if index already built
                 if self.bm25_index is not None:
                     logger.debug("BM25 index already exists, skipping auto-build")
                     return
 
-                documents = []
-                doc_ids = []
+                # Get count from vector store
+                count = self.vector_store.collection.count()
+                if count == 0:
+                    logger.debug("No documents in vector store, skipping BM25 auto-build")
+                    return
 
-                for meta in self.vector_store.metadata:
-                    # Extract text content from metadata
-                    if hasattr(meta, 'text'):
-                        documents.append(meta.text)
-                        doc_ids.append(meta.id)
+                logger.info("Building BM25 index", documents=count)
+
+                # Get all documents from ChromaDB
+                results = self.vector_store.collection.get(
+                    limit=count,
+                    include=["documents", "metadatas"]
+                )
+
+                if not results or not results.get('documents'):
+                    logger.debug("No documents retrieved from vector store")
+                    return
+
+                documents = results['documents']
+                doc_ids = results['ids']
 
                 if documents:
                     self._build_bm25_index_unsafe(documents, doc_ids)
@@ -303,16 +310,58 @@ class HybridRetriever:
         """
         logger.info("Building BM25 index", documents=len(documents))
 
+        # Normalize documents to strings and validate
+        normalized_docs = []
+        valid_doc_ids = []
+
+        for i, doc in enumerate(documents):
+            try:
+                # Handle various data types
+                if isinstance(doc, str):
+                    text = doc
+                elif isinstance(doc, dict):
+                    # Extract text from dict if present
+                    text = doc.get('text', doc.get('content', doc.get('document', '')))
+                    if not text:
+                        logger.warning(f"Document {i} is dict without text field: {list(doc.keys())[:5]}")
+                        continue
+                elif doc is None:
+                    logger.warning(f"Document {i} is None, skipping")
+                    continue
+                else:
+                    # Try to convert to string
+                    text = str(doc)
+                    logger.warning(f"Document {i} has unexpected type {type(doc).__name__}, converted to string")
+
+                # Validate text is non-empty
+                if not text or not text.strip():
+                    logger.warning(f"Document {i} is empty, skipping")
+                    continue
+
+                normalized_docs.append(text)
+                valid_doc_ids.append(doc_ids[i] if i < len(doc_ids) else f"doc_{i}")
+
+            except Exception as e:
+                logger.warning(f"Failed to process document {i}: {e}")
+                continue
+
+        if not normalized_docs:
+            logger.error("No valid documents to build BM25 index")
+            return
+
+        if len(normalized_docs) < len(documents):
+            logger.warning(f"Only {len(normalized_docs)}/{len(documents)} documents valid for BM25 indexing")
+
         # Tokenize documents for BM25
-        tokenized_docs = [doc.lower().split() for doc in documents]
+        tokenized_docs = [doc.lower().split() for doc in normalized_docs]
 
         # Create BM25 index
         self.bm25_index = bm25s.BM25(tokenized_docs)
-        self.bm25_documents = documents
-        self.bm25_doc_ids = doc_ids
+        self.bm25_documents = normalized_docs
+        self.bm25_doc_ids = valid_doc_ids
 
-        logger.info("BM25 index built")
-        metrics.record_count("bm25_documents", len(documents))
+        logger.info("BM25 index built", valid_documents=len(normalized_docs))
+        metrics.record_count("bm25_documents", len(normalized_docs))
 
     @log_execution_time
     def vector_search(

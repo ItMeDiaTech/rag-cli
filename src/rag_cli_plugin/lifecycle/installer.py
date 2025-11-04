@@ -40,7 +40,7 @@ def install_dependencies() -> bool:
     print("Installing dependencies...")
     try:
         subprocess.check_call([
-            sys.executable, "-m", "pip", "install",
+            "python3.11", "-m", "pip", "install",
             "-r", str(requirements),
             "--quiet"
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -27,7 +27,6 @@
       "Bash(/dev/null)",
       "Bash(findstr:*)",
       "Bash(awk:*)",
-      "Bash(*:*)",
       "Bash(for:*)",
       "Bash(do)",
       "Bash(if [ -f \"$file\" ])",
@@ -37,7 +36,11 @@
       "Bash(fi)",
       "Bash(done)",
       "Bash(pip freeze:*)",
-      "Bash(requirements-lock.txt)"
+      "Bash(requirements-lock.txt)",
+      "Bash(nul)",
+      "Bash(powershell -NoProfile -Command \"Get-Content src/rag_cli_plugin/hooks/*.py | Select-String -Pattern ''''Metadata:|  enabled:|  priority:|  triggers:'''' -A 1\")",
+      "Bash(sqlite3:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
