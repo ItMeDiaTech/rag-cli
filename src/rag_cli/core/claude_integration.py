@@ -19,16 +19,62 @@ except ImportError:
     Anthropic = None
 
 from rag_cli.core.config import get_config
-from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE
+from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE, CLAUDE_RATE_LIMIT_REQUESTS
 from rag_cli.core.retrieval_pipeline import RetrievalResult
 from rag_cli.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from rag_cli.core.prompt_templates import get_prompt_manager
 from rag_cli.core.query_classifier import QueryClassification
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_api_call
+from collections import deque
 
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
+
+
+class RateLimiter:
+    """Simple token bucket rate limiter for API calls."""
+
+    def __init__(self, max_requests: int, window_seconds: int = 60):
+        """Initialize rate limiter.
+
+        Args:
+            max_requests: Maximum requests allowed in window
+            window_seconds: Time window in seconds (default: 60)
+        """
+        self.max_requests = max_requests
+        self.window = window_seconds
+        self.requests = deque()
+
+    def check_rate_limit(self) -> bool:
+        """Check if request is allowed. Returns True if allowed, False if rate limited."""
+        now = time.time()
+
+        # Remove old requests outside window
+        while self.requests and self.requests[0] < now - self.window:
+            self.requests.popleft()
+
+        if len(self.requests) >= self.max_requests:
+            return False  # Rate limited
+
+        self.requests.append(now)
+        return True
+
+    def get_wait_time(self) -> float:
+        """Get time to wait before next request is allowed."""
+        if not self.requests:
+            return 0.0
+
+        now = time.time()
+        # Remove old requests
+        while self.requests and self.requests[0] < now - self.window:
+            self.requests.popleft()
+
+        if len(self.requests) < self.max_requests:
+            return 0.0
+
+        # Time until oldest request expires
+        return (self.requests[0] + self.window) - now
 
 
 class CostLimitExceededError(Exception):
@@ -123,6 +169,10 @@ class ClaudeIntegration:
         self.cache_max_size = RESPONSE_CACHE_MAX_SIZE
         self.cache_hits = 0
         self.cache_misses = 0
+
+        # Rate limiting
+        self.rate_limiter = RateLimiter(max_requests=CLAUDE_RATE_LIMIT_REQUESTS, window_seconds=60)
+        logger.info(f"Rate limiter initialized: {CLAUDE_RATE_LIMIT_REQUESTS} requests per minute")
 
     def _build_context(
         self,
@@ -482,6 +532,15 @@ Please provide a comprehensive answer based on the context above."""
         Returns:
             Tuple of (response text, token usage)
         """
+        # Check rate limit before making API call
+        if not self.rate_limiter.check_rate_limit():
+            wait_time = self.rate_limiter.get_wait_time()
+            logger.warning(f"Rate limit reached. Waiting {wait_time:.1f} seconds...")
+            time.sleep(wait_time)
+            # Try again after waiting
+            if not self.rate_limiter.check_rate_limit():
+                raise Exception("Rate limit exceeded even after waiting")
+
         def api_call():
             return self.client.messages.create(
                 model=self.model,
@@ -522,6 +581,15 @@ Please provide a comprehensive answer based on the context above."""
         Returns:
             Tuple of (response text, token usage)
         """
+        # Check rate limit before making API call
+        if not self.rate_limiter.check_rate_limit():
+            wait_time = self.rate_limiter.get_wait_time()
+            logger.warning(f"Rate limit reached. Waiting {wait_time:.1f} seconds...")
+            time.sleep(wait_time)
+            # Try again after waiting
+            if not self.rate_limiter.check_rate_limit():
+                raise Exception("Rate limit exceeded even after waiting")
+
         def api_call():
             return self.client.messages.create(
                 model=self.model,

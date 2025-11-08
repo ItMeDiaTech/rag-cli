@@ -298,7 +298,7 @@ class SemanticCache:
             current_time = time.time()
             active_cache = OrderedDict()
             for key, entry in self.cache.items():
-                age = current_time - entry['timestamp']
+                age = current_time - entry.created_at.timestamp()
                 if age < self.ttl.total_seconds():
                     active_cache[key] = entry
 
@@ -306,11 +306,11 @@ class SemanticCache:
             serializable_cache = {}
             for key, entry in active_cache.items():
                 serializable_cache[key] = {
-                    'query': entry['query'],
-                    'response': entry['response'],
-                    'embedding': entry['embedding'].tolist(),  # Convert numpy array to list
-                    'timestamp': entry['timestamp'],
-                    'metadata': entry.get('metadata', {})
+                    'query': entry.query,
+                    'response': entry.result,
+                    'embedding': entry.query_embedding.tolist(),  # Convert numpy array to list
+                    'timestamp': entry.created_at.timestamp(),
+                    'metadata': {}
                 }
 
             cache_data = {
@@ -378,7 +378,7 @@ class SemanticCache:
 
 # Import HNSW version for better performance
 try:
-    from core.semantic_cache_hnsw import HNSWSemanticCache
+    from rag_cli.core.semantic_cache_hnsw import HNSWSemanticCache
     USE_HNSW = True
 except ImportError:
     logger.warning("HNSW semantic cache not available, falling back to linear search")

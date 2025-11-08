@@ -626,19 +626,19 @@ def check_maf_status() -> Dict[str, Any]:
     """
     try:
         # Try to import and initialize orchestrator
-        from agents.maf.core.agent import AgentRegistry
-        from agents.maf.core.orchestrator import WorkflowOrchestrator
-        
+        from rag_cli.agents.maf.core.agent import AgentRegistry
+        from rag_cli.agents.maf.core.orchestrator import WorkflowOrchestrator
+
         # Get agent registry
         registry = AgentRegistry()
         agents = registry.get_all_agents()
-        
+
         # Create orchestrator instance
         orchestrator = WorkflowOrchestrator(agents=agents)
-        
+
         # Get stats
         stats = orchestrator.get_stats()
-        
+
         return {
             'available': True,
             'orchestrator_initialized': True,

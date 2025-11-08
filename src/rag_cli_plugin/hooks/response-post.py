@@ -56,7 +56,7 @@ def get_cache_key(session_id: str, prompt: str) -> str:
         Cache key string
     """
     # Use hash of prompt to create deterministic key
-    prompt_hash = hashlib.md5(prompt.encode()).hexdigest()[:16]
+    prompt_hash = hashlib.blake2b(prompt.encode(), digest_size=16).hexdigest()
     return f"{session_id}_{prompt_hash}"
 
 def load_cached_results(cache_key: str) -> Optional[List[Dict[str, Any]]]:

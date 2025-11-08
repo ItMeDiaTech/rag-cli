@@ -161,7 +161,7 @@ class ResultSynthesizer:
 
         for sq_idx, result in results_with_source:
             # Create hash of text content
-            text_hash = hashlib.md5(result.text.encode()).hexdigest()
+            text_hash = hashlib.blake2b(result.text.encode(), digest_size=16).hexdigest()
 
             # Check exact duplicate
             if text_hash in seen_hashes:
@@ -371,7 +371,7 @@ async def test_synthesizer():
     print("Testing Result Synthesizer...")
     print("=" * 70)
 
-    from agents.query_decomposer import SubQuery
+    from rag_cli.agents.query_decomposer import SubQuery
 
     synthesizer = get_result_synthesizer()
 

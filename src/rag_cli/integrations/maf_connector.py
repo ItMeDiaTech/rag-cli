@@ -218,7 +218,7 @@ class MAFConnector:
             return None
 
         try:
-            from agents.maf.core.task_classifier import IntelligentTaskClassifier
+            from rag_cli.agents.maf.core.task_classifier import IntelligentTaskClassifier
 
             classifier = IntelligentTaskClassifier()
             classification = classifier.classify_task(query)
@@ -307,15 +307,20 @@ class MAFConnector:
             logger.warning("MAF not available for multi-agent execution")
             return {agent: None for agent in agents}
 
+        if not agents:
+            logger.warning("No agents specified for multi-agent execution")
+            return {}
+
         logger.info(f"Executing {len(agents)} MAF agents with {strategy} strategy",
                    agents=agents)
 
         results = {}
+        per_agent_timeout = timeout / len(agents)
 
         if strategy == 'parallel':
             # Execute all agents concurrently
             tasks = [
-                self.execute_agent(agent, task_data.copy(), timeout=timeout/len(agents))
+                self.execute_agent(agent, task_data.copy(), timeout=per_agent_timeout)
                 for agent in agents
             ]
 
@@ -340,7 +345,7 @@ class MAFConnector:
             for agent in agents:
                 try:
                     result = await self.execute_agent(agent, task_data.copy(),
-                                                     timeout=timeout/len(agents))
+                                                     timeout=per_agent_timeout)
                     results[agent] = result
                     logger.debug(f"Agent {agent} completed")
                 except Exception as e:
@@ -552,7 +557,7 @@ class MAFConnector:
         # Try to get version info from embedded MAF
         if self.maf_available:
             try:
-                from agents.maf.core import agent
+                from rag_cli.agents.maf.core import agent
                 health['maf_version'] = getattr(agent, '__version__', '1.2.2')
             except Exception:
                 health['maf_version'] = '1.2.2 (embedded)'
@@ -588,7 +593,7 @@ async def test_maf_connection():
     # Health check
     health = await connector.health_check()
     print(f"MAF Available: {health['maf_available']}")
-    print(f"MAF Path: {health['maf_path']}")
+    print(f"MAF Path: {health['maf_location']}")
     print(f"Available Agents: {', '.join(health['available_agents'])}")
 
     if not connector.is_available():

@@ -319,47 +319,54 @@ def start_tcp_server() -> Optional[subprocess.Popen]:
         tcp_log = open(tcp_log_file, 'a', buffering=1)  # Line buffered
         logger.info(f"TCP server output will be logged to {tcp_log_file}")
 
-        # Create sanitized environment (exclude sensitive variables)
-        env = os.environ.copy()
-        # Remove potentially sensitive environment variables that aren't needed
-        sensitive_vars = ['ANTHROPIC_API_KEY', 'TAVILY_API_KEY', 'OPENAI_API_KEY']
-        for var in sensitive_vars:
-            env.pop(var, None)
+        try:
+            # Create sanitized environment (exclude sensitive variables)
+            env = os.environ.copy()
+            # Remove potentially sensitive environment variables that aren't needed
+            sensitive_vars = ['ANTHROPIC_API_KEY', 'TAVILY_API_KEY', 'OPENAI_API_KEY']
+            for var in sensitive_vars:
+                env.pop(var, None)
 
-        # Start the process with output redirected to log file
-        process = subprocess.Popen(
-            ['python', '-m', 'src.monitoring.tcp_server'],
-            cwd=str(project_root),
-            stdout=tcp_log,
-            stderr=subprocess.STDOUT,  # Combine stderr with stdout
-            env=env
-        )
+            # Start the process with output redirected to log file
+            process = subprocess.Popen(
+                ['python', '-m', 'rag_cli_plugin.services.tcp_server'],
+                cwd=str(project_root),
+                stdout=tcp_log,
+                stderr=subprocess.STDOUT,  # Combine stderr with stdout
+                env=env
+            )
 
-        # Wait for server to start with exponential backoff
-        max_attempts = 20
-        wait_time = 0.05  # Start with 50ms
-        for attempt in range(max_attempts):
-            if is_port_open(port=9999, timeout=0.5):
-                logger.info(f"TCP server started successfully (PID: {process.pid})")
+            # Wait for server to start with exponential backoff
+            max_attempts = 20
+            wait_time = 0.05  # Start with 50ms
+            for attempt in range(max_attempts):
+                if is_port_open(port=9999, timeout=0.5):
+                    logger.info(f"TCP server started successfully (PID: {process.pid})")
 
-                # Register process and log file in global registry
-                _running_processes['tcp_server'] = {
-                    'process': process,
-                    'log_file': tcp_log,
-                    'pid': process.pid
-                }
+                    # Register process and log file in global registry
+                    _running_processes['tcp_server'] = {
+                        'process': process,
+                        'log_file': tcp_log,
+                        'pid': process.pid
+                    }
 
-                # Write PID file for cleanup on next start
-                write_pid_file('tcp_server', process.pid)
+                    # Write PID file for cleanup on next start
+                    write_pid_file('tcp_server', process.pid)
 
-                return process
-            time.sleep(wait_time)
-            wait_time = min(wait_time * 1.5, 0.5)  # Exponential backoff, max 500ms
+                    return process
+                time.sleep(wait_time)
+                wait_time = min(wait_time * 1.5, 0.5)  # Exponential backoff, max 500ms
 
-        logger.error("TCP server failed to start - timeout waiting for port 9999")
-        process.terminate()
-        tcp_log.close()
-        return None
+            logger.error("TCP server failed to start - timeout waiting for port 9999")
+            process.terminate()
+            tcp_log.close()
+            return None
+
+        except Exception as e:
+            # Ensure file handle is closed on exception
+            tcp_log.close()
+            logger.error(f"Exception while starting TCP server: {e}")
+            raise
 
     except Exception as e:
         logger.error(f"Failed to start TCP server: {e}")
@@ -393,7 +400,7 @@ def start_web_dashboard() -> Optional[subprocess.Popen]:
 
         # Start the process with output redirected to log file
         process = subprocess.Popen(
-            ['python', '-m', 'src.monitoring.web_dashboard', '5000'],
+            ['python', '-m', 'rag_cli_plugin.services.web_dashboard', '5000'],
             cwd=str(project_root),
             stdout=dashboard_log,
             stderr=subprocess.STDOUT,  # Combine stderr with stdout

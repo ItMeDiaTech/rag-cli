@@ -573,7 +573,7 @@ def _format_orchestration_summary(strategy_used: str, classification: Optional[Q
     Returns:
         Formatted markdown summary string
     """
-    from monitoring.output_formatter import OutputFormatter
+    from rag_cli_plugin.services.output_formatter import OutputFormatter
 
     formatter = OutputFormatter(verbose=False)
     formatted_summary = formatter.format_header("Query Processing", 2)
@@ -686,7 +686,7 @@ def _cache_retrieval_results(documents: List, query: str, event: Dict[str, Any],
         import hashlib
 
         session_id = event.get("session_id", "unknown")
-        prompt_hash = hashlib.md5(query.encode()).hexdigest()[:16]
+        prompt_hash = hashlib.blake2b(query.encode(), digest_size=16).hexdigest()
         cache_key = f"{session_id}_{prompt_hash}"
 
         cache_dir = project_root / "data" / "cache"

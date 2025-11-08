@@ -84,7 +84,7 @@ class EmbeddingManager:
             embeddings = []
             for text in texts:
                 # Generate deterministic mock embedding from text hash
-                hash_obj = hashlib.md5(text.encode())
+                hash_obj = hashlib.blake2b(text.encode(), digest_size=16)
                 hash_bytes = hash_obj.digest()
 
                 # Convert to floats
@@ -201,8 +201,9 @@ class MemoryManager:
         """Store a memory"""
 
         # Generate ID
-        memory_id = hashlib.md5(
-            f"{memory_data.get('content', '')}{time.time()}".encode()
+        memory_id = hashlib.blake2b(
+            f"{memory_data.get('content', '')}{time.time()}".encode(),
+            digest_size=16
         ).hexdigest()
 
         # Extract content
@@ -275,7 +276,7 @@ class MemoryManager:
         self.logger.debug("Searching for: %s...", query[:100])
 
         # Check cache first
-        cache_key = hashlib.md5(f"{query}{limit}".encode()).hexdigest()
+        cache_key = hashlib.blake2b(f"{query}{limit}".encode(), digest_size=16).hexdigest()
         if cache_key in self.memory_cache:
             self.cache_hits += 1
             self.logger.debug("Cache hit for query")
@@ -437,7 +438,7 @@ class MemoryManager:
                 summary = f"Consolidated {len(old_memories)} memories from before {cutoff_date}"
 
                 # Store consolidation
-                consolidation_id = hashlib.md5(f"{summary}{time.time()}".encode()).hexdigest()
+                consolidation_id = hashlib.blake2b(f"{summary}{time.time()}".encode(), digest_size=16).hexdigest()
 
                 cursor.execute('''
                     INSERT INTO consolidations (id, summary, memory_ids, timestamp)
@@ -450,9 +451,10 @@ class MemoryManager:
                 ))
 
                 # Delete old memories
-                cursor.execute('''
+                placeholders = ','.join('?' * len(memory_ids))
+                cursor.execute(f'''
                     DELETE FROM memories
-                    WHERE id IN ({','.join(['?'] * len(memory_ids))})
+                    WHERE id IN ({placeholders})
                 ''', memory_ids)
 
                 conn.commit()

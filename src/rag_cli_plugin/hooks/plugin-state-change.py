@@ -138,7 +138,7 @@ def initialize_resources() -> bool:
 
         # Try to start monitoring services
         try:
-            from monitoring.service_manager import ensure_services_running
+            from rag_cli_plugin.services.service_manager import ensure_services_running
             ensure_services_running()
             logger.info("Monitoring services started")
         except Exception as e:

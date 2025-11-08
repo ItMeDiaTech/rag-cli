@@ -77,7 +77,7 @@ def load_auto_indexing_config() -> Dict[str, Any]:
             ".env"
         ],
         "debounce_ms": 5000,
-        "supported_formats": [".md", ".txt", ".rst", ".pd", ".docx"],
+        "supported_formats": [".md", ".txt", ".rst", ".pdf", ".docx"],
         "max_file_size_mb": 10
     }
 

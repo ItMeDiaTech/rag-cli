@@ -33,6 +33,7 @@ from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from rag_cli.core.config import get_config
+from rag_cli.core.constants import MAX_FILE_SIZE_MB
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_execution_time
 
 
@@ -221,6 +222,15 @@ class DocumentProcessor:
 
         if not file_path.exists():
             raise FileNotFoundError(f"Document not found: {file_path}")
+
+        # Validate file size to prevent memory exhaustion
+        max_size_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
+        file_size = file_path.stat().st_size
+        if file_size > max_size_bytes:
+            raise ValueError(
+                f"File {file_path.name} ({file_size / 1024 / 1024:.1f}MB) "
+                f"exceeds maximum size of {MAX_FILE_SIZE_MB}MB"
+            )
 
         # Check if format is supported
         suffix = file_path.suffix.lower()
@@ -472,7 +482,7 @@ class DocumentProcessor:
         """
         # Use hash of source path and timestamp
         hash_input = f"{source}_{datetime.now().isoformat()}"
-        return hashlib.md5(hash_input.encode()).hexdigest()[:16]
+        return hashlib.blake2b(hash_input.encode(), digest_size=16).hexdigest()
 
     @log_execution_time
     def chunk_document(

@@ -710,7 +710,7 @@ def get_event_history():
 def get_latency_stats():
     """Get latency statistics with percentiles."""
     try:
-        from monitoring.latency_tracker import get_latency_tracker
+        from rag_cli_plugin.services.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         summary = tracker.get_summary()
@@ -737,7 +737,7 @@ def get_operation_latency(operation: str):
         return jsonify({"error": "Invalid operation format"}), 400
 
     try:
-        from monitoring.latency_tracker import get_latency_tracker
+        from rag_cli_plugin.services.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         stats = tracker.get_stats(operation)

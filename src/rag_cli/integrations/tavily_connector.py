@@ -43,7 +43,8 @@ class TavilyConnector:
             api_key: Tavily API key (reads from env TAVILY_API_KEY if not provided)
         """
         self.api_key = api_key or os.getenv("TAVILY_API_KEY")
-        self.quota_file = Path("config/tavily_usage.json")
+        project_root = Path(__file__).parent.parent.parent.parent
+        self.quota_file = project_root / "config" / "tavily_usage.json"
         self.rate_limit_delay = 6.0  # 10 requests/minute = 6s between requests
 
         self.last_request_time = 0.0
@@ -73,8 +74,11 @@ class TavilyConnector:
             self.quota_file.write_text(json.dumps(initial_data, indent=2))
             logger.info("Created Tavily quota tracking file")
 
-    def _get_usage(self) -> Dict[str, Any]:
+    def _get_usage(self, _retry: bool = False) -> Dict[str, Any]:
         """Get current usage statistics.
+
+        Args:
+            _retry: Internal flag to prevent infinite recursion
 
         Returns:
             Dictionary with month, searches, last_reset
@@ -96,9 +100,12 @@ class TavilyConnector:
             return data
 
         except (json.JSONDecodeError, FileNotFoundError) as e:
+            if _retry:
+                logger.error("Failed to initialize quota file after retry")
+                raise
             logger.error(f"Failed to read quota file: {e}")
             self._init_quota_file()
-            return self._get_usage()
+            return self._get_usage(_retry=True)
 
     def _increment_usage(self):
         """Increment usage counter."""

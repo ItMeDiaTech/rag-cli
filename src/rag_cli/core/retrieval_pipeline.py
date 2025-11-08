@@ -598,7 +598,7 @@ class HybridRetriever:
 
         # Import QueryIntent for type checking
         try:
-            from core.query_classifier import QueryIntent
+            from rag_cli.core.query_classifier import QueryIntent
         except ImportError:
             return (vector_weight, keyword_weight)
 
