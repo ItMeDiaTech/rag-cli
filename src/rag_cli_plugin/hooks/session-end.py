@@ -106,8 +106,7 @@ def graceful_shutdown_vector_store() -> bool:
             try:
                 # ChromaDB PersistentClient doesn't have an explicit close method
                 # but we can ensure all pending writes are flushed
-                collection = _vector_store.collection
-                count = collection.count()
+                count = _vector_store.get_vector_count()
                 logger.info(f"Vector store contains {count} vectors at shutdown")
 
                 # Clear the singleton reference to allow garbage collection
