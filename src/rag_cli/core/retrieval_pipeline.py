@@ -15,6 +15,7 @@ import threading
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+from contextlib import contextmanager
 import numpy as np
 from collections import defaultdict, OrderedDict
 
@@ -636,6 +637,42 @@ class HybridRetriever:
 
         return (vector_weight, keyword_weight)
 
+    @contextmanager
+    def _temporary_weights(self, vector_weight: Optional[float] = None, keyword_weight: Optional[float] = None):
+        """Temporarily override retrieval weights using a context manager.
+
+        This context manager ensures weights are always restored, even if an exception occurs.
+        Safer than manual save/restore pattern which can leak state on errors.
+
+        Args:
+            vector_weight: Temporary vector weight (None = keep current)
+            keyword_weight: Temporary keyword weight (None = keep current)
+
+        Yields:
+            None
+
+        Example:
+            with self._temporary_weights(0.8, 0.2):
+                results = self._hybrid_search(query, top_k)
+                # Weights automatically restored after this block
+        """
+        # Save original values
+        original_vector_weight = self.vector_weight
+        original_keyword_weight = self.keyword_weight
+
+        # Apply temporary values if provided
+        if vector_weight is not None:
+            self.vector_weight = vector_weight
+        if keyword_weight is not None:
+            self.keyword_weight = keyword_weight
+
+        try:
+            yield
+        finally:
+            # Always restore original weights
+            self.vector_weight = original_vector_weight
+            self.keyword_weight = original_keyword_weight
+
     async def vector_search_async(
         self,
         query_embedding: np.ndarray,
@@ -810,13 +847,8 @@ class HybridRetriever:
         # Get adaptive weights based on query classification
         adaptive_vector_weight, adaptive_keyword_weight = self._get_adaptive_weights(query, classification)
 
-        # Temporarily override weights for this query
-        original_vector_weight = self.vector_weight
-        original_keyword_weight = self.keyword_weight
-        self.vector_weight = adaptive_vector_weight
-        self.keyword_weight = adaptive_keyword_weight
-
-        try:
+        # Use context manager to temporarily override weights for this query
+        with self._temporary_weights(adaptive_vector_weight, adaptive_keyword_weight):
             # Check semantic cache
             if use_cache and self.cache:
                 cache_result = self.cache.get(query)
@@ -1070,11 +1102,6 @@ class HybridRetriever:
                 )
 
             return final_results
-
-        finally:
-            # Restore original weights
-            self.vector_weight = original_vector_weight
-            self.keyword_weight = original_keyword_weight
 
     @log_execution_time
     def retrieve(

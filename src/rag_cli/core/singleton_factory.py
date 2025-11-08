@@ -191,7 +191,7 @@ class SingletonRegistry:
         >>> registry.register("vector_store", VectorStoreFactory())
         >>>
         >>> embeddings = registry.get("embeddings", model_name="bert")
-        >>> vector_store = registry.get("vector_store", backend="faiss")
+        >>> vector_store = registry.get("vector_store", backend="chromadb")
     """
 
     def __init__(self):

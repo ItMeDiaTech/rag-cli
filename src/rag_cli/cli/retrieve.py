@@ -55,6 +55,132 @@ def format_response(response_text: str, sources: list, show_sources: bool = True
     return formatted
 
 
+def process_query(
+    q: str,
+    retriever,
+    claude,
+    top_k: int,
+    no_generate: bool,
+    show_chunks: bool,
+    no_sources: bool,
+    stream: bool,
+    verbose: bool,
+    console: Console
+) -> None:
+    """Process a single query and display results.
+
+    Args:
+        q: Query string to process
+        retriever: HybridRetriever instance for document retrieval
+        claude: ClaudeIntegration instance for response generation (or None)
+        top_k: Number of chunks to retrieve
+        no_generate: If True, only retrieve without generating response
+        show_chunks: If True, display retrieved chunks
+        no_sources: If True, hide source citations
+        stream: If True, stream the response
+        verbose: If True, show detailed metrics
+        console: Rich Console instance for output
+    """
+    start_time = time.time()
+
+    # Retrieve relevant chunks
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+    ) as progress:
+        task = progress.add_task("Retrieving relevant documents...", total=None)
+
+        try:
+            results = retriever.retrieve(q, top_k=top_k)
+            retrieval_time = time.time() - start_time
+            progress.update(task, completed=100)
+        except Exception as e:
+            console.print(f"[red]Retrieval failed: {e}[/red]")
+            logger.exception("Retrieval failed", error=str(e))
+            return
+
+    if not results:
+        console.print("[yellow]No relevant documents found.[/yellow]")
+        return
+
+    # Display retrieved chunks if requested
+    if show_chunks:
+        console.print("\n[cyan]Retrieved Chunks:[/cyan]")
+        for i, result in enumerate(results, 1):
+            chunk_panel = Panel(
+                result.text[:500] + ("..." if len(result.text) > 500 else ""),
+                title=f"[{i}] {Path(result.source).name} (Score: {result.score:.3f})",
+                border_style="dim"
+            )
+            console.print(chunk_panel)
+
+    # Generate response if requested
+    if not no_generate and claude:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+        ) as progress:
+            task = progress.add_task("Generating response with Claude...", total=None)
+
+            try:
+                response = claude.generate_response(
+                    q,
+                    results,
+                    stream=stream,
+                    use_cache=True
+                )
+                generation_time = time.time() - start_time - retrieval_time
+                progress.update(task, completed=100)
+
+                # Format and display response
+                formatted_response = format_response(
+                    response.answer,
+                    response.sources,
+                    show_sources=not no_sources
+                )
+
+                console.print("\n[green]Response:[/green]")
+                console.print(Markdown(formatted_response))
+
+                # Display metrics
+                if verbose:
+                    metrics_table = Table(show_header=False)
+                    metrics_table.add_column("Metric", style="cyan")
+                    metrics_table.add_column("Value", justify="right", style="white")
+
+                    metrics_table.add_row("Retrieval Time", f"{retrieval_time:.2f}s")
+                    metrics_table.add_row("Generation Time", f"{generation_time:.2f}s")
+                    metrics_table.add_row("Total Time", f"{response.latency_seconds:.2f}s")
+                    metrics_table.add_row("Chunks Retrieved", str(len(results)))
+
+                    # Safely access token_usage (may not be present in all responses)
+                    if hasattr(response, 'token_usage') and response.token_usage:
+                        input_tokens = response.token_usage.get('input', 0)
+                        output_tokens = response.token_usage.get('output', 0)
+                        metrics_table.add_row("Input Tokens", str(input_tokens))
+                        metrics_table.add_row("Output Tokens", str(output_tokens))
+                    else:
+                        metrics_table.add_row("Input Tokens", "N/A")
+                        metrics_table.add_row("Output Tokens", "N/A")
+
+                    console.print("\n")
+                    console.print(metrics_table)
+
+            except Exception as e:
+                console.print(f"[red]Generation failed: {e}[/red]")
+                logger.exception("Generation failed", error=str(e))
+    else:
+        # Just show retrieval results summary
+        console.print(f"\n[green]Retrieved {len(results)} relevant chunks in {retrieval_time:.2f}s[/green]")
+
+        sources = list(set(Path(r.source).name for r in results))
+        console.print("\n[cyan]Sources:[/cyan]")
+        for source in sources:
+            console.print(f"  * {source}")
+
+
 @click.command()
 @click.option('--query', '-q', help='Query to search for (interactive if not provided)')
 @click.option('--top-k', '-k', type=int, default=5, help='Number of chunks to retrieve')
@@ -121,107 +247,6 @@ def main(
 
     console.print(f"[green]Index loaded: {vector_store.get_vector_count()} vectors[/green]\n")
 
-    def process_query(q: str):
-        """Process a single query."""
-        start_time = time.time()
-
-        # Retrieve relevant chunks
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
-        ) as progress:
-            task = progress.add_task("Retrieving relevant documents...", total=None)
-
-            try:
-                results = retriever.retrieve(q, top_k=top_k)
-                retrieval_time = time.time() - start_time
-                progress.update(task, completed=100)
-            except Exception as e:
-                console.print(f"[red]Retrieval failed: {e}[/red]")
-                logger.exception("Retrieval failed", error=str(e))
-                return
-
-        if not results:
-            console.print("[yellow]No relevant documents found.[/yellow]")
-            return
-
-        # Display retrieved chunks if requested
-        if show_chunks:
-            console.print("\n[cyan]Retrieved Chunks:[/cyan]")
-            for i, result in enumerate(results, 1):
-                chunk_panel = Panel(
-                    result.text[:500] + ("..." if len(result.text) > 500 else ""),
-                    title=f"[{i}] {Path(result.source).name} (Score: {result.score:.3f})",
-                    border_style="dim"
-                )
-                console.print(chunk_panel)
-
-        # Generate response if requested
-        if not no_generate and claude:
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                transient=True,
-            ) as progress:
-                task = progress.add_task("Generating response with Claude...", total=None)
-
-                try:
-                    response = claude.generate_response(
-                        q,
-                        results,
-                        stream=stream,
-                        use_cache=True
-                    )
-                    generation_time = time.time() - start_time - retrieval_time
-                    progress.update(task, completed=100)
-
-                    # Format and display response
-                    formatted_response = format_response(
-                        response.answer,
-                        response.sources,
-                        show_sources=not no_sources
-                    )
-
-                    console.print("\n[green]Response:[/green]")
-                    console.print(Markdown(formatted_response))
-
-                    # Display metrics
-                    if verbose:
-                        metrics_table = Table(show_header=False)
-                        metrics_table.add_column("Metric", style="cyan")
-                        metrics_table.add_column("Value", justify="right", style="white")
-
-                        metrics_table.add_row("Retrieval Time", f"{retrieval_time:.2f}s")
-                        metrics_table.add_row("Generation Time", f"{generation_time:.2f}s")
-                        metrics_table.add_row("Total Time", f"{response.latency_seconds:.2f}s")
-                        metrics_table.add_row("Chunks Retrieved", str(len(results)))
-
-                        # Safely access token_usage (may not be present in all responses)
-                        if hasattr(response, 'token_usage') and response.token_usage:
-                            input_tokens = response.token_usage.get('input', 0)
-                            output_tokens = response.token_usage.get('output', 0)
-                            metrics_table.add_row("Input Tokens", str(input_tokens))
-                            metrics_table.add_row("Output Tokens", str(output_tokens))
-                        else:
-                            metrics_table.add_row("Input Tokens", "N/A")
-                            metrics_table.add_row("Output Tokens", "N/A")
-
-                        console.print("\n")
-                        console.print(metrics_table)
-
-                except Exception as e:
-                    console.print(f"[red]Generation failed: {e}[/red]")
-                    logger.exception("Generation failed", error=str(e))
-        else:
-            # Just show retrieval results summary
-            console.print(f"\n[green]Retrieved {len(results)} relevant chunks in {retrieval_time:.2f}s[/green]")
-
-            sources = list(set(Path(r.source).name for r in results))
-            console.print("\n[cyan]Sources:[/cyan]")
-            for source in sources:
-                console.print(f"  * {source}")
-
     # Handle interactive or single query mode
     if interactive or (not query):
         console.print("[yellow]Interactive mode. Type 'quit' or 'exit' to stop.[/yellow]\n")
@@ -235,7 +260,7 @@ def main(
                     break
 
                 if q.strip():
-                    process_query(q)
+                    process_query(q, retriever, claude, top_k, no_generate, show_chunks, no_sources, stream, verbose, console)
                     console.print("\n" + "="*60 + "\n")
 
             except KeyboardInterrupt:
@@ -248,7 +273,7 @@ def main(
     else:
         # Single query mode
         console.print(f"[cyan]Query:[/cyan] {query}\n")
-        process_query(query)
+        process_query(query, retriever, claude, top_k, no_generate, show_chunks, no_sources, stream, verbose, console)
 
     # Show usage statistics if using Claude
     if not no_generate and claude and verbose:

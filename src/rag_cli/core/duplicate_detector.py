@@ -250,23 +250,20 @@ class DuplicateDetector:
     def _check_fuzzy_duplicate(self, content: str) -> Tuple[bool, Optional[ContentHash]]:
         """Check for fuzzy duplicates using similarity.
 
+        Note: This feature is not yet implemented. Always returns False.
+        TODO: Implement using SimHash or MinHash for fuzzy duplicate detection.
+
+        For production implementation, consider:
+        - Store MinHash/SimHash in ContentHash
+        - Use Jaccard similarity for comparison
+        - Set configurable similarity threshold (e.g., 0.8)
+
         Args:
             content: Content to check
 
         Returns:
-            Tuple of (is_duplicate, hash_info)
+            Tuple of (False, None) - fuzzy matching not implemented
         """
-        # Simple fuzzy matching: check if content is very similar
-        # For production, could use MinHash or SimHash
-        normalized = self._normalize_content(content)
-        len(normalized)
-
-        for hash_info in self.hashes.values():
-            # This is a placeholder - in production would need to store
-            # fuzzy hashes or use approximate matching
-            # For now, just return False
-            pass
-
         return False, None
 
     def save(self):
