@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from rag_cli.core.config import get_config
-from rag_cli.core.constants import MAX_FILE_SIZE_MB
+from rag_cli.core.constants import MAX_FILE_SIZE_MB, CHARS_PER_TOKEN
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_execution_time
 
 
@@ -149,7 +149,7 @@ class DocumentProcessor:
             Estimated token count
         """
         # Simple estimation: ~4 characters per token
-        return len(text) // 4
+        return len(text) // CHARS_PER_TOKEN
 
     @log_execution_time
     def process_text(
@@ -997,7 +997,7 @@ def _chunk_document_worker(
             chunk_index=i,
             total_chunks=total_chunks,
             char_count=len(text),
-            token_count=len(text) // 4,  # Approximate token count
+            token_count=len(text) // CHARS_PER_TOKEN,  # Approximate token count
             source=document.source,
             doc_id=document.doc_id,
             chunk_id=f"{document.doc_id}_chunk_{i}"

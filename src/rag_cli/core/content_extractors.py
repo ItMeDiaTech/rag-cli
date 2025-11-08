@@ -5,7 +5,7 @@ Provides tools to extract clean, structured content from HTML pages and convert 
 
 import re
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from bs4 import BeautifulSoup
 import trafilatura
 
@@ -107,7 +107,7 @@ class ContentExtractor:
 
         return content_without_code, code_blocks
 
-    def extract_metadata_from_html(self, html: str) -> Dict[str, any]:
+    def extract_metadata_from_html(self, html: str) -> Dict[str, Any]:
         """Extract metadata from HTML.
 
         Args:
@@ -213,7 +213,7 @@ class ContentExtractor:
 
         return content
 
-    def extract_tables(self, html: str) -> List[Dict[str, any]]:
+    def extract_tables(self, html: str) -> List[Dict[str, Any]]:
         """Extract tables from HTML.
 
         Args:

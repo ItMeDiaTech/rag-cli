@@ -6,7 +6,7 @@ Tracks errors across sessions to identify patterns and trigger online documentat
 import json
 import hashlib
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -348,7 +348,7 @@ class ErrorTracker:
             logger.error(f"Error loading error history: {e}")
             self.errors = defaultdict(list)
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """Get error tracking statistics.
 
         Returns:

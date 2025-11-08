@@ -2,7 +2,7 @@
 """Document indexing script for RAG-CLI.
 
 This script processes documents from a directory, generates embeddings,
-and stores them in the FAISS vector index for retrieval.
+and stores them in the ChromaDB vector store for retrieval.
 """
 
 import sys
@@ -52,7 +52,7 @@ def main(
 
     This command processes all supported documents in the specified directory,
     chunks them appropriately, generates embeddings, and stores them in the
-    FAISS vector index for later retrieval.
+    ChromaDB vector store for later retrieval.
 
     Example:
         rag-index ./docs --recursive --pattern "*.md"
@@ -293,7 +293,7 @@ def main(
         stats_table.add_row("Documents Processed", str(len(documents_to_process)))
         stats_table.add_row("Total Chunks", str(len(all_chunks)))
         stats_table.add_row("Average Chunks/Document", f"{len(all_chunks) / len(documents_to_process):.1f}")
-        stats_table.add_row("Total Vectors", str(vector_store.collection.count()))
+        stats_table.add_row("Total Vectors", str(vector_store.get_vector_count()))
         if skipped_count > 0:
             stats_table.add_row("Skipped Duplicates", str(skipped_count))
         if updated_sources:

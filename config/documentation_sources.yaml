@@ -1,0 +1,153 @@
+# Documentation Sources Configuration
+#
+# This file defines documentation sources for various technologies that can be
+# automatically fetched and indexed by RAG-CLI's project indexer.
+#
+# Each source has:
+#   - name: Technology name
+#   - url: Documentation URL
+#   - priority: Fetch priority (1=highest)
+#   - doc_type: Type of documentation (official, tutorial, community)
+#   - enabled: Whether to fetch this source
+
+documentation_sources:
+  # Programming Languages
+  Python:
+    - url: "https://docs.python.org/3/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+    - url: "https://realpython.com/"
+      priority: 2
+      doc_type: "tutorial"
+      enabled: true
+
+  JavaScript:
+    - url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+    - url: "https://javascript.info/"
+      priority: 2
+      doc_type: "tutorial"
+      enabled: true
+
+  TypeScript:
+    - url: "https://www.typescriptlang.org/docs/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Rust:
+    - url: "https://doc.rust-lang.org/book/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+    - url: "https://rust-lang.github.io/async-book/"
+      priority: 2
+      doc_type: "official"
+      enabled: true
+
+  Go:
+    - url: "https://go.dev/doc/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Java:
+    - url: "https://docs.oracle.com/javase/tutorial/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  # Web Frameworks
+  Django:
+    - url: "https://docs.djangoproject.com/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Flask:
+    - url: "https://flask.palletsprojects.com/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  FastAPI:
+    - url: "https://fastapi.tiangolo.com/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  React:
+    - url: "https://react.dev/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  "Vue.js":
+    - url: "https://vuejs.org/guide/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Angular:
+    - url: "https://angular.io/docs"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Express:
+    - url: "https://expressjs.com/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  "Next.js":
+    - url: "https://nextjs.org/docs"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  # AI/ML Libraries
+  LangChain:
+    - url: "https://python.langchain.com/docs/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  "Anthropic SDK":
+    - url: "https://docs.anthropic.com/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  FAISS:
+    - url: "https://github.com/facebookresearch/faiss/wiki"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  NumPy:
+    - url: "https://numpy.org/doc/stable/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  Pandas:
+    - url: "https://pandas.pydata.org/docs/"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  PyTorch:
+    - url: "https://pytorch.org/docs/stable/index.html"
+      priority: 1
+      doc_type: "official"
+      enabled: true
+
+  TensorFlow:
+    - url: "https://www.tensorflow.org/api_docs"
+      priority: 1
+      doc_type: "official"
+      enabled: true

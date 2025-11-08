@@ -77,7 +77,7 @@ from rag_cli.core.claude_code_adapter import get_adapter
 from rag_cli.core.query_classifier import QueryClassification
 from rag_cli_plugin.services.logger import get_logger
 from rag_cli_plugin.services.service_manager import ensure_services_running
-from rag_cli.core.constants import TCP_CHECK_CACHE_SECONDS
+from rag_cli.core.constants import TCP_CHECK_CACHE_SECONDS, MAX_BACKOFF_SECONDS
 
 logger = get_logger(__name__)
 
@@ -144,7 +144,7 @@ def check_tcp_server_available() -> bool:
 
             # Increment failure count and calculate backoff
             _tcp_consecutive_failures += 1
-            backoff_seconds = min(TCP_CHECK_CACHE_SECONDS * (2 ** (_tcp_consecutive_failures - 1)), 240)
+            backoff_seconds = min(TCP_CHECK_CACHE_SECONDS * (2 ** (_tcp_consecutive_failures - 1)), MAX_BACKOFF_SECONDS)
             _tcp_backoff_until = current_time + backoff_seconds
 
             if _tcp_consecutive_failures > 1:
@@ -328,7 +328,7 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
     """
     try:
         # Check if vector store exists
-        vector_store_path = project_root / "data" / "vectors" / "faiss_index"
+        vector_store_path = project_root / "data" / "vectors" / "chroma_db"
         if not vector_store_path.exists():
             logger.warning("No vector index found, skipping RAG enhancement")
             return []

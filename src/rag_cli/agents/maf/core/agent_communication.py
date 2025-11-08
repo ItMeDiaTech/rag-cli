@@ -7,10 +7,13 @@ Implements MCP-inspired patterns for proper inter-agent communication and contex
 import asyncio
 import logging
 import uuid
+from collections import deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
+
+from rag_cli.core.constants import MAX_EVENT_HISTORY
 
 
 class CommunicationType(Enum):
@@ -392,7 +395,7 @@ class CommunicativeAgent:
     def __init__(self):
         self.communication_hub: Optional[AgentCommunicationHub] = None
         self.agent_id: str = ""
-        self.received_messages = deque(maxlen=100)  # Bounded to prevent memory leaks
+        self.received_messages = deque(maxlen=MAX_EVENT_HISTORY)  # Bounded to prevent memory leaks
 
     def connect_to_hub(self, hub: AgentCommunicationHub, agent_id: str, expertise: List[str] = None):
         """Connect this agent to the communication hub"""

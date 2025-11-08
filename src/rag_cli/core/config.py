@@ -23,7 +23,7 @@ def resolve_data_path(relative_path: str) -> str:
     When running from project, uses project directory.
 
     Args:
-        relative_path: Relative path like "data/vectors/vectors.index"
+        relative_path: Relative path like "data/vectors/chroma_db"
 
     Returns:
         Absolute path resolved to correct base directory
@@ -73,10 +73,10 @@ class EmbeddingsConfig(BaseModel):
 
 class VectorStoreConfig(BaseModel):
     """Vector store configuration."""
-    backend: str = "faiss"
+    backend: str = "chromadb"  # Default to ChromaDB (v2.0+)
     index_type: str = Field("auto", pattern="^(auto|flat|hnsw|ivf)$")
     index_params: Dict[str, Any] = {}
-    save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/vectors.index"))
+    save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/chroma_db"))
     metadata_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/metadata.json"))
     auto_save: bool = True
     backup_enabled: bool = True
@@ -198,6 +198,10 @@ class ClaudeConfig(BaseModel):
     warn_cost_threshold: float = Field(1.0, ge=0.0)
     max_cost_limit: float = Field(10.0, ge=0.0)  # Hard limit in USD
     enable_cost_limiting: bool = True
+
+    # API Pricing (USD per token)
+    pricing_input_per_token: float = Field(0.00000025, description="Cost per input token in USD ($0.25 per 1M tokens)")
+    pricing_output_per_token: float = Field(0.00000125, description="Cost per output token in USD ($1.25 per 1M tokens)")
 
 
 class MonitoringConfig(BaseModel):

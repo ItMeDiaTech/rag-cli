@@ -115,11 +115,11 @@ def main(
         progress.update(task, completed=100)
 
     # Check if index exists
-    if vector_store.index.ntotal == 0:
+    if vector_store.is_empty():
         console.print("[red]No documents indexed! Please run rag-index first.[/red]")
         sys.exit(1)
 
-    console.print(f"[green]Index loaded: {vector_store.index.ntotal} vectors[/green]\n")
+    console.print(f"[green]Index loaded: {vector_store.get_vector_count()} vectors[/green]\n")
 
     def process_query(q: str):
         """Process a single query."""

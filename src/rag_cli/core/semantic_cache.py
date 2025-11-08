@@ -34,7 +34,7 @@ class CacheEntry:
     access_count: int = 0
     hit_count: int = 0
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access statistics."""
         self.last_accessed = datetime.now()
         self.access_count += 1
@@ -125,7 +125,7 @@ class SemanticCache:
 
         return None
 
-    def _evict_lru(self):
+    def _evict_lru(self) -> None:
         """Evict least recently used entry."""
         if len(self.cache) >= self.max_size:
             # Remove oldest entry (LRU)
@@ -135,7 +135,7 @@ class SemanticCache:
                          evicted_query=evicted_entry.query[:50],
                          access_count=evicted_entry.access_count)
 
-    def _clean_expired(self):
+    def _clean_expired(self) -> None:
         """Remove expired entries."""
         now = datetime.now()
         expired_keys = [
@@ -211,7 +211,7 @@ class SemanticCache:
             self.misses += 1
             return None
 
-    def put(self, query: str, result: Any):
+    def put(self, query: str, result: Any) -> None:
         """Store result in cache.
 
         Args:
@@ -253,7 +253,7 @@ class SemanticCache:
             # Unexpected errors - log with traceback
             logger.exception("Unexpected error in cache put", exc_info=True)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cache entries."""
         self.cache.clear()
         self.hits = 0
@@ -282,7 +282,7 @@ class SemanticCache:
             "ttl_seconds": self.ttl.total_seconds()
         }
 
-    def save(self, filepath: Path):
+    def save(self, filepath: Path) -> None:
         """Save cache to disk using JSON (secure alternative to pickle).
 
         Implements automatic rotation when cache file exceeds size limit.
@@ -351,7 +351,7 @@ class SemanticCache:
             # Unexpected errors - log with traceback
             logger.exception("Unexpected error saving cache", exc_info=True)
 
-    def load(self, filepath: Path):
+    def load(self, filepath: Path) -> None:
         """Load cache from disk (JSON format for security).
 
         Args:

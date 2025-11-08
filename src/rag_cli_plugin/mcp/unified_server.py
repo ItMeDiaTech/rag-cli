@@ -61,7 +61,7 @@ class UnifiedMCPServer:
                 logger.warning(f"Failed to start monitoring services: {e}")
 
             # Check if vector store exists
-            vector_store_path = project_root / "data" / "vectors" / "vectors.index"
+            vector_store_path = project_root / "data" / "vectors" / "chroma_db"
             if not vector_store_path.exists():
                 logger.warning("No vector index found")
                 # Don't return - allow service management tools to work
@@ -518,7 +518,7 @@ class UnifiedMCPServer:
         use_llm = arguments.get("use_llm", True)
 
         # Check if vector store exists
-        vector_store_path = project_root / "data" / "vectors" / "vectors.index"
+        vector_store_path = project_root / "data" / "vectors" / "chroma_db"
         if not vector_store_path.exists():
             return {
                 "jsonrpc": "2.0",
@@ -661,7 +661,7 @@ class UnifiedMCPServer:
         """Handle RAG status request."""
         try:
             # Check if vector store exists
-            vector_store_path = project_root / "data" / "vectors" / "vectors.index"
+            vector_store_path = project_root / "data" / "vectors" / "chroma_db"
             has_index = vector_store_path.exists()
 
             status = {
@@ -677,8 +677,8 @@ class UnifiedMCPServer:
 
             if has_index and self.vector_store:
                 status["statistics"] = {
-                    "total_documents": self.vector_store.index.ntotal,
-                    "index_type": type(self.vector_store.index).__name__
+                    "total_documents": self.vector_store.get_vector_count(),
+                    "index_type": "chromadb_hnsw"
                 }
 
             return {

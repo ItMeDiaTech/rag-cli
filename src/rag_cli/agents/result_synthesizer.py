@@ -22,6 +22,7 @@ from collections import defaultdict
 import hashlib
 
 from rag_cli.core.retrieval_pipeline import RetrievalResult
+from rag_cli.core.constants import SIMILARITY_THRESHOLD
 from rag_cli.agents.query_decomposer import SubQuery
 from rag_cli.utils.logger import get_logger
 
@@ -44,7 +45,7 @@ class ResultSynthesizer:
 
     def __init__(self):
         """Initialize result synthesizer."""
-        self.similarity_threshold = 0.85  # For deduplication
+        self.similarity_threshold = SIMILARITY_THRESHOLD  # For deduplication
         self.max_merged_results = 15  # Limit final result set
 
         logger.info(

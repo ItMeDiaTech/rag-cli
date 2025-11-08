@@ -28,7 +28,7 @@ else:
 if project_root is None:
     current = hook_file.parent
     for _ in range(10):  # Search up to 10 levels
-        if (current / 'src' / 'rag_cli' / 'core').exists() and (current / 'src' / 'rag_cli_plugin' / 'services').exists():
+        if (current / 'src' / 'rag_cli').exists() and (current / 'src' / 'rag_cli_plugin').exists():
             project_root = current
             break
         current = current.parent
@@ -42,14 +42,14 @@ if project_root is None:
     ]
 
     for path in potential_paths:
-        if path.exists() and (path / 'src' / 'rag_cli' / 'core').exists():
+        if path.exists() and (path / 'src' / 'rag_cli').exists():
             project_root = path
             break
 
 # Strategy 4: Last resort - relative to hook file location
 if project_root is None:
     project_root = hook_file.parents[3]
-    if not (project_root / 'src' / 'rag_cli' / 'core').exists():
+    if not (project_root / 'src' / 'rag_cli').exists():
         raise RuntimeError(
             f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
             "Please set RAG_CLI_ROOT environment variable to the project directory."
@@ -118,7 +118,7 @@ def health_check_chromadb() -> Dict[str, Any]:
 
             # Get vector count
             try:
-                count = vector_store.collection.count()
+                count = vector_store.get_vector_count()
                 health_status["vector_count"] = count
                 logger.info(f"ChromaDB health check: {count} vectors in collection")
 

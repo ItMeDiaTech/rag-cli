@@ -102,7 +102,7 @@ class PathResolver:
 
         Example:
             >>> resolver = get_path_resolver()
-            >>> vector_path = resolver.get_data_path("vectors", "faiss_index")
+            >>> vector_path = resolver.get_data_path("vectors", "chroma_db")
         """
         return self.data_root.joinpath(*parts)
 

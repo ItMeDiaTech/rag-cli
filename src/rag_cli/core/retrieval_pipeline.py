@@ -25,6 +25,7 @@ import bm25s
 from sentence_transformers import CrossEncoder
 
 from rag_cli.core.config import get_config
+from rag_cli.core.constants import CHARS_PER_TOKEN, DEFAULT_VECTOR_WEIGHT, DEFAULT_KEYWORD_WEIGHT
 from rag_cli.core.embeddings import get_embedding_generator
 from rag_cli.core.vector_store import get_vector_store
 from rag_cli.core.document_processor import DocumentChunk, get_document_processor
@@ -265,7 +266,7 @@ class HybridRetriever:
                     return
 
                 # Get count from vector store
-                count = self.vector_store.collection.count()
+                count = self.vector_store.get_vector_count()
                 if count == 0:
                     logger.debug("No documents in vector store, skipping BM25 auto-build")
                     return
@@ -549,7 +550,7 @@ class HybridRetriever:
         combined_scores = []
         for i, (doc_id, text, orig_score, metadata, method) in enumerate(candidates):
             # Weight: 70% cross-encoder, 30% original
-            combined_score = 0.7 * ce_scores[i] + 0.3 * orig_score
+            combined_score = DEFAULT_VECTOR_WEIGHT * ce_scores[i] + DEFAULT_KEYWORD_WEIGHT * orig_score
             combined_scores.append((
                 doc_id, text, combined_score, metadata, method, ce_scores[i]
             ))
@@ -1183,7 +1184,7 @@ if __name__ == "__main__":
             chunk_index=0,
             total_chunks=1,
             char_count=len(text),
-            token_count=len(text) // 4,
+            token_count=len(text) // CHARS_PER_TOKEN,
             source=f"doc_{i}.txt",
             doc_id=f"doc_{i}",
             chunk_id=f"doc_{i}_chunk_0"

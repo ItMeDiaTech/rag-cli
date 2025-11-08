@@ -38,6 +38,7 @@ except ImportError:
 project_root = setup_sys_path()
 
 from rag_cli_plugin.services.logger import get_logger
+from rag_cli.core.constants import RESPONSE_CACHE_TTL_SECONDS
 
 logger = get_logger(__name__)
 
@@ -76,7 +77,7 @@ def load_cached_results(cache_key: str) -> Optional[List[Dict[str, Any]]]:
 
         # Check if cache is stale (older than 5 minutes)
         import time
-        if time.time() - cache_file.stat().st_mtime > 300:
+        if time.time() - cache_file.stat().st_mtime > RESPONSE_CACHE_TTL_SECONDS:
             cache_file.unlink()  # Delete stale cache
             return None
 

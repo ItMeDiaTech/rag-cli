@@ -7,7 +7,7 @@ import hashlib
 import logging
 import json
 import threading
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -331,7 +331,7 @@ class DuplicateDetector:
                 logger.exception("Unexpected error loading hashes", exc_info=True)
                 self.hashes = {}
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about stored hashes.
 
         Returns:

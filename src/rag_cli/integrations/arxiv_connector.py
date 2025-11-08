@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from collections import OrderedDict
 import requests
 
+from rag_cli.core.constants import DEFAULT_HTTP_TIMEOUT
 from rag_cli.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -142,7 +143,7 @@ class ArXivConnector:
             response = requests.get(
                 self.BASE_URL,
                 params=params,
-                timeout=10
+                timeout=DEFAULT_HTTP_TIMEOUT
             )
             response.raise_for_status()
 

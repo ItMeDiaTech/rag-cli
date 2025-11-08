@@ -4,7 +4,7 @@ Intelligent Task Classification System
 Automatically determines the appropriate workflow and agents based on task description
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 
 
@@ -247,7 +247,7 @@ Focus on the main intent of the task.
 
         return None
 
-    def get_task_summary(self, classification: TaskClassification, task_description: str) -> Dict[str, any]:
+    def get_task_summary(self, classification: TaskClassification, task_description: str) -> Dict[str, Any]:
         """Generate a summary of the task classification"""
 
         return {

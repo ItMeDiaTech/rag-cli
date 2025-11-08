@@ -19,7 +19,7 @@ except ImportError:
     Anthropic = None
 
 from rag_cli.core.config import get_config
-from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE, CLAUDE_RATE_LIMIT_REQUESTS
+from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE, CLAUDE_RATE_LIMIT_REQUESTS, CHARS_PER_TOKEN
 from rag_cli.core.retrieval_pipeline import RetrievalResult
 from rag_cli.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from rag_cli.core.prompt_templates import get_prompt_manager
@@ -620,9 +620,9 @@ Please provide a comprehensive answer based on the context above."""
         else:
             # Estimate if not available
             token_usage = {
-                "input": len(user_message) // 4,
-                "output": len(response_text) // 4,
-                "total": (len(user_message) + len(response_text)) // 4
+                "input": len(user_message) // CHARS_PER_TOKEN,
+                "output": len(response_text) // CHARS_PER_TOKEN,
+                "total": (len(user_message) + len(response_text)) // CHARS_PER_TOKEN
             }
 
         return response_text, token_usage
@@ -636,9 +636,10 @@ Please provide a comprehensive answer based on the context above."""
         self.total_tokens_used["input"] += token_usage.get("input", 0)
         self.total_tokens_used["output"] += token_usage.get("output", 0)
 
-        # Calculate cost (example rates for Haiku)
-        input_cost = token_usage.get("input", 0) * 0.00000025  # $0.25 per 1M tokens
-        output_cost = token_usage.get("output", 0) * 0.00000125  # $1.25 per 1M tokens
+        # Calculate cost using configured pricing
+        config = get_config()
+        input_cost = token_usage.get("input", 0) * config.claude.pricing_input_per_token
+        output_cost = token_usage.get("output", 0) * config.claude.pricing_output_per_token
         query_cost = input_cost + output_cost
 
         self.total_cost += query_cost
