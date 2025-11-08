@@ -17,6 +17,7 @@ USAGE:
 
 import asyncio
 import time
+import threading
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
@@ -94,7 +95,29 @@ class MAFConnector:
 
         Returns:
             MAFResult if successful, None if failed or unavailable
+
+        Raises:
+            ValueError: If agent_name is invalid or task_data is malformed
+            TypeError: If arguments are of wrong type
         """
+        # Validate agent_name
+        if not agent_name:
+            raise ValueError("agent_name cannot be empty")
+
+        if not isinstance(agent_name, str):
+            raise TypeError(f"agent_name must be str, got {type(agent_name).__name__}")
+
+        # Validate task_data
+        if not isinstance(task_data, dict):
+            raise TypeError(f"task_data must be dict, got {type(task_data).__name__}")
+
+        # Validate timeout
+        if not isinstance(timeout, (int, float)):
+            raise TypeError(f"timeout must be numeric, got {type(timeout).__name__}")
+
+        if timeout <= 0:
+            raise ValueError(f"timeout must be positive, got {timeout}")
+
         if not self.maf_available:
             logger.warning("Embedded MAF not available, falling back to RAG-only mode")
             return None
@@ -106,8 +129,11 @@ class MAFConnector:
             # Get the agent class
             agent_class = self.agents_map.get(agent_name)
             if not agent_class:
-                logger.error(f"Agent '{agent_name}' not found in agent map")
-                return None
+                available = ', '.join(self.agents_map.keys())
+                raise ValueError(
+                    f"Unknown agent: '{agent_name}'. "
+                    f"Available agents: {available}"
+                )
 
             # Create agent instance
             config = self.AgentConfig(
@@ -164,9 +190,15 @@ class MAFConnector:
                 metadata={'error': 'timeout'},
                 timestamp=datetime.now()
             )
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Expected errors - agent not found, wrong types, etc.
             logger.error("Embedded MAF agent execution failed", agent=agent_name, error=str(e),
                          fallback="returning RAG-only response")
+            return None
+        except Exception as e:
+            # Unexpected errors - log with traceback and return None
+            logger.exception("Unexpected error in MAF agent execution",
+                            agent=agent_name, exc_info=True)
             return None
 
     async def _execute_agent_task(self, agent: Any, task_description: str, task_data: Dict[str, Any]) -> str:
@@ -235,8 +267,13 @@ class MAFConnector:
                          confidence=f"{classification.confidence:.2f}")
             return result
 
-        except Exception as e:
+        except (ImportError, AttributeError) as e:
+            # Expected errors - missing classifier or wrong attributes
             logger.warning(f"Embedded MAF task classification failed, falling back: {e}")
+            return None
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in task classification", exc_info=True)
             return None
 
     async def execute_debugger(
@@ -335,8 +372,14 @@ class MAFConnector:
                         results[agent] = result
                         logger.debug(f"Agent {agent} completed successfully")
 
-            except Exception as e:
+            except (asyncio.CancelledError, RuntimeError) as e:
+                # Expected errors - task cancellation, event loop issues
                 logger.error(f"Multi-agent parallel execution failed: {e}")
+                for agent in agents:
+                    results[agent] = None
+            except Exception as e:
+                # Unexpected errors - log with traceback
+                logger.exception("Unexpected error in multi-agent parallel execution", exc_info=True)
                 for agent in agents:
                     results[agent] = None
 
@@ -348,8 +391,13 @@ class MAFConnector:
                                                      timeout=per_agent_timeout)
                     results[agent] = result
                     logger.debug(f"Agent {agent} completed")
-                except Exception as e:
+                except (ValueError, TypeError) as e:
+                    # Expected errors - validation failures
                     logger.error(f"Agent {agent} failed: {e}")
+                    results[agent] = None
+                except Exception as e:
+                    # Unexpected errors - log with traceback
+                    logger.exception(f"Unexpected error executing agent {agent}", exc_info=True)
                     results[agent] = None
 
         # Log summary
@@ -567,10 +615,11 @@ class MAFConnector:
 
 # Singleton instance
 _maf_connector: Optional[MAFConnector] = None
+_maf_lock = threading.Lock()
 
 
 def get_maf_connector() -> MAFConnector:
-    """Get or create the global MAF connector instance.
+    """Get or create the global MAF connector instance with thread-safe initialization.
 
     Returns:
         MAF connector instance
@@ -578,7 +627,9 @@ def get_maf_connector() -> MAFConnector:
     global _maf_connector
 
     if _maf_connector is None:
-        _maf_connector = MAFConnector()
+        with _maf_lock:
+            if _maf_connector is None:
+                _maf_connector = MAFConnector()
 
     return _maf_connector
 

@@ -543,8 +543,14 @@ class EmbeddingPool:
             # Use generator's encode but without cache to avoid thread contention
             embeddings = self.generator._encode_batch(chunk, show_progress=False)
             return embeddings
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Expected errors - invalid input, wrong types
             logger.error(f"Error encoding chunk {chunk_idx}: {e}")
+            # Return zero embeddings as fallback
+            return np.zeros((len(chunk), self.generator.dimensions))
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception(f"Unexpected error encoding chunk {chunk_idx}", exc_info=True)
             # Return zero embeddings as fallback
             return np.zeros((len(chunk), self.generator.dimensions))
 

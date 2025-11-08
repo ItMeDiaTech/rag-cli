@@ -14,6 +14,7 @@ import os
 import sys
 import atexit
 import signal
+import fcntl
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -57,7 +58,7 @@ _shutdown_registered = False
 
 
 def write_pid_file(service_name: str, pid: int):
-    """Write PID to file for later cleanup.
+    """Write PID to file for later cleanup with thread-safe file locking.
 
     Args:
         service_name: Name of the service
@@ -65,7 +66,12 @@ def write_pid_file(service_name: str, pid: int):
     """
     try:
         pid_file = PID_DIR / f"{service_name}.pid"
-        pid_file.write_text(str(pid))
+        with open(pid_file, 'w') as f:
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                f.write(str(pid))
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
         logger.debug(f"Wrote PID file for {service_name}: {pid}")
     except Exception as e:
         logger.error(f"Failed to write PID file for {service_name}: {e}")
@@ -102,7 +108,13 @@ def cleanup_stale_processes():
 
     for pid_file in PID_DIR.glob("*.pid"):
         try:
-            pid = int(pid_file.read_text().strip())
+            # Read PID with file locking
+            with open(pid_file, 'r') as f:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+                    pid = int(f.read().strip())
+                finally:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
             service_name = pid_file.stem
 
             # Check if process exists

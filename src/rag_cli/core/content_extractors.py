@@ -63,8 +63,17 @@ class ContentExtractor:
 
             return content
 
-        except Exception as e:
+        except (IOError, OSError, FileNotFoundError) as e:
+            # Expected errors - file not found, permission issues
+            logger.error(f"Error reading file: {e}")
+            return None
+        except (ValueError, TypeError, UnicodeDecodeError) as e:
+            # Expected errors - invalid content, encoding issues
             logger.error(f"Error extracting content: {e}")
+            return None
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in content extraction", exc_info=True)
             return None
 
     def extract_code_blocks(self, content: str) -> Tuple[str, List[Dict[str, str]]]:

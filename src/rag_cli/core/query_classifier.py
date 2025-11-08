@@ -5,7 +5,7 @@ for user queries to enable intelligent routing and retrieval.
 """
 
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Pattern
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -274,6 +274,38 @@ class QueryClassifier:
         """
         self.confidence_threshold = confidence_threshold
 
+        # Pre-compile all intent patterns for O(1) regex matching
+        self.compiled_intent_patterns: Dict[QueryIntent, List[Pattern]] = {}
+        for intent, config in self.INTENT_PATTERNS.items():
+            self.compiled_intent_patterns[intent] = [
+                re.compile(pattern, re.IGNORECASE)
+                for pattern in config['patterns']
+            ]
+
+        # Pre-compile entity patterns
+        self.compiled_entity_patterns: Dict[str, Dict[str, Pattern]] = {}
+        for entity_type, patterns in self.ENTITY_PATTERNS.items():
+            self.compiled_entity_patterns[entity_type] = {
+                name: re.compile(pattern, re.IGNORECASE)
+                for name, pattern in patterns.items()
+            }
+
+        # Pre-compile version pattern
+        self.compiled_version_pattern = re.compile(self.VERSION_PATTERN, re.IGNORECASE)
+
+        # Pre-compile non-technical patterns
+        self.compiled_non_technical_patterns = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in self.NON_TECHNICAL_PATTERNS
+        ]
+
+        total_patterns = (
+            sum(len(p) for p in self.compiled_intent_patterns.values()) +
+            sum(len(p) for p in self.compiled_entity_patterns.values()) +
+            len(self.compiled_non_technical_patterns) + 1
+        )
+        logger.info(f"Query classifier initialized with {total_patterns} pre-compiled regex patterns")
+
     def classify(self, query: str) -> QueryClassification:
         """Classify a user query.
 
@@ -335,15 +367,15 @@ class QueryClassifier:
         Returns:
             True if technical query
         """
-        # Check for non-technical patterns
-        for pattern in self.NON_TECHNICAL_PATTERNS:
-            if re.search(pattern, query, re.IGNORECASE):
+        # Check for non-technical patterns (pre-compiled)
+        for pattern in self.compiled_non_technical_patterns:
+            if pattern.search(query):
                 return False
 
-        # Check for technical entities
-        for entity_type, patterns in self.ENTITY_PATTERNS.items():
+        # Check for technical entities (pre-compiled)
+        for entity_type, patterns in self.compiled_entity_patterns.items():
             for name, pattern in patterns.items():
-                if re.search(pattern, query, re.IGNORECASE):
+                if pattern.search(query):
                     return True
 
         # Check for code-related keywords
@@ -368,10 +400,10 @@ class QueryClassifier:
             score = 0.0
             weight = config['weight']
 
-            # Check regex patterns
+            # Check regex patterns (pre-compiled)
             pattern_matches = 0
-            for pattern in config['patterns']:
-                if re.search(pattern, query, re.IGNORECASE):
+            for pattern in self.compiled_intent_patterns[intent]:
+                if pattern.search(query):
                     pattern_matches += 1
 
             if pattern_matches > 0:
@@ -406,12 +438,14 @@ class QueryClassifier:
         """
         entities = []
 
-        for entity_type, patterns in self.ENTITY_PATTERNS.items():
+        for entity_type, patterns in self.compiled_entity_patterns.items():
             for name, pattern in patterns.items():
-                if re.search(pattern, query, re.IGNORECASE):
-                    # Check for version
+                if pattern.search(query):
+                    # Check for version (using pre-compiled pattern)
                     version = None
-                    version_match = re.search(f"{name}\\s*{self.VERSION_PATTERN}", query, re.IGNORECASE)
+                    # Build version search pattern dynamically for this entity
+                    version_search = re.compile(f"{name}\\s*{self.VERSION_PATTERN}", re.IGNORECASE)
+                    version_match = version_search.search(query)
                     if version_match:
                         version = version_match.group(1)
 

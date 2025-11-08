@@ -36,7 +36,7 @@ from rag_cli.utils.error_tracker import get_error_tracker
 from rag_cli.core.duplicate_detector import get_duplicate_detector
 from rag_cli.core.semantic_cache import get_semantic_cache
 from rag_cli.core.hyde import get_hyde_generator
-from rag_cli.core.query_classifier import QueryClassification
+from rag_cli.core.query_classifier import QueryClassification, QueryIntent
 
 # Optional plugin integration (metrics collector from plugin)
 try:
@@ -594,12 +594,6 @@ class HybridRetriever:
 
         # If no classification, return default weights
         if not classification:
-            return (vector_weight, keyword_weight)
-
-        # Import QueryIntent for type checking
-        try:
-            from rag_cli.core.query_classifier import QueryIntent
-        except ImportError:
             return (vector_weight, keyword_weight)
 
         # Adaptive weight profiles based on intent

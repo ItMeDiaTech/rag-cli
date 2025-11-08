@@ -6,6 +6,7 @@ and provides validation and type checking for all configuration values.
 
 import os
 import json
+import threading
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 import yaml
@@ -534,17 +535,20 @@ class ConfigManager:
 
 # Singleton instance
 _config_manager: Optional[ConfigManager] = None
+_config_lock = threading.Lock()
 
 
 def get_config() -> Config:
-    """Get global configuration instance.
+    """Get global configuration instance with thread-safe initialization.
 
     Returns:
         Global configuration object
     """
     global _config_manager
     if _config_manager is None:
-        _config_manager = ConfigManager()
+        with _config_lock:
+            if _config_manager is None:
+                _config_manager = ConfigManager()
     return _config_manager.get()
 
 

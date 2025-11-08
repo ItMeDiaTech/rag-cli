@@ -139,6 +139,7 @@ def main(
                 progress.update(task, completed=100)
             except Exception as e:
                 console.print(f"[red]Retrieval failed: {e}[/red]")
+                logger.exception("Retrieval failed", error=str(e))
                 return
 
         if not results:
@@ -195,8 +196,16 @@ def main(
                         metrics_table.add_row("Generation Time", f"{generation_time:.2f}s")
                         metrics_table.add_row("Total Time", f"{response.latency_seconds:.2f}s")
                         metrics_table.add_row("Chunks Retrieved", str(len(results)))
-                        metrics_table.add_row("Input Tokens", str(response.token_usage.get('input', 0)))
-                        metrics_table.add_row("Output Tokens", str(response.token_usage.get('output', 0)))
+
+                        # Safely access token_usage (may not be present in all responses)
+                        if hasattr(response, 'token_usage') and response.token_usage:
+                            input_tokens = response.token_usage.get('input', 0)
+                            output_tokens = response.token_usage.get('output', 0)
+                            metrics_table.add_row("Input Tokens", str(input_tokens))
+                            metrics_table.add_row("Output Tokens", str(output_tokens))
+                        else:
+                            metrics_table.add_row("Input Tokens", "N/A")
+                            metrics_table.add_row("Output Tokens", "N/A")
 
                         console.print("\n")
                         console.print(metrics_table)

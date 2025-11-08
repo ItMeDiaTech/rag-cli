@@ -200,8 +200,14 @@ class SemanticCache:
 
                 return None
 
-        except Exception as e:
+        except (KeyError, ValueError, AttributeError, TypeError) as e:
+            # Expected errors - missing keys, invalid values, wrong types
             logger.error(f"Cache lookup failed: {e}")
+            self.misses += 1
+            return None
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in cache lookup", exc_info=True)
             self.misses += 1
             return None
 
@@ -240,8 +246,12 @@ class SemanticCache:
                          query=query[:50],
                          cache_size=len(self.cache))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Expected errors - invalid values, wrong types
             logger.error(f"Cache put failed: {e}")
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in cache put", exc_info=True)
 
     def clear(self):
         """Clear all cache entries."""
@@ -331,8 +341,15 @@ class SemanticCache:
                         entries=len(active_cache),
                         expired_removed=len(self.cache) - len(active_cache))
 
+        except (IOError, OSError, PermissionError) as e:
+            # Expected errors - file system issues
+            logger.error(f"Failed to save cache to {filepath}: {e}")
+        except json.JSONEncodeError as e:
+            # JSON encoding errors
+            logger.error(f"Failed to encode cache data: {e}")
         except Exception as e:
-            logger.error(f"Failed to save cache: {e}")
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error saving cache", exc_info=True)
 
     def load(self, filepath: Path):
         """Load cache from disk (JSON format for security).
@@ -371,8 +388,21 @@ class SemanticCache:
                         entries=len(self.cache),
                         version=cache_data.get('version', 'unknown'))
 
+        except (IOError, OSError, FileNotFoundError) as e:
+            # Expected errors - file not found, permission issues
+            logger.error(f"Failed to load cache from {filepath}: {e}")
+            self.cache.clear()
+        except json.JSONDecodeError as e:
+            # JSON parsing errors
+            logger.error(f"Failed to parse cache file {filepath}: {e}")
+            self.cache.clear()
+        except (KeyError, ValueError, TypeError) as e:
+            # Invalid cache data structure
+            logger.error(f"Invalid cache data in {filepath}: {e}")
+            self.cache.clear()
         except Exception as e:
-            logger.error(f"Failed to load cache: {e}")
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error loading cache", exc_info=True)
             self.cache.clear()
 
 

@@ -183,6 +183,32 @@ def main(
                 console.print("[yellow]No new documents to index (all duplicates)[/yellow]")
                 return
 
+            # Validate chunk parameters before processing
+            if chunk_size is not None or chunk_overlap is not None:
+                final_chunk_size = chunk_size if chunk_size is not None else config.document_processing.chunk_size
+                final_chunk_overlap = chunk_overlap if chunk_overlap is not None else config.document_processing.chunk_overlap
+
+                # Validate chunk_size
+                if final_chunk_size < 50:
+                    console.print("[red]Error: chunk_size must be at least 50 tokens[/red]")
+                    sys.exit(1)
+
+                if final_chunk_size > 2000:
+                    console.print("[red]Error: chunk_size cannot exceed 2000 tokens[/red]")
+                    sys.exit(1)
+
+                # Validate chunk_overlap
+                if final_chunk_overlap < 0:
+                    console.print("[red]Error: chunk_overlap cannot be negative[/red]")
+                    sys.exit(1)
+
+                if final_chunk_overlap >= final_chunk_size:
+                    console.print(
+                        f"[red]Error: chunk_overlap ({final_chunk_overlap}) must be "
+                        f"less than chunk_size ({final_chunk_size})[/red]"
+                    )
+                    sys.exit(1)
+
             # Chunk documents
             all_chunks = []
             task2 = progress.add_task("Chunking documents...", total=len(documents_to_process))
@@ -198,63 +224,56 @@ def main(
 
             console.print(f"\n[green]Created {len(all_chunks)} chunks from {len(documents_to_process)} documents[/green]")
 
-            # Generate embeddings
-            task3 = progress.add_task("Generating embeddings...", total=len(all_chunks))
-            chunk_texts = [chunk.content for chunk in all_chunks]
-
-            # Process in batches to show progress
-            batch_size = 32
-            all_embeddings = []
-
-            for i in range(0, len(chunk_texts), batch_size):
-                batch = chunk_texts[i:i + batch_size]
-                embeddings = generator.encode(batch, show_progress=False, use_cache=False)
-                all_embeddings.append(embeddings)
-                progress.update(task3, advance=len(batch))
-
-            # Combine embeddings
-            import numpy as np
-            final_embeddings = np.vstack(all_embeddings)
-
-            # Store in vector database
-            task4 = progress.add_task("Storing in vector index...", total=1)
-
-            metadata_list = []
-            sources = []
-            for chunk in all_chunks:
-                metadata_list.append(chunk.metadata)
-                sources.append(chunk.source)
-
-            # In update mode, delete old chunks from sources being updated
+            # In update mode, delete old chunks from sources being updated first
             if update and updated_sources:
                 for source in updated_sources:
                     deleted = vector_store.delete_by_source(source)
                     if deleted > 0:
                         console.print(f"[yellow]Deleted {deleted} old chunks from {Path(source).name}[/yellow]")
 
-            # Use upsert if update mode, otherwise add
-            if update:
-                ids = vector_store.upsert(
-                    final_embeddings,
-                    chunk_texts,
-                    metadata=metadata_list,
-                    sources=sources
-                )
-                console.print(f"[cyan]Upserted {len(ids)} chunks to vector store[/cyan]")
-            else:
-                ids = vector_store.add(
-                    final_embeddings,
-                    chunk_texts,
-                    metadata=metadata_list,
-                    sources=sources
-                )
+            # Generate embeddings and store in batches (streaming mode - no memory accumulation)
+            task3 = progress.add_task("Processing and storing chunks...", total=len(all_chunks))
 
-            progress.update(task4, completed=1)
+            batch_size = 32
+            total_stored = 0
+
+            for i in range(0, len(all_chunks), batch_size):
+                batch_end = min(i + batch_size, len(all_chunks))
+                batch_chunks = all_chunks[i:batch_end]
+
+                # Extract batch data
+                batch_texts = [chunk.content for chunk in batch_chunks]
+                batch_metadata = [chunk.metadata for chunk in batch_chunks]
+                batch_sources = [chunk.source for chunk in batch_chunks]
+
+                # Generate embeddings for this batch
+                batch_embeddings = generator.encode(batch_texts, show_progress=False, use_cache=False)
+
+                # Store immediately - don't accumulate in memory
+                if update:
+                    batch_ids = vector_store.upsert(
+                        batch_embeddings,
+                        batch_texts,
+                        metadata=batch_metadata,
+                        sources=batch_sources
+                    )
+                else:
+                    batch_ids = vector_store.add(
+                        batch_embeddings,
+                        batch_texts,
+                        metadata=batch_metadata,
+                        sources=batch_sources
+                    )
+
+                total_stored += len(batch_ids)
+                progress.update(task3, advance=len(batch_chunks))
+
+            console.print(f"[green]Stored {total_stored} chunks in vector index[/green]")
 
             # Build BM25 index for hybrid retrieval
-            task5 = progress.add_task("Building keyword index...", total=1)
+            task4 = progress.add_task("Building keyword index...", total=1)
             retriever.index_documents(all_chunks)
-            progress.update(task5, completed=1)
+            progress.update(task4, completed=1)
 
         # Save the index and duplicate registry
         console.print("\n[cyan]Saving index to disk...[/cyan]")
