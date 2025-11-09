@@ -830,6 +830,34 @@ class ChromaVectorStore:
             logger.warning(f"Could not estimate size: {e}")
             return 0.0
 
+    def get_vector_count(self) -> int:
+        """Get total number of vectors in the store.
+
+        Returns:
+            int: Number of vectors stored
+        """
+        try:
+            return self.collection.count()
+        except Exception as e:
+            logger.error(f"Failed to get vector count: {e}")
+            return 0
+
+    def get_dimension(self) -> int:
+        """Get the dimension of vectors in this store.
+
+        Returns:
+            int: Vector dimension
+        """
+        return self.dimension
+
+    def is_empty(self) -> bool:
+        """Check if the vector store is empty.
+
+        Returns:
+            bool: True if no vectors stored, False otherwise
+        """
+        return self.get_vector_count() == 0
+
     def save_async_sync_wrapper(self, path: Optional[str] = None, metadata_path: Optional[str] = None):
         """Compatibility wrapper (no-op for ChromaDB).
 

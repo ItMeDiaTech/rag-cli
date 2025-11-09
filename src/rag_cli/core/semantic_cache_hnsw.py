@@ -113,7 +113,7 @@ class HNSWSemanticCache:
     def _compute_query_hash(self, query: str) -> str:
         """Compute hash for exact query matching."""
         import hashlib
-        return hashlib.md5(query.encode()).hexdigest()
+        return hashlib.blake2b(query.encode(), digest_size=16).hexdigest()
 
     def _find_similar_hnsw(self, query_embedding: np.ndarray, k: int = 1) -> Optional[Tuple[int, float]]:
         """Find most similar entry using HNSW index.

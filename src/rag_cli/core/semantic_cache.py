@@ -34,7 +34,7 @@ class CacheEntry:
     access_count: int = 0
     hit_count: int = 0
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access statistics."""
         self.last_accessed = datetime.now()
         self.access_count += 1
@@ -125,7 +125,7 @@ class SemanticCache:
 
         return None
 
-    def _evict_lru(self):
+    def _evict_lru(self) -> None:
         """Evict least recently used entry."""
         if len(self.cache) >= self.max_size:
             # Remove oldest entry (LRU)
@@ -135,7 +135,7 @@ class SemanticCache:
                          evicted_query=evicted_entry.query[:50],
                          access_count=evicted_entry.access_count)
 
-    def _clean_expired(self):
+    def _clean_expired(self) -> None:
         """Remove expired entries."""
         now = datetime.now()
         expired_keys = [
@@ -200,12 +200,18 @@ class SemanticCache:
 
                 return None
 
-        except Exception as e:
+        except (KeyError, ValueError, AttributeError, TypeError) as e:
+            # Expected errors - missing keys, invalid values, wrong types
             logger.error(f"Cache lookup failed: {e}")
             self.misses += 1
             return None
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in cache lookup", exc_info=True)
+            self.misses += 1
+            return None
 
-    def put(self, query: str, result: Any):
+    def put(self, query: str, result: Any) -> None:
         """Store result in cache.
 
         Args:
@@ -240,10 +246,14 @@ class SemanticCache:
                          query=query[:50],
                          cache_size=len(self.cache))
 
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Expected errors - invalid values, wrong types
             logger.error(f"Cache put failed: {e}")
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in cache put", exc_info=True)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cache entries."""
         self.cache.clear()
         self.hits = 0
@@ -272,7 +282,7 @@ class SemanticCache:
             "ttl_seconds": self.ttl.total_seconds()
         }
 
-    def save(self, filepath: Path):
+    def save(self, filepath: Path) -> None:
         """Save cache to disk using JSON (secure alternative to pickle).
 
         Implements automatic rotation when cache file exceeds size limit.
@@ -298,7 +308,7 @@ class SemanticCache:
             current_time = time.time()
             active_cache = OrderedDict()
             for key, entry in self.cache.items():
-                age = current_time - entry['timestamp']
+                age = current_time - entry.created_at.timestamp()
                 if age < self.ttl.total_seconds():
                     active_cache[key] = entry
 
@@ -306,11 +316,11 @@ class SemanticCache:
             serializable_cache = {}
             for key, entry in active_cache.items():
                 serializable_cache[key] = {
-                    'query': entry['query'],
-                    'response': entry['response'],
-                    'embedding': entry['embedding'].tolist(),  # Convert numpy array to list
-                    'timestamp': entry['timestamp'],
-                    'metadata': entry.get('metadata', {})
+                    'query': entry.query,
+                    'response': entry.result,
+                    'embedding': entry.query_embedding.tolist(),  # Convert numpy array to list
+                    'timestamp': entry.created_at.timestamp(),
+                    'metadata': {}
                 }
 
             cache_data = {
@@ -331,10 +341,17 @@ class SemanticCache:
                         entries=len(active_cache),
                         expired_removed=len(self.cache) - len(active_cache))
 
+        except (IOError, OSError, PermissionError) as e:
+            # Expected errors - file system issues
+            logger.error(f"Failed to save cache to {filepath}: {e}")
+        except json.JSONEncodeError as e:
+            # JSON encoding errors
+            logger.error(f"Failed to encode cache data: {e}")
         except Exception as e:
-            logger.error(f"Failed to save cache: {e}")
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error saving cache", exc_info=True)
 
-    def load(self, filepath: Path):
+    def load(self, filepath: Path) -> None:
         """Load cache from disk (JSON format for security).
 
         Args:
@@ -371,14 +388,27 @@ class SemanticCache:
                         entries=len(self.cache),
                         version=cache_data.get('version', 'unknown'))
 
+        except (IOError, OSError, FileNotFoundError) as e:
+            # Expected errors - file not found, permission issues
+            logger.error(f"Failed to load cache from {filepath}: {e}")
+            self.cache.clear()
+        except json.JSONDecodeError as e:
+            # JSON parsing errors
+            logger.error(f"Failed to parse cache file {filepath}: {e}")
+            self.cache.clear()
+        except (KeyError, ValueError, TypeError) as e:
+            # Invalid cache data structure
+            logger.error(f"Invalid cache data in {filepath}: {e}")
+            self.cache.clear()
         except Exception as e:
-            logger.error(f"Failed to load cache: {e}")
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error loading cache", exc_info=True)
             self.cache.clear()
 
 
 # Import HNSW version for better performance
 try:
-    from core.semantic_cache_hnsw import HNSWSemanticCache
+    from rag_cli.core.semantic_cache_hnsw import HNSWSemanticCache
     USE_HNSW = True
 except ImportError:
     logger.warning("HNSW semantic cache not available, falling back to linear search")

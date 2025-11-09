@@ -18,6 +18,7 @@ Output: ["best RAG practices", "chunking strategies", "embedding models"]
 
 import re
 import asyncio
+import threading
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -456,10 +457,11 @@ class QueryDecomposer:
 
 # Singleton instance
 _decomposer: Optional[QueryDecomposer] = None
+_decomposer_lock = threading.Lock()
 
 
 def get_query_decomposer() -> QueryDecomposer:
-    """Get or create the global query decomposer instance.
+    """Get or create the global query decomposer instance with thread-safe initialization.
 
     Returns:
         Query decomposer instance
@@ -467,7 +469,9 @@ def get_query_decomposer() -> QueryDecomposer:
     global _decomposer
 
     if _decomposer is None:
-        _decomposer = QueryDecomposer()
+        with _decomposer_lock:
+            if _decomposer is None:
+                _decomposer = QueryDecomposer()
 
     return _decomposer
 

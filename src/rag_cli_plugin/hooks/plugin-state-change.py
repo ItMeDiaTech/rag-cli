@@ -20,46 +20,9 @@ from typing import Dict, Any
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Initialize path resolution variables
-hook_file = Path(__file__).resolve()
-project_root = os.environ.get('RAG_CLI_ROOT')
-if project_root:
-    project_root = Path(project_root)
-else:
-    project_root = None
-
-# Strategy 2: Try to find project root by walking up from hook location
-if project_root is None:
-    current = hook_file.parent
-    for _ in range(10):  # Search up to 10 levels
-        if (current / 'src' / 'core').exists() and (current / 'src' / 'monitoring').exists():
-            project_root = current
-            break
-        current = current.parent
-
-# Strategy 3: Check common installation locations
-if project_root is None:
-    potential_paths = [
-        Path.home() / '.claude' / 'plugins' / 'rag-cli',
-        Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli',
-        Path.cwd(),
-    ]
-
-    for path in potential_paths:
-        if path.exists() and (path / 'src' / 'core').exists():
-            project_root = path
-            break
-
-# Strategy 4: Last resort - relative to hook file location
-if project_root is None:
-    project_root = hook_file.parents[3]
-    if not (project_root / 'src' / 'core').exists():
-        raise RuntimeError(
-            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            "Please set RAG_CLI_ROOT environment variable to the project directory."
-        )
-
-sys.path.insert(0, str(project_root / 'src'))
+# Set up project paths using centralized utility
+from rag_cli_plugin.hooks.path_utils import setup_sys_path
+project_root = setup_sys_path(__file__)
 
 from rag_cli_plugin.services.logger import get_logger
 
@@ -138,7 +101,7 @@ def initialize_resources() -> bool:
 
         # Try to start monitoring services
         try:
-            from monitoring.service_manager import ensure_services_running
+            from rag_cli_plugin.services.service_manager import ensure_services_running
             ensure_services_running()
             logger.info("Monitoring services started")
         except Exception as e:

@@ -6,6 +6,7 @@ and provides validation and type checking for all configuration values.
 
 import os
 import json
+import threading
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 import yaml
@@ -22,7 +23,7 @@ def resolve_data_path(relative_path: str) -> str:
     When running from project, uses project directory.
 
     Args:
-        relative_path: Relative path like "data/vectors/vectors.index"
+        relative_path: Relative path like "data/vectors/chroma_db"
 
     Returns:
         Absolute path resolved to correct base directory
@@ -48,7 +49,7 @@ class DocumentProcessingConfig(BaseModel):
     chunk_size: int = Field(500, ge=100, le=2000)
     chunk_overlap: int = Field(100, ge=0, le=500)
     separators: List[str] = ["\n\n", "\n", ". ", " ", ""]
-    supported_formats: List[str] = [".md", ".txt", ".pd", ".docx", ".html"]
+    supported_formats: List[str] = [".md", ".txt", ".pdf", ".docx", ".html"]
     add_contextual_headers: bool = True
     metadata_fields: List[str] = ["source", "title", "section", "timestamp", "doc_type"]
 
@@ -72,10 +73,10 @@ class EmbeddingsConfig(BaseModel):
 
 class VectorStoreConfig(BaseModel):
     """Vector store configuration."""
-    backend: str = "faiss"
+    backend: str = "chromadb"  # Default to ChromaDB (v2.0+)
     index_type: str = Field("auto", pattern="^(auto|flat|hnsw|ivf)$")
     index_params: Dict[str, Any] = {}
-    save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/vectors.index"))
+    save_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/chroma_db"))
     metadata_path: str = Field(default_factory=lambda: resolve_data_path("data/vectors/metadata.json"))
     auto_save: bool = True
     backup_enabled: bool = True
@@ -198,6 +199,10 @@ class ClaudeConfig(BaseModel):
     max_cost_limit: float = Field(10.0, ge=0.0)  # Hard limit in USD
     enable_cost_limiting: bool = True
 
+    # API Pricing (USD per token)
+    pricing_input_per_token: float = Field(0.00000025, description="Cost per input token in USD ($0.25 per 1M tokens)")
+    pricing_output_per_token: float = Field(0.00000125, description="Cost per output token in USD ($1.25 per 1M tokens)")
+
 
 class MonitoringConfig(BaseModel):
     """Monitoring configuration."""
@@ -265,7 +270,7 @@ class SecurityConfig(BaseModel):
     validate_inputs: bool = True
     max_query_length: int = Field(1000, ge=10, le=10000)
     max_document_size_mb: int = Field(50, ge=1, le=1000)
-    allowed_file_extensions: List[str] = [".md", ".txt", ".pd", ".docx", ".html"]
+    allowed_file_extensions: List[str] = [".md", ".txt", ".pdf", ".docx", ".html"]
     sanitize_html: bool = True
     log_queries: bool = False
 
@@ -479,7 +484,7 @@ class ConfigManager:
             raise ValueError("No configuration loaded")
 
         # Convert to dictionary
-        config_dict = self._config.dict()
+        config_dict = self._config.model_dump()
 
         # Write to YAML
         with open(save_path, 'w') as f:
@@ -534,17 +539,20 @@ class ConfigManager:
 
 # Singleton instance
 _config_manager: Optional[ConfigManager] = None
+_config_lock = threading.Lock()
 
 
 def get_config() -> Config:
-    """Get global configuration instance.
+    """Get global configuration instance with thread-safe initialization.
 
     Returns:
         Global configuration object
     """
     global _config_manager
     if _config_manager is None:
-        _config_manager = ConfigManager()
+        with _config_lock:
+            if _config_manager is None:
+                _config_manager = ConfigManager()
     return _config_manager.get()
 
 

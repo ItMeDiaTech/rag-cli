@@ -9,6 +9,7 @@ import sys
 import os
 import json
 import time
+import threading
 import asyncio
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
@@ -17,56 +18,9 @@ from typing import Dict, Any, Optional, List, Tuple
 os.environ['CLAUDE_HOOK_CONTEXT'] = '1'
 os.environ['RAG_CLI_SUPPRESS_CONSOLE'] = '1'
 
-# Initialize path resolution variables
-hook_file = Path(__file__).resolve()
-project_root = os.environ.get('RAG_CLI_ROOT')
-if project_root:
-    project_root = Path(project_root)
-else:
-    project_root = None
-
-# Could be in .claude/plugins/rag-cli (when synced to Claude Code)
-# or in development directory
-# Strategy 2: Try to find project root by walking up from hook location
-if project_root is None:
-    current = hook_file.parent
-    for _ in range(10):  # Search up to 10 levels
-        # Check if this is the RAG-CLI root (has src/rag_cli and src/rag_cli_plugin)
-        if (current / 'src' / 'rag_cli' / 'core').exists() and (current / 'src' / 'rag_cli_plugin' / 'services').exists():
-            project_root = current
-            break
-        current = current.parent
-
-# Strategy 3: Check common installation locations
-if project_root is None:
-    potential_paths = [
-        # GitHub marketplace installation location
-        Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli',
-        # Manual plugin installation location
-        Path.home() / '.claude' / 'plugins' / 'rag-cli',
-        # Relative to current working directory
-        Path.cwd(),
-    ]
-
-    for path in potential_paths:
-        if path.exists() and (path / 'src' / 'rag_cli' / 'core').exists():
-            project_root = path
-            break
-
-# Strategy 4: Last resort - relative to hook file location
-if project_root is None:
-    # Assume hook is in src/rag_cli_plugin/hooks/, so project root is 3 levels up
-    project_root = hook_file.parents[3]
-    # Validate this actually looks like project root
-    if not (project_root / 'src' / 'rag_cli' / 'core').exists():
-        # If validation fails, raise clear error
-        raise RuntimeError(
-            f"Failed to locate RAG-CLI project root. Searched from: {hook_file}\n"
-            "Please set RAG_CLI_ROOT environment variable to the project directory.\n"
-            "Example: export RAG_CLI_ROOT=/path/to/RAG-CLI"
-        )
-
-sys.path.insert(0, str(project_root / 'src'))
+# Set up project paths using centralized utility
+from rag_cli_plugin.hooks.path_utils import setup_sys_path
+project_root = setup_sys_path(__file__)
 
 from rag_cli.core.config import get_config
 from rag_cli.core.vector_store import get_vector_store
@@ -76,7 +30,7 @@ from rag_cli.core.claude_code_adapter import get_adapter
 from rag_cli.core.query_classifier import QueryClassification
 from rag_cli_plugin.services.logger import get_logger
 from rag_cli_plugin.services.service_manager import ensure_services_running
-from rag_cli.core.constants import TCP_CHECK_CACHE_SECONDS
+from rag_cli.core.constants import TCP_CHECK_CACHE_SECONDS, MAX_BACKOFF_SECONDS
 
 logger = get_logger(__name__)
 
@@ -87,6 +41,7 @@ SETTINGS_FILE = project_root / "config" / "rag_settings.json"
 TCP_SERVER_URL = "http://localhost:9999"
 
 # Cache TCP server availability to avoid repeated checks with exponential backoff
+_tcp_state_lock = threading.Lock()
 _tcp_server_available = None
 _tcp_check_time = 0
 _tcp_consecutive_failures = 0
@@ -104,50 +59,51 @@ def check_tcp_server_available() -> bool:
     """
     global _tcp_server_available, _tcp_check_time, _tcp_consecutive_failures, _tcp_backoff_until
 
-    current_time = time.time()
+    with _tcp_state_lock:
+        current_time = time.time()
 
-    # Check if in backoff period
-    if current_time < _tcp_backoff_until:
-        logger.debug(f"TCP server in backoff period (until {_tcp_backoff_until - current_time:.1f}s)")
-        return False
+        # Check if in backoff period
+        if current_time < _tcp_backoff_until:
+            logger.debug(f"TCP server in backoff period (until {_tcp_backoff_until - current_time:.1f}s)")
+            return False
 
-    # Use cached result if check was recent
-    if _tcp_server_available is not None and (current_time - _tcp_check_time) < TCP_CHECK_CACHE_SECONDS:
-        return _tcp_server_available
-
-    # Try to connect to TCP server
-    try:
-        import urllib.request
-        import urllib.error
-
-        req = urllib.request.Request(
-            f"{TCP_SERVER_URL}/api/health",
-            method='GET'
-        )
-
-        with urllib.request.urlopen(req, timeout=0.5) as response:
-            # Success - reset failure count
-            _tcp_server_available = (response.status == 200)
-            _tcp_check_time = current_time
-            _tcp_consecutive_failures = 0
-            _tcp_backoff_until = 0
+        # Use cached result if check was recent
+        if _tcp_server_available is not None and (current_time - _tcp_check_time) < TCP_CHECK_CACHE_SECONDS:
             return _tcp_server_available
 
-    except (urllib.error.URLError, urllib.error.HTTPError, ConnectionError, TimeoutError, OSError) as e:
-        # Network/connection errors are expected when server is not running
-        logger.debug(f"TCP server not reachable: {type(e).__name__}")
-        _tcp_server_available = False
-        _tcp_check_time = current_time
+        # Try to connect to TCP server
+        try:
+            import urllib.request
+            import urllib.error
 
-        # Increment failure count and calculate backoff
-        _tcp_consecutive_failures += 1
-        backoff_seconds = min(TCP_CHECK_CACHE_SECONDS * (2 ** (_tcp_consecutive_failures - 1)), 240)
-        _tcp_backoff_until = current_time + backoff_seconds
+            req = urllib.request.Request(
+                f"{TCP_SERVER_URL}/api/health",
+                method='GET'
+            )
 
-        if _tcp_consecutive_failures > 1:
-            logger.debug(f"TCP server check failed {_tcp_consecutive_failures} times, backing off for {backoff_seconds}s")
+            with urllib.request.urlopen(req, timeout=0.5) as response:
+                # Success - reset failure count
+                _tcp_server_available = (response.status == 200)
+                _tcp_check_time = current_time
+                _tcp_consecutive_failures = 0
+                _tcp_backoff_until = 0
+                return _tcp_server_available
 
-        return False
+        except (urllib.error.URLError, urllib.error.HTTPError, ConnectionError, TimeoutError, OSError) as e:
+            # Network/connection errors are expected when server is not running
+            logger.debug(f"TCP server not reachable: {type(e).__name__}")
+            _tcp_server_available = False
+            _tcp_check_time = current_time
+
+            # Increment failure count and calculate backoff
+            _tcp_consecutive_failures += 1
+            backoff_seconds = min(TCP_CHECK_CACHE_SECONDS * (2 ** (_tcp_consecutive_failures - 1)), MAX_BACKOFF_SECONDS)
+            _tcp_backoff_until = current_time + backoff_seconds
+
+            if _tcp_consecutive_failures > 1:
+                logger.debug(f"TCP server check failed {_tcp_consecutive_failures} times, backing off for {backoff_seconds}s")
+
+            return False
 
 def submit_event_to_server(event_type: str, data: Dict[str, Any]) -> bool:
     """Submit an event to the TCP server via HTTP POST.
@@ -325,7 +281,7 @@ def retrieve_context(query: str, settings: Dict[str, Any], classification: Optio
     """
     try:
         # Check if vector store exists
-        vector_store_path = project_root / "data" / "vectors" / "faiss_index"
+        vector_store_path = project_root / "data" / "vectors" / "chroma_db"
         if not vector_store_path.exists():
             logger.warning("No vector index found, skipping RAG enhancement")
             return []
@@ -573,7 +529,7 @@ def _format_orchestration_summary(strategy_used: str, classification: Optional[Q
     Returns:
         Formatted markdown summary string
     """
-    from monitoring.output_formatter import OutputFormatter
+    from rag_cli_plugin.services.output_formatter import OutputFormatter
 
     formatter = OutputFormatter(verbose=False)
     formatted_summary = formatter.format_header("Query Processing", 2)
@@ -686,7 +642,7 @@ def _cache_retrieval_results(documents: List, query: str, event: Dict[str, Any],
         import hashlib
 
         session_id = event.get("session_id", "unknown")
-        prompt_hash = hashlib.md5(query.encode()).hexdigest()[:16]
+        prompt_hash = hashlib.blake2b(query.encode(), digest_size=16).hexdigest()
         cache_key = f"{session_id}_{prompt_hash}"
 
         cache_dir = project_root / "data" / "cache"

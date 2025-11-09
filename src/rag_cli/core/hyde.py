@@ -204,7 +204,7 @@ Write as if you're providing the actual answer from documentation. Be concise an
         """
         # Normalize query: lowercase, strip whitespace, remove punctuation
         normalized = query.lower().strip()
-        return hashlib.md5(normalized.encode()).hexdigest()
+        return hashlib.blake2b(normalized.encode(), digest_size=16).hexdigest()
 
     def _get_cached_result(self, cache_key: str) -> Optional[HyDEResult]:
         """Get result from cache if available and not expired.

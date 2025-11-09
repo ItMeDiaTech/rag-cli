@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 import uuid
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
@@ -94,7 +94,7 @@ class WorkflowOrchestrator:
         self.total_workflows = 0
         self.completed_workflows = 0
         self.failed_workflows = 0
-        self.workflow_history = []
+        self.workflow_history = deque(maxlen=1000)  # Bounded to prevent memory leaks
 
         self.logger.info("Orchestrator initialized with %s agents", len(agents))
 
@@ -626,19 +626,19 @@ def check_maf_status() -> Dict[str, Any]:
     """
     try:
         # Try to import and initialize orchestrator
-        from agents.maf.core.agent import AgentRegistry
-        from agents.maf.core.orchestrator import WorkflowOrchestrator
-        
+        from rag_cli.agents.maf.core.agent import AgentRegistry
+        from rag_cli.agents.maf.core.orchestrator import WorkflowOrchestrator
+
         # Get agent registry
         registry = AgentRegistry()
         agents = registry.get_all_agents()
-        
+
         # Create orchestrator instance
         orchestrator = WorkflowOrchestrator(agents=agents)
-        
+
         # Get stats
         stats = orchestrator.get_stats()
-        
+
         return {
             'available': True,
             'orchestrator_initialized': True,

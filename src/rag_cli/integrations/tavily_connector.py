@@ -8,6 +8,8 @@ graceful fallback when quota is exhausted.
 import os
 import time
 import json
+import threading
+import fcntl
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
@@ -43,7 +45,8 @@ class TavilyConnector:
             api_key: Tavily API key (reads from env TAVILY_API_KEY if not provided)
         """
         self.api_key = api_key or os.getenv("TAVILY_API_KEY")
-        self.quota_file = Path("config/tavily_usage.json")
+        project_root = Path(__file__).parent.parent.parent.parent
+        self.quota_file = project_root / "config" / "tavily_usage.json"
         self.rate_limit_delay = 6.0  # 10 requests/minute = 6s between requests
 
         self.last_request_time = 0.0
@@ -70,11 +73,19 @@ class TavilyConnector:
                 "searches": 0,
                 "last_reset": datetime.now().isoformat()
             }
-            self.quota_file.write_text(json.dumps(initial_data, indent=2))
+            with open(self.quota_file, 'w') as f:
+                try:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                    f.write(json.dumps(initial_data, indent=2))
+                finally:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
             logger.info("Created Tavily quota tracking file")
 
-    def _get_usage(self) -> Dict[str, Any]:
+    def _get_usage(self, _retry: bool = False) -> Dict[str, Any]:
         """Get current usage statistics.
+
+        Args:
+            _retry: Internal flag to prevent infinite recursion
 
         Returns:
             Dictionary with month, searches, last_reset
@@ -90,21 +101,34 @@ class TavilyConnector:
                     "searches": 0,
                     "last_reset": datetime.now().isoformat()
                 }
-                self.quota_file.write_text(json.dumps(data, indent=2))
+                with open(self.quota_file, 'w') as f:
+                    try:
+                        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                        f.write(json.dumps(data, indent=2))
+                    finally:
+                        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
                 logger.info("Tavily quota reset for new month", month=current_month)
 
             return data
 
         except (json.JSONDecodeError, FileNotFoundError) as e:
+            if _retry:
+                logger.error("Failed to initialize quota file after retry")
+                raise
             logger.error(f"Failed to read quota file: {e}")
             self._init_quota_file()
-            return self._get_usage()
+            return self._get_usage(_retry=True)
 
     def _increment_usage(self):
-        """Increment usage counter."""
+        """Increment usage counter with thread-safe file locking."""
         data = self._get_usage()
         data["searches"] += 1
-        self.quota_file.write_text(json.dumps(data, indent=2))
+        with open(self.quota_file, 'w') as f:
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                f.write(json.dumps(data, indent=2))
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
         # Log warning if approaching limit
         if data["searches"] == self.WARN_THRESHOLD:
@@ -220,18 +244,32 @@ class TavilyConnector:
 
             return results
 
+        except requests.Timeout:
+            logger.error("Tavily API request timed out")
+            return []
+        except requests.ConnectionError as e:
+            logger.error(f"Tavily API connection failed: {e}")
+            return []
+        except requests.HTTPError as e:
+            logger.error(f"Tavily API HTTP error: {e}")
+            return []
         except requests.RequestException as e:
             logger.error(f"Tavily API request failed: {e}")
             return []
         except json.JSONDecodeError as e:
             logger.error(f"Tavily response parsing failed: {e}")
             return []
+        except (KeyError, TypeError, ValueError) as e:
+            # Expected errors during response parsing
+            logger.error(f"Tavily response validation failed: {e}")
+            return []
         except Exception as e:
-            logger.error(f"Tavily search failed: {e}", exc_info=True)
+            # Unexpected errors - log with traceback
+            logger.exception("Unexpected error in Tavily search", exc_info=True)
             return []
 
     def _parse_response(self, data: Dict[str, Any]) -> List[TavilyResult]:
-        """Parse Tavily API response.
+        """Parse Tavily API response with comprehensive validation.
 
         Args:
             data: JSON response from Tavily API
@@ -241,19 +279,63 @@ class TavilyConnector:
         """
         results = []
 
-        try:
-            for item in data.get("results", []):
+        # Validate response is dict
+        if not isinstance(data, dict):
+            logger.error(f"Invalid Tavily response: expected dict, got {type(data).__name__}")
+            return results
+
+        # Check for results key
+        if "results" not in data:
+            logger.error("Invalid Tavily response: missing 'results' key")
+            return results
+
+        result_list = data["results"]
+
+        # Validate results is list
+        if not isinstance(result_list, list):
+            logger.error(f"Invalid Tavily results: expected list, got {type(result_list).__name__}")
+            return results
+
+        # Parse each result with error handling
+        for i, item in enumerate(result_list):
+            try:
+                if not isinstance(item, dict):
+                    logger.warning(f"Skipping invalid result {i}: not a dict")
+                    continue
+
+                # Validate required fields
+                required_fields = ['title', 'url', 'content']
+                missing = [f for f in required_fields if f not in item]
+                if missing:
+                    logger.warning(f"Skipping result {i}: missing fields {missing}")
+                    continue
+
+                # Validate field types
+                if not isinstance(item['title'], str):
+                    logger.warning(f"Skipping result {i}: title is not string")
+                    continue
+
+                if not isinstance(item['url'], str):
+                    logger.warning(f"Skipping result {i}: url is not string")
+                    continue
+
+                if not isinstance(item['content'], str):
+                    logger.warning(f"Skipping result {i}: content is not string")
+                    continue
+
+                # Create result object
                 result = TavilyResult(
-                    title=item.get("title", ""),
-                    url=item.get("url", ""),
-                    content=item.get("content", ""),
-                    score=item.get("score", 0.0),
-                    published_date=item.get("published_date")
+                    title=item['title'],
+                    url=item['url'],
+                    content=item['content'],
+                    score=float(item.get('score', 0.0)),
+                    published_date=item.get('published_date')
                 )
                 results.append(result)
 
-        except (KeyError, TypeError) as e:
-            logger.error(f"Failed to parse Tavily result: {e}")
+            except (KeyError, TypeError, ValueError) as e:
+                logger.warning(f"Failed to parse result {i}: {e}")
+                continue
 
         return results
 
@@ -288,10 +370,11 @@ class TavilyConnector:
 
 # Singleton instance
 _tavily_connector: Optional[TavilyConnector] = None
+_tavily_lock = threading.Lock()
 
 
 def get_tavily_connector() -> TavilyConnector:
-    """Get or create the global Tavily connector instance.
+    """Get or create the global Tavily connector instance with thread-safe initialization.
 
     Returns:
         Tavily connector instance
@@ -299,6 +382,8 @@ def get_tavily_connector() -> TavilyConnector:
     global _tavily_connector
 
     if _tavily_connector is None:
-        _tavily_connector = TavilyConnector()
+        with _tavily_lock:
+            if _tavily_connector is None:
+                _tavily_connector = TavilyConnector()
 
     return _tavily_connector

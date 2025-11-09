@@ -177,7 +177,7 @@ def run_async(coro: Coroutine[Any, Any, T], timeout: Optional[float] = None) -> 
         Result of coroutine
 
     Example:
-        >>> from core.async_utils import run_async
+        >>> from rag_cli.core.async_utils import run_async
         >>> async def main():
         ...     return "hello"
         >>> result = run_async(main())

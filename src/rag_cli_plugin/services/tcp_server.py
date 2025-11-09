@@ -20,6 +20,7 @@ from flask import Flask, jsonify, request
 import psutil
 
 from rag_cli.core.config import get_config
+from rag_cli.core.constants import MAX_EVENT_HISTORY
 from rag_cli_plugin.services.logger import get_logger, get_metrics_logger
 
 
@@ -54,7 +55,7 @@ class MetricsCollector:
         self.cache_misses = 0
 
         # Log buffer
-        self.log_buffer = deque(maxlen=100)
+        self.log_buffer = deque(maxlen=MAX_EVENT_HISTORY)
 
         # Component status
         self.component_status = {
@@ -66,12 +67,12 @@ class MetricsCollector:
 
         # Event streaming support (SSE) with weak references to prevent memory leaks
         self.event_subscribers = []  # List of weak references to queues for SSE clients
-        self.event_history = deque(maxlen=100)  # Recent events for new subscribers
+        self.event_history = deque(maxlen=MAX_EVENT_HISTORY)  # Recent events for new subscribers
 
         # New event categories
-        self.activity_events = deque(maxlen=100)
-        self.reasoning_events = deque(maxlen=100)
-        self.query_enhancement_events = deque(maxlen=100)
+        self.activity_events = deque(maxlen=MAX_EVENT_HISTORY)
+        self.reasoning_events = deque(maxlen=MAX_EVENT_HISTORY)
+        self.query_enhancement_events = deque(maxlen=MAX_EVENT_HISTORY)
 
     def subscribe_to_events(self) -> Queue:
         """Subscribe to real-time events. Returns a queue for SSE streaming.
@@ -445,7 +446,7 @@ class MonitoringServer:
 
         try:
             vector_store = get_vector_store()
-            total_vectors = vector_store.index.ntotal
+            total_vectors = vector_store.get_vector_count()
         except (AttributeError, RuntimeError, Exception) as e:
             logger.debug(f"Could not retrieve vector count: {e}")
             total_vectors = 0
@@ -710,7 +711,7 @@ def get_event_history():
 def get_latency_stats():
     """Get latency statistics with percentiles."""
     try:
-        from monitoring.latency_tracker import get_latency_tracker
+        from rag_cli_plugin.services.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         summary = tracker.get_summary()
@@ -737,7 +738,7 @@ def get_operation_latency(operation: str):
         return jsonify({"error": "Invalid operation format"}), 400
 
     try:
-        from monitoring.latency_tracker import get_latency_tracker
+        from rag_cli_plugin.services.latency_tracker import get_latency_tracker
 
         tracker = get_latency_tracker()
         stats = tracker.get_stats(operation)

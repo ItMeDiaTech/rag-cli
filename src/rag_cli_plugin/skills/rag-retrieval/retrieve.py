@@ -248,10 +248,12 @@ def main():
     args = parse_arguments()
 
     # Check if vector store exists
-    vector_store_path = Path("data/vectors/faiss_index")
+    # Get project root (4 levels up from this file)
+    project_root = Path(__file__).resolve().parents[4]
+    vector_store_path = project_root / "data" / "vectors" / "chroma_db"
     if not vector_store_path.exists():
         print("Error: No vector index found. Please index documents first:")
-        print("  python scripts/index.py --input data/documents")
+        print("  rag-index ./data/documents --recursive")
         sys.exit(1)
 
     # Perform retrieval

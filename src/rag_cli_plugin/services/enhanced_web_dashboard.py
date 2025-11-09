@@ -16,6 +16,8 @@ from flask import Flask, render_template, jsonify, Response, stream_with_context
 from flask_cors import CORS
 import requests
 
+from rag_cli.core.constants import MAX_EVENT_HISTORY
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,7 +37,7 @@ class EnhancedMetricsCollector:
     def __init__(self):
         # Agent orchestration metrics
         self.agent_executions = defaultdict(list)  # agent_id -> list of executions
-        self.agent_messages = deque(maxlen=100)  # Message flow between agents
+        self.agent_messages = deque(maxlen=MAX_EVENT_HISTORY)  # Message flow between agents
         self.agent_graph_nodes = []  # Current active agents
         self.agent_graph_links = []  # Connections between agents
         self.decision_tree = deque(maxlen=50)  # Decision tree nodes
@@ -43,22 +45,22 @@ class EnhancedMetricsCollector:
         # Cost tracking
         self.cost_by_agent = defaultdict(float)  # agent_id -> total cost
         self.token_usage_by_agent = defaultdict(int)  # agent_id -> total tokens
-        self.cost_history = deque(maxlen=100)  # Historical cost data
+        self.cost_history = deque(maxlen=MAX_EVENT_HISTORY)  # Historical cost data
 
         # RAG pipeline metrics
-        self.rag_activities = deque(maxlen=100)
+        self.rag_activities = deque(maxlen=MAX_EVENT_HISTORY)
         self.cache_stats = {'hits': 0, 'misses': 0}
-        self.vector_search_latencies = deque(maxlen=100)
+        self.vector_search_latencies = deque(maxlen=MAX_EVENT_HISTORY)
         self.document_count = 0
 
         # Performance metrics
-        self.latency_history = deque(maxlen=100)
-        self.throughput_history = deque(maxlen=100)
-        self.cpu_history = deque(maxlen=100)
-        self.memory_history = deque(maxlen=100)
+        self.latency_history = deque(maxlen=MAX_EVENT_HISTORY)
+        self.throughput_history = deque(maxlen=MAX_EVENT_HISTORY)
+        self.cpu_history = deque(maxlen=MAX_EVENT_HISTORY)
+        self.memory_history = deque(maxlen=MAX_EVENT_HISTORY)
 
         # Timeline activities
-        self.timeline_activities = deque(maxlen=100)
+        self.timeline_activities = deque(maxlen=MAX_EVENT_HISTORY)
 
         # System stats
         self.total_queries = 0

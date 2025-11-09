@@ -129,7 +129,7 @@ class AgentOrchestrator:
         logger.info("Routing strategy selected", strategy=strategy.value)
 
         # Emit reasoning event
-        from monitoring.tcp_server import metrics_collector
+        from rag_cli_plugin.services.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Agent orchestration: Classified as {classification.primary_intent.value} "
             f"with {classification.confidence:.0%} confidence. "
@@ -307,7 +307,7 @@ class AgentOrchestrator:
         logger.debug("Executing parallel RAG + MAF strategy")
 
         # Emit activity event
-        from monitoring.tcp_server import metrics_collector
+        from rag_cli_plugin.services.tcp_server import metrics_collector
         metrics_collector.record_activity_event(
             activity="parallel_rag_maf_started",
             component="agent_orchestrator",
@@ -450,7 +450,7 @@ class AgentOrchestrator:
             content = "\n\n".join(content_parts)
 
         # Emit reasoning event
-        from monitoring.tcp_server import metrics_collector
+        from rag_cli_plugin.services.tcp_server import metrics_collector
         metrics_collector.record_reasoning_event(
             reasoning=f"Hybrid synthesis: Combined MAF {'analysis' if maf_result else 'unavailable'} "
             f"with {len(rag_results)} RAG results. "
@@ -506,7 +506,7 @@ class AgentOrchestrator:
         logger.debug("Executing decomposed strategy")
 
         # Emit activity event
-        from monitoring.tcp_server import metrics_collector
+        from rag_cli_plugin.services.tcp_server import metrics_collector
         metrics_collector.record_activity_event(
             activity="query_decomposition_started",
             component="agent_orchestrator",

@@ -9,9 +9,10 @@ import sys
 import json
 import logging
 import logging.handlers
+import re
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Pattern
 from functools import wraps
 import time
 import structlog
@@ -19,6 +20,15 @@ from structlog.processors import JSONRenderer, TimeStamper, add_log_level
 
 # Import Windows-safe file handler from core logger
 from rag_cli.utils.logger import create_file_handler
+
+# Pre-compile sensitive data patterns for performance (avoid re-compilation on every log)
+_SENSITIVE_PATTERNS: list[tuple[Pattern, str]] = [
+    (re.compile(r'(api[\s_-]?key\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', re.IGNORECASE), r'\1***REDACTED***\3'),
+    (re.compile(r'(token\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', re.IGNORECASE), r'\1***REDACTED***\3'),
+    (re.compile(r'(secret\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', re.IGNORECASE), r'\1***REDACTED***\3'),
+    (re.compile(r'(password\s*[:=]\s*["\']?)([^\s"\']{8,})(["\']?)', re.IGNORECASE), r'\1***REDACTED***\3'),
+    (re.compile(r'(Bearer\s+)([a-zA-Z0-9_\-\.]{20,})', re.IGNORECASE), r'\1***REDACTED***'),
+]
 
 
 def redact_sensitive_data(text: str) -> str:
@@ -30,24 +40,10 @@ def redact_sensitive_data(text: str) -> str:
     Returns:
         Text with sensitive data redacted
     """
-    import re
-
-    # Redact API keys and tokens
-    # Pattern: key=value or "key":"value" or key: value
-    sensitive_patterns = [
-        (r'(api[\s_-]?key\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
-        (r'(token\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
-        (r'(secret\s*[:=]\s*["\']?)([a-zA-Z0-9_\-]{20,})(["\']?)', r'\1***REDACTED***\3'),
-        (r'(password\s*[:=]\s*["\']?)([^\s"\']{8,})(["\']?)', r'\1***REDACTED***\3'),
-        # Redact Bearer tokens
-        (r'(Bearer\s+)([a-zA-Z0-9_\-\.]{20,})', r'\1***REDACTED***'),
-        # Redact email addresses (optional, might be too aggressive)
-        # (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '***EMAIL_REDACTED***'),
-    ]
-
+    # Use pre-compiled patterns for better performance
     redacted_text = text
-    for pattern, replacement in sensitive_patterns:
-        redacted_text = re.sub(pattern, replacement, redacted_text, flags=re.IGNORECASE)
+    for pattern, replacement in _SENSITIVE_PATTERNS:
+        redacted_text = pattern.sub(replacement, redacted_text)
 
     return redacted_text
 

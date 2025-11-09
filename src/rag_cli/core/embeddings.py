@@ -20,6 +20,7 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
 from rag_cli.core.config import get_config
+from rag_cli.core.constants import EMBEDDING_CACHE_SIZE
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_execution_time
 
 
@@ -64,7 +65,7 @@ class EmbeddingCache:
             return self._cache[text]
         return None
 
-    def put(self, text: str, embedding: np.ndarray):
+    def put(self, text: str, embedding: np.ndarray) -> None:
         """Store embedding in cache with LRU eviction.
 
         Args:
@@ -87,7 +88,7 @@ class EmbeddingCache:
         self._cache[text] = embedding
         logger.debug("Added to embedding cache", text_length=len(text), cache_size=len(self._cache))
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the cache."""
         self._cache.clear()
         logger.info("Embedding cache cleared")
@@ -351,7 +352,7 @@ class EmbeddingGenerator:
         logger.info("Encoding documents", count=len(documents))
 
         # For large document sets, disable cache to avoid memory issues
-        use_cache = len(documents) < 1000
+        use_cache = len(documents) < EMBEDDING_CACHE_SIZE
 
         embeddings = self.encode(
             documents,
@@ -400,7 +401,7 @@ class EmbeddingGenerator:
 
         return similarities
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the embedding cache."""
         self.cache.clear()
 
@@ -412,7 +413,7 @@ class EmbeddingGenerator:
         """
         return self.dimensions
 
-    def warmup(self):
+    def warmup(self) -> None:
         """Warm up the model with a test encoding."""
         logger.debug("Warming up embedding model")
         _ = self.encode("warmup test")
@@ -543,8 +544,14 @@ class EmbeddingPool:
             # Use generator's encode but without cache to avoid thread contention
             embeddings = self.generator._encode_batch(chunk, show_progress=False)
             return embeddings
-        except Exception as e:
+        except (ValueError, TypeError, AttributeError) as e:
+            # Expected errors - invalid input, wrong types
             logger.error(f"Error encoding chunk {chunk_idx}: {e}")
+            # Return zero embeddings as fallback
+            return np.zeros((len(chunk), self.generator.dimensions))
+        except Exception as e:
+            # Unexpected errors - log with traceback
+            logger.exception(f"Unexpected error encoding chunk {chunk_idx}", exc_info=True)
             # Return zero embeddings as fallback
             return np.zeros((len(chunk), self.generator.dimensions))
 
@@ -573,7 +580,7 @@ class EmbeddingPool:
             show_progress
         )
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown the thread pool."""
         logger.debug("Shutting down EmbeddingPool")
         self.executor.shutdown(wait=True)

@@ -15,6 +15,7 @@ import threading
 import asyncio
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+from contextlib import contextmanager
 import numpy as np
 from collections import defaultdict, OrderedDict
 
@@ -25,6 +26,7 @@ import bm25s
 from sentence_transformers import CrossEncoder
 
 from rag_cli.core.config import get_config
+from rag_cli.core.constants import CHARS_PER_TOKEN, DEFAULT_VECTOR_WEIGHT, DEFAULT_KEYWORD_WEIGHT
 from rag_cli.core.embeddings import get_embedding_generator
 from rag_cli.core.vector_store import get_vector_store
 from rag_cli.core.document_processor import DocumentChunk, get_document_processor
@@ -36,7 +38,7 @@ from rag_cli.utils.error_tracker import get_error_tracker
 from rag_cli.core.duplicate_detector import get_duplicate_detector
 from rag_cli.core.semantic_cache import get_semantic_cache
 from rag_cli.core.hyde import get_hyde_generator
-from rag_cli.core.query_classifier import QueryClassification
+from rag_cli.core.query_classifier import QueryClassification, QueryIntent
 
 # Optional plugin integration (metrics collector from plugin)
 try:
@@ -265,7 +267,7 @@ class HybridRetriever:
                     return
 
                 # Get count from vector store
-                count = self.vector_store.collection.count()
+                count = self.vector_store.get_vector_count()
                 if count == 0:
                     logger.debug("No documents in vector store, skipping BM25 auto-build")
                     return
@@ -549,7 +551,7 @@ class HybridRetriever:
         combined_scores = []
         for i, (doc_id, text, orig_score, metadata, method) in enumerate(candidates):
             # Weight: 70% cross-encoder, 30% original
-            combined_score = 0.7 * ce_scores[i] + 0.3 * orig_score
+            combined_score = DEFAULT_VECTOR_WEIGHT * ce_scores[i] + DEFAULT_KEYWORD_WEIGHT * orig_score
             combined_scores.append((
                 doc_id, text, combined_score, metadata, method, ce_scores[i]
             ))
@@ -596,12 +598,6 @@ class HybridRetriever:
         if not classification:
             return (vector_weight, keyword_weight)
 
-        # Import QueryIntent for type checking
-        try:
-            from core.query_classifier import QueryIntent
-        except ImportError:
-            return (vector_weight, keyword_weight)
-
         # Adaptive weight profiles based on intent
         intent = classification.primary_intent
 
@@ -640,6 +636,42 @@ class HybridRetriever:
             logger.debug("Using default weight profile", vector=vector_weight, keyword=keyword_weight)
 
         return (vector_weight, keyword_weight)
+
+    @contextmanager
+    def _temporary_weights(self, vector_weight: Optional[float] = None, keyword_weight: Optional[float] = None):
+        """Temporarily override retrieval weights using a context manager.
+
+        This context manager ensures weights are always restored, even if an exception occurs.
+        Safer than manual save/restore pattern which can leak state on errors.
+
+        Args:
+            vector_weight: Temporary vector weight (None = keep current)
+            keyword_weight: Temporary keyword weight (None = keep current)
+
+        Yields:
+            None
+
+        Example:
+            with self._temporary_weights(0.8, 0.2):
+                results = self._hybrid_search(query, top_k)
+                # Weights automatically restored after this block
+        """
+        # Save original values
+        original_vector_weight = self.vector_weight
+        original_keyword_weight = self.keyword_weight
+
+        # Apply temporary values if provided
+        if vector_weight is not None:
+            self.vector_weight = vector_weight
+        if keyword_weight is not None:
+            self.keyword_weight = keyword_weight
+
+        try:
+            yield
+        finally:
+            # Always restore original weights
+            self.vector_weight = original_vector_weight
+            self.keyword_weight = original_keyword_weight
 
     async def vector_search_async(
         self,
@@ -815,13 +847,8 @@ class HybridRetriever:
         # Get adaptive weights based on query classification
         adaptive_vector_weight, adaptive_keyword_weight = self._get_adaptive_weights(query, classification)
 
-        # Temporarily override weights for this query
-        original_vector_weight = self.vector_weight
-        original_keyword_weight = self.keyword_weight
-        self.vector_weight = adaptive_vector_weight
-        self.keyword_weight = adaptive_keyword_weight
-
-        try:
+        # Use context manager to temporarily override weights for this query
+        with self._temporary_weights(adaptive_vector_weight, adaptive_keyword_weight):
             # Check semantic cache
             if use_cache and self.cache:
                 cache_result = self.cache.get(query)
@@ -1076,11 +1103,6 @@ class HybridRetriever:
 
             return final_results
 
-        finally:
-            # Restore original weights
-            self.vector_weight = original_vector_weight
-            self.keyword_weight = original_keyword_weight
-
     @log_execution_time
     def retrieve(
         self,
@@ -1189,7 +1211,7 @@ if __name__ == "__main__":
             chunk_index=0,
             total_chunks=1,
             char_count=len(text),
-            token_count=len(text) // 4,
+            token_count=len(text) // CHARS_PER_TOKEN,
             source=f"doc_{i}.txt",
             doc_id=f"doc_{i}",
             chunk_id=f"doc_{i}_chunk_0"

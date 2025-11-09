@@ -123,7 +123,7 @@ def process_hook(event: Dict[str, Any]) -> Dict[str, Any]:
 
         # Try to send event to monitoring dashboard if available
         try:
-            from monitoring.service_manager import ServiceManager
+            from rag_cli_plugin.services.service_manager import ServiceManager
 
             manager = ServiceManager()
             if manager.is_healthy():

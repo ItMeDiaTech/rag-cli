@@ -447,7 +447,7 @@ class WebScraper:
             # Skip common non-documentation pages
             skip_patterns = [
                 '/search', '/login', '/signup', '/download',
-                '.pd', '.zip', '.tar', '.gz',
+                '.pdf', '.zip', '.tar', '.gz',
                 '/api/v', '/api-', '/blog', '/news'
             ]
 
@@ -520,7 +520,7 @@ def scrape_and_save(
 
     for i, doc in enumerate(documents):
         # Create filename from URL
-        url_hash = hashlib.md5(doc.url.encode()).hexdigest()[:8]
+        url_hash = hashlib.blake2b(doc.url.encode(), digest_size=8).hexdigest()
         filename = f"{i:04d}_{url_hash}.txt"
 
         filepath = doc_dir / filename

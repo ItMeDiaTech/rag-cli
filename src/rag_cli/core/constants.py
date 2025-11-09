@@ -88,3 +88,15 @@ EMBEDDING_TIMEOUT = 60
 
 SEARCH_TIMEOUT = 10
 """Timeout for vector search (seconds)"""
+
+# Similarity thresholds
+SIMILARITY_THRESHOLD = 0.85
+"""Default similarity threshold for deduplication and matching"""
+
+# Cache TTL
+RESPONSE_CACHE_TTL_SECONDS = 300
+"""Response cache TTL (seconds) - 5 minutes"""
+
+# Backoff configuration
+MAX_BACKOFF_SECONDS = 240
+"""Maximum backoff time for exponential backoff (seconds) - 4 minutes"""

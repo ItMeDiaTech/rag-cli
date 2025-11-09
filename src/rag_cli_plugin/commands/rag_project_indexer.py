@@ -9,6 +9,7 @@ import sys
 import json
 import time
 import re
+import yaml
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
@@ -313,80 +314,60 @@ class ProjectAnalyzer:
 class DocumentationFetcher:
     """Fetches documentation for detected technologies."""
 
-    # Documentation source mappings
-    DOC_SOURCES = {
-        # Languages
-        "Python": [
-            ("https://docs.python.org/3/", 1, "official"),
-            ("https://realpython.com/", 2, "tutorial"),
-        ],
-        "JavaScript": [
-            ("https://developer.mozilla.org/en-US/docs/Web/JavaScript", 1, "official"),
-            ("https://javascript.info/", 2, "tutorial"),
-        ],
-        "TypeScript": [
-            ("https://www.typescriptlang.org/docs/", 1, "official"),
-        ],
-        "Rust": [
-            ("https://doc.rust-lang.org/book/", 1, "official"),
-            ("https://rust-lang.github.io/async-book/", 2, "official"),
-        ],
-        "Go": [
-            ("https://go.dev/doc/", 1, "official"),
-        ],
-        "Java": [
-            ("https://docs.oracle.com/javase/tutorial/", 1, "official"),
-        ],
+    def __init__(self):
+        """Initialize fetcher and load documentation sources from config."""
+        self.doc_sources = self._load_documentation_sources()
 
-        # Frameworks
-        "Django": [
-            ("https://docs.djangoproject.com/", 1, "official"),
-        ],
-        "Flask": [
-            ("https://flask.palletsprojects.com/", 1, "official"),
-        ],
-        "FastAPI": [
-            ("https://fastapi.tiangolo.com/", 1, "official"),
-        ],
-        "React": [
-            ("https://react.dev/", 1, "official"),
-        ],
-        "Vue.js": [
-            ("https://vuejs.org/guide/", 1, "official"),
-        ],
-        "Angular": [
-            ("https://angular.io/docs", 1, "official"),
-        ],
-        "Express": [
-            ("https://expressjs.com/", 1, "official"),
-        ],
-        "Next.js": [
-            ("https://nextjs.org/docs", 1, "official"),
-        ],
+    def _load_documentation_sources(self) -> Dict[str, List[tuple]]:
+        """Load documentation sources from YAML configuration file.
 
-        # Libraries
-        "LangChain": [
-            ("https://python.langchain.com/docs/", 1, "official"),
-        ],
-        "Anthropic SDK": [
-            ("https://docs.anthropic.com/", 1, "official"),
-        ],
-        "FAISS": [
-            ("https://github.com/facebookresearch/faiss/wiki", 1, "official"),
-        ],
-        "NumPy": [
-            ("https://numpy.org/doc/stable/", 1, "official"),
-        ],
-        "Pandas": [
-            ("https://pandas.pydata.org/docs/", 1, "official"),
-        ],
-        "PyTorch": [
-            ("https://pytorch.org/docs/stable/index.html", 1, "official"),
-        ],
-        "TensorFlow": [
-            ("https://www.tensorflow.org/api_docs", 1, "official"),
-        ],
-    }
+        Returns:
+            Dictionary mapping technology names to lists of (url, priority, doc_type) tuples
+        """
+        # Get project root (3 levels up from this file)
+        project_root = Path(__file__).resolve().parents[3]
+        config_file = project_root / "config" / "documentation_sources.yaml"
+
+        if config_file.exists():
+            try:
+                with open(config_file, 'r') as f:
+                    config = yaml.safe_load(f)
+                    doc_sources_dict = config.get('documentation_sources', {})
+
+                    # Convert YAML structure to internal format
+                    result = {}
+                    for tech_name, sources in doc_sources_dict.items():
+                        result[tech_name] = [
+                            (source['url'], source['priority'], source['doc_type'])
+                            for source in sources
+                            if source.get('enabled', True)
+                        ]
+
+                    logger.info(f"Loaded documentation sources for {len(result)} technologies from {config_file}")
+                    return result
+
+            except Exception as e:
+                logger.warning(f"Failed to load documentation sources from {config_file}: {e}")
+                # Fall through to defaults
+
+        # Fallback to default sources if config missing
+        logger.info("Using default documentation sources")
+        return self._get_default_sources()
+
+    def _get_default_sources(self) -> Dict[str, List[tuple]]:
+        """Get default documentation sources as fallback.
+
+        Returns:
+            Dictionary mapping technology names to lists of (url, priority, doc_type) tuples
+        """
+        return {
+            "Python": [("https://docs.python.org/3/", 1, "official")],
+            "JavaScript": [("https://developer.mozilla.org/en-US/docs/Web/JavaScript", 1, "official")],
+            "TypeScript": [("https://www.typescriptlang.org/docs/", 1, "official")],
+            "React": [("https://react.dev/", 1, "official")],
+            "Django": [("https://docs.djangoproject.com/", 1, "official")],
+            "Flask": [("https://flask.palletsprojects.com/", 1, "official")],
+        }
 
     def get_sources(self, technologies: List[DetectedTechnology]) -> List[DocumentationSource]:
         """Get documentation sources for detected technologies.
@@ -400,8 +381,8 @@ class DocumentationFetcher:
         sources = []
 
         for tech in technologies:
-            if tech.name in self.DOC_SOURCES:
-                for url, priority, doc_type in self.DOC_SOURCES[tech.name]:
+            if tech.name in self.doc_sources:
+                for url, priority, doc_type in self.doc_sources[tech.name]:
                     sources.append(DocumentationSource(
                         name=tech.name,
                         url=url,

@@ -6,7 +6,8 @@ Uses content hashing to identify and filter duplicate documents before indexing.
 import hashlib
 import logging
 import json
-from typing import Dict, List, Optional, Tuple
+import threading
+from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -48,6 +49,7 @@ class DuplicateDetector:
         """
         self.hash_file = hash_file or './data/vectors/content_hashes.json'
         self.hashes: Dict[str, ContentHash] = {}
+        self._file_lock = threading.Lock()
         self.load()
 
     def compute_hash(self, content: str) -> str:
@@ -248,66 +250,85 @@ class DuplicateDetector:
     def _check_fuzzy_duplicate(self, content: str) -> Tuple[bool, Optional[ContentHash]]:
         """Check for fuzzy duplicates using similarity.
 
+        Note: This feature is not yet implemented. Always returns False.
+        TODO: Implement using SimHash or MinHash for fuzzy duplicate detection.
+
+        For production implementation, consider:
+        - Store MinHash/SimHash in ContentHash
+        - Use Jaccard similarity for comparison
+        - Set configurable similarity threshold (e.g., 0.8)
+
         Args:
             content: Content to check
 
         Returns:
-            Tuple of (is_duplicate, hash_info)
+            Tuple of (False, None) - fuzzy matching not implemented
         """
-        # Simple fuzzy matching: check if content is very similar
-        # For production, could use MinHash or SimHash
-        normalized = self._normalize_content(content)
-        len(normalized)
-
-        for hash_info in self.hashes.values():
-            # This is a placeholder - in production would need to store
-            # fuzzy hashes or use approximate matching
-            # For now, just return False
-            pass
-
         return False, None
 
     def save(self):
-        """Save hashes to file."""
-        try:
-            # Ensure directory exists
-            Path(self.hash_file).parent.mkdir(parents=True, exist_ok=True)
+        """Save hashes to file with thread-safe file locking."""
+        with self._file_lock:
+            try:
+                # Ensure directory exists
+                Path(self.hash_file).parent.mkdir(parents=True, exist_ok=True)
 
-            # Convert to serializable format
-            data = {
-                'hashes': {k: v.to_dict() for k, v in self.hashes.items()},
-                'saved_at': datetime.now().isoformat()
-            }
+                # Convert to serializable format
+                data = {
+                    'hashes': {k: v.to_dict() for k, v in self.hashes.items()},
+                    'saved_at': datetime.now().isoformat()
+                }
 
-            with open(self.hash_file, 'w') as f:
-                json.dump(data, f, indent=2)
+                with open(self.hash_file, 'w') as f:
+                    json.dump(data, f, indent=2)
 
-            logger.debug(f"Saved {len(self.hashes)} hashes to {self.hash_file}")
+                logger.debug(f"Saved {len(self.hashes)} hashes to {self.hash_file}")
 
-        except Exception as e:
-            logger.error(f"Error saving hashes: {e}")
+            except (IOError, OSError, PermissionError) as e:
+                # Expected errors - file system issues
+                logger.error(f"Error saving hashes to {self.hash_file}: {e}")
+            except json.JSONEncodeError as e:
+                # JSON encoding errors
+                logger.error(f"Error encoding hash data: {e}")
+            except Exception as e:
+                # Unexpected errors - log with traceback
+                logger.exception("Unexpected error saving hashes", exc_info=True)
 
     def load(self):
-        """Load hashes from file."""
-        try:
-            if not Path(self.hash_file).exists():
-                logger.debug("No existing hash file found, starting fresh")
-                return
+        """Load hashes from file with thread-safe file locking."""
+        with self._file_lock:
+            try:
+                if not Path(self.hash_file).exists():
+                    logger.debug("No existing hash file found, starting fresh")
+                    return
 
-            with open(self.hash_file, 'r') as f:
-                data = json.load(f)
+                with open(self.hash_file, 'r') as f:
+                    data = json.load(f)
 
-            # Load hashes
-            hash_data = data.get('hashes', {})
-            self.hashes = {k: ContentHash.from_dict(v) for k, v in hash_data.items()}
+                # Load hashes
+                hash_data = data.get('hashes', {})
+                self.hashes = {k: ContentHash.from_dict(v) for k, v in hash_data.items()}
 
-            logger.info(f"Loaded {len(self.hashes)} hashes from {self.hash_file}")
+                logger.info(f"Loaded {len(self.hashes)} hashes from {self.hash_file}")
 
-        except Exception as e:
-            logger.error(f"Error loading hashes: {e}")
-            self.hashes = {}
+            except (IOError, OSError, FileNotFoundError) as e:
+                # Expected errors - file not found, permission issues
+                logger.error(f"Error loading hashes from {self.hash_file}: {e}")
+                self.hashes = {}
+            except json.JSONDecodeError as e:
+                # JSON parsing errors
+                logger.error(f"Error parsing hash file {self.hash_file}: {e}")
+                self.hashes = {}
+            except (KeyError, ValueError, TypeError) as e:
+                # Invalid hash data structure
+                logger.error(f"Invalid hash data in {self.hash_file}: {e}")
+                self.hashes = {}
+            except Exception as e:
+                # Unexpected errors - log with traceback
+                logger.exception("Unexpected error loading hashes", exc_info=True)
+                self.hashes = {}
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """Get statistics about stored hashes.
 
         Returns:

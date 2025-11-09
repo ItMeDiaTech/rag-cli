@@ -19,16 +19,62 @@ except ImportError:
     Anthropic = None
 
 from rag_cli.core.config import get_config
-from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE
+from rag_cli.core.constants import RESPONSE_CACHE_MAX_SIZE, CLAUDE_RATE_LIMIT_REQUESTS, CHARS_PER_TOKEN
 from rag_cli.core.retrieval_pipeline import RetrievalResult
 from rag_cli.core.claude_code_adapter import get_adapter, is_claude_code_mode
 from rag_cli.core.prompt_templates import get_prompt_manager
 from rag_cli.core.query_classifier import QueryClassification
 from rag_cli.utils.logger import get_logger, get_metrics_logger, log_api_call
+from collections import deque, OrderedDict
 
 
 logger = get_logger(__name__)
 metrics = get_metrics_logger()
+
+
+class RateLimiter:
+    """Simple token bucket rate limiter for API calls."""
+
+    def __init__(self, max_requests: int, window_seconds: int = 60):
+        """Initialize rate limiter.
+
+        Args:
+            max_requests: Maximum requests allowed in window
+            window_seconds: Time window in seconds (default: 60)
+        """
+        self.max_requests = max_requests
+        self.window = window_seconds
+        self.requests = deque()
+
+    def check_rate_limit(self) -> bool:
+        """Check if request is allowed. Returns True if allowed, False if rate limited."""
+        now = time.time()
+
+        # Remove old requests outside window
+        while self.requests and self.requests[0] < now - self.window:
+            self.requests.popleft()
+
+        if len(self.requests) >= self.max_requests:
+            return False  # Rate limited
+
+        self.requests.append(now)
+        return True
+
+    def get_wait_time(self) -> float:
+        """Get time to wait before next request is allowed."""
+        if not self.requests:
+            return 0.0
+
+        now = time.time()
+        # Remove old requests
+        while self.requests and self.requests[0] < now - self.window:
+            self.requests.popleft()
+
+        if len(self.requests) < self.max_requests:
+            return 0.0
+
+        # Time until oldest request expires
+        return (self.requests[0] + self.window) - now
 
 
 class CostLimitExceededError(Exception):
@@ -117,12 +163,15 @@ class ClaudeIntegration:
             self.client = Anthropic(api_key=self.api_key)
             logger.info("Claude integration initialized in standalone mode", model=self.model)
 
-        # Response cache with LRU eviction
-        self.cache = {}
-        self.cache_access_order = []
+        # Response cache with LRU eviction (OrderedDict provides O(1) operations)
+        self.cache = OrderedDict()
         self.cache_max_size = RESPONSE_CACHE_MAX_SIZE
         self.cache_hits = 0
         self.cache_misses = 0
+
+        # Rate limiting
+        self.rate_limiter = RateLimiter(max_requests=CLAUDE_RATE_LIMIT_REQUESTS, window_seconds=60)
+        logger.info(f"Rate limiter initialized: {CLAUDE_RATE_LIMIT_REQUESTS} requests per minute")
 
     def _build_context(
         self,
@@ -365,10 +414,8 @@ Please provide a comprehensive answer based on the context above."""
         cache_key = f"{query}:{len(retrieval_results)}"
         if use_cache and cache_key in self.cache:
             self.cache_hits += 1
-            # Update LRU order
-            if cache_key in self.cache_access_order:
-                self.cache_access_order.remove(cache_key)
-            self.cache_access_order.append(cache_key)
+            # Update LRU order - O(1) with OrderedDict
+            self.cache.move_to_end(cache_key)
 
             logger.debug("Response cache hit", query_length=len(query))
             metrics.record_success("response_cache_hit")
@@ -424,22 +471,15 @@ Please provide a comprehensive answer based on the context above."""
                 cached=False
             )
 
-            # Cache response with LRU eviction
+            # Cache response with LRU eviction - O(1) with OrderedDict
             if use_cache:
-                # Evict if at capacity
-                if len(self.cache) >= self.cache_max_size and cache_key not in self.cache:
-                    if self.cache_access_order:
-                        lru_key = self.cache_access_order.pop(0)
-                        if lru_key in self.cache:
-                            del self.cache[lru_key]
-                        logger.debug("Evicted from response cache", key=lru_key[:50])
-
                 self.cache[cache_key] = response
+                self.cache.move_to_end(cache_key)  # Mark as recently used
 
-                # Update LRU order
-                if cache_key in self.cache_access_order:
-                    self.cache_access_order.remove(cache_key)
-                self.cache_access_order.append(cache_key)
+                # Evict oldest if over size - O(1) with OrderedDict
+                if len(self.cache) > self.cache_max_size:
+                    lru_key, _ = self.cache.popitem(last=False)  # Remove oldest
+                    logger.debug("Evicted from response cache", key=lru_key[:50])
 
             # Log metrics
             logger.info(
@@ -482,6 +522,15 @@ Please provide a comprehensive answer based on the context above."""
         Returns:
             Tuple of (response text, token usage)
         """
+        # Check rate limit before making API call
+        if not self.rate_limiter.check_rate_limit():
+            wait_time = self.rate_limiter.get_wait_time()
+            logger.warning(f"Rate limit reached. Waiting {wait_time:.1f} seconds...")
+            time.sleep(wait_time)
+            # Try again after waiting
+            if not self.rate_limiter.check_rate_limit():
+                raise Exception("Rate limit exceeded even after waiting")
+
         def api_call():
             return self.client.messages.create(
                 model=self.model,
@@ -522,6 +571,15 @@ Please provide a comprehensive answer based on the context above."""
         Returns:
             Tuple of (response text, token usage)
         """
+        # Check rate limit before making API call
+        if not self.rate_limiter.check_rate_limit():
+            wait_time = self.rate_limiter.get_wait_time()
+            logger.warning(f"Rate limit reached. Waiting {wait_time:.1f} seconds...")
+            time.sleep(wait_time)
+            # Try again after waiting
+            if not self.rate_limiter.check_rate_limit():
+                raise Exception("Rate limit exceeded even after waiting")
+
         def api_call():
             return self.client.messages.create(
                 model=self.model,
@@ -562,9 +620,9 @@ Please provide a comprehensive answer based on the context above."""
         else:
             # Estimate if not available
             token_usage = {
-                "input": len(user_message) // 4,
-                "output": len(response_text) // 4,
-                "total": (len(user_message) + len(response_text)) // 4
+                "input": len(user_message) // CHARS_PER_TOKEN,
+                "output": len(response_text) // CHARS_PER_TOKEN,
+                "total": (len(user_message) + len(response_text)) // CHARS_PER_TOKEN
             }
 
         return response_text, token_usage
@@ -578,9 +636,10 @@ Please provide a comprehensive answer based on the context above."""
         self.total_tokens_used["input"] += token_usage.get("input", 0)
         self.total_tokens_used["output"] += token_usage.get("output", 0)
 
-        # Calculate cost (example rates for Haiku)
-        input_cost = token_usage.get("input", 0) * 0.00000025  # $0.25 per 1M tokens
-        output_cost = token_usage.get("output", 0) * 0.00000125  # $1.25 per 1M tokens
+        # Calculate cost using configured pricing
+        config = get_config()
+        input_cost = token_usage.get("input", 0) * config.claude.pricing_input_per_token
+        output_cost = token_usage.get("output", 0) * config.claude.pricing_output_per_token
         query_cost = input_cost + output_cost
 
         self.total_cost += query_cost
@@ -632,7 +691,6 @@ Please provide a comprehensive answer based on the context above."""
     def clear_cache(self):
         """Clear response cache."""
         self.cache.clear()
-        self.cache_access_order.clear()
         logger.info("Response cache cleared")
 
 

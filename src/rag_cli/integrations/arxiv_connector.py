@@ -5,12 +5,15 @@ with rate limiting to comply with API guidelines (3 requests/second).
 """
 
 import time
+import threading
 import xml.etree.ElementTree as ET
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from collections import OrderedDict
 import requests
 
+from rag_cli.core.constants import DEFAULT_HTTP_TIMEOUT
 from rag_cli.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -42,12 +45,15 @@ class ArXivConnector:
         """
         self.rate_limit_delay = rate_limit_delay
         self.last_request_time = 0.0
-        self.cache: Dict[str, List[ArXivPaper]] = {}
+        # Bounded cache with LRU eviction to prevent memory leaks
+        self.cache = OrderedDict()
+        self.max_cache_size = 100  # Keep last 100 search results
         self.cache_ttl = timedelta(days=30)  # Cache papers for 30 days
 
         logger.info("ArXiv connector initialized",
                     rate_limit=f"{1 / rate_limit_delay:.1f} req/sec",
-                    cache_ttl=f"{self.cache_ttl.days} days")
+                    cache_ttl=f"{self.cache_ttl.days} days",
+                    max_cache_size=self.max_cache_size)
 
     def _rate_limit(self):
         """Enforce rate limiting to stay under 3 requests/second."""
@@ -104,13 +110,18 @@ class ArXivConnector:
         Returns:
             List of ArXivPaper objects
         """
-        # Check cache first
+        # Check cache first with LRU tracking
         cache_key = f"{query}_{max_results}_{categories}_{sort_by}"
         if cache_key in self.cache:
             cached_papers, cache_time = self.cache[cache_key]
             if datetime.now() - cache_time < self.cache_ttl:
+                # Move to end to mark as recently used (O(1) with OrderedDict)
+                self.cache.move_to_end(cache_key)
                 logger.debug("ArXiv cache hit", query=query, count=len(cached_papers))
                 return cached_papers
+            else:
+                # Expired, remove from cache
+                del self.cache[cache_key]
 
         # Rate limit
         self._rate_limit()
@@ -132,15 +143,21 @@ class ArXivConnector:
             response = requests.get(
                 self.BASE_URL,
                 params=params,
-                timeout=10
+                timeout=DEFAULT_HTTP_TIMEOUT
             )
             response.raise_for_status()
 
             # Parse XML response
             papers = self._parse_response(response.text)
 
-            # Cache results
+            # Cache results with LRU eviction
             self.cache[cache_key] = (papers, datetime.now())
+            self.cache.move_to_end(cache_key)  # Mark as recently used
+
+            # Evict oldest if over size - O(1) with OrderedDict
+            if len(self.cache) > self.max_cache_size:
+                oldest_key, _ = self.cache.popitem(last=False)
+                logger.debug("ArXiv cache eviction", evicted_key=oldest_key[:50])
 
             logger.info("ArXiv search completed",
                         query=query,
@@ -269,10 +286,11 @@ class ArXivConnector:
 
 # Singleton instance
 _arxiv_connector: Optional[ArXivConnector] = None
+_arxiv_lock = threading.Lock()
 
 
 def get_arxiv_connector() -> ArXivConnector:
-    """Get or create the global ArXiv connector instance.
+    """Get or create the global ArXiv connector instance with thread-safe initialization.
 
     Returns:
         ArXiv connector instance
@@ -280,6 +298,8 @@ def get_arxiv_connector() -> ArXivConnector:
     global _arxiv_connector
 
     if _arxiv_connector is None:
-        _arxiv_connector = ArXivConnector()
+        with _arxiv_lock:
+            if _arxiv_connector is None:
+                _arxiv_connector = ArXivConnector()
 
     return _arxiv_connector
