@@ -1,4 +1,16 @@
-# RAG-CLI - STATUS: [NOT FULLY WORKING]
+# RAG-CLI - STATUS: [Sorta WORKING] - Read below
+
+## Use dt-cli repo instead, I think it's better
+
+NEW 11/08/2025: I believe I put this in a semi working state - haven't fully tested but tried to fix a lot of the issues that existed. As a first attempt at utilizing plugins... I find them a bit weird with a lot of overlap with MCP. 
+
+That being said, I reworked this entire project and decided to go with an even more Open Source / Free approach in this repo: **https://github.com/ItMeDiaTech/dt-cli** . With the use of RAG / MAF, it really isn't needed to use Claude Code CLI as much. Depending on how happy I am with the results, I may cancel my $200 plan I use now to assist in building coding projects.
+
+In this new repo, I still left in integraion with Claude Code CLI just in case though and you can still use it as a plugin just like this project. 
+
+I might end up deprecating this repo in favor of the other. Let me know what you think my leaving a star on whichever you find better so I can get feedback, or using the Discussions which I think I left open? I do have a background in coding, but I do feel we should use the tools available to use to accelerate our tasks...even if I feel I do more debugging than coding with them.
+
+## Old News
 
 I'm in the process of refractoring and analyzing best practices for plugins since they just came out. It's not in a workable state, but I just started this project a few days ago. Hoping to get it in a working state / runnable state in the next day or two from 11/07/2025. 
 
