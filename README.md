@@ -8,7 +8,7 @@ That being said, I reworked this entire project and decided to go with an even m
 
 In this new repo, I still left in integraion with Claude Code CLI just in case though and you can still use it as a plugin just like this project. 
 
-I might end up deprecating this repo in favor of the other. Let me know what you think my leaving a star on whichever you find better so I can get feedback, or using the Discussions which I think I left open? I do have a background in coding, but I do feel we should use the tools available to use to accelerate our tasks...even if I feel I do more debugging than coding with them.
+I might end up deprecating this repo in favor of the other. Let me know what you think my leaving a star on whichever you find better so I can get feedback, or using the Discussions which I think I left open? I do have a background in coding, but I do feel we should use the tools available to accelerate our tasks...even if I feel I do more debugging than coding with them.
 
 ## Old News
 
