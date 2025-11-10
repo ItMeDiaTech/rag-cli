@@ -74,15 +74,21 @@ def get_rag_cli_root(hook_file: Optional[Path] = None) -> Path:
     
     # Strategy 3: Check common installation locations
     if project_root is None:
+        # IMPORTANT: Skip marketplace cache during lifecycle hooks to prevent file locks
+        skip_marketplace = os.environ.get('CLAUDE_LIFECYCLE_HOOK') == 'true'
+
         potential_paths = [
-            # GitHub marketplace installation location
-            Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli',
-            # Manual plugin installation location
+            # Manual plugin installation location (check first)
             Path.home() / '.claude' / 'plugins' / 'rag-cli',
             # Relative to current working directory
             Path.cwd(),
         ]
-        
+
+        # Only check marketplace cache if NOT in lifecycle hook
+        if not skip_marketplace:
+            # GitHub marketplace installation location (temporary cache)
+            potential_paths.insert(0, Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli')
+
         for path in potential_paths:
             if path.exists():
                 # Check for new structure

@@ -168,45 +168,39 @@ def verify_installation() -> bool:
     print("Verifying installation...")
 
     try:
-        # Set up sys.path before importing modules
-        plugin_root = get_plugin_root()
-        plugin_root_str = str(plugin_root)
-        src_dir_str = str(plugin_root / "src")
-        
-        if plugin_root_str not in sys.path:
-            sys.path.insert(0, plugin_root_str)
-        if src_dir_str not in sys.path:
-            sys.path.insert(0, src_dir_str)
-        
-        # Try importing core modules
-        from rag_cli.core import vector_store, embeddings
-        print("  Core library imports OK")
+        # IMPORTANT: DO NOT modify sys.path during lifecycle hooks
+        # The marketplace cache directory may still be in use by the framework
+        # Instead, rely on the package being installed via pip install
 
-        # Try importing plugin modules
-        from rag_cli_plugin.mcp import unified_server
-        print("  Plugin imports OK")
-
-        # Check if required files exist
+        # Just verify the plugin_root structure without importing modules
         plugin_root = get_plugin_root()
-        required_files = [
-            plugin_root / "config" / "rag_settings.json",
+
+        # Check if required directories and files exist
+        required_paths = [
+            plugin_root / "src" / "rag_cli" / "core",
+            plugin_root / "src" / "rag_cli_plugin",
+            plugin_root / "config",
             plugin_root / "data",
-            plugin_root / "logs"
+            plugin_root / ".claude-plugin" / "plugin.json"
         ]
 
-        for file_path in required_files:
-            if file_path.exists():
-                print(f"  Found: {file_path.relative_to(plugin_root)}")
+        all_exist = True
+        for path in required_paths:
+            if path.exists():
+                print(f"  Found: {path.relative_to(plugin_root)}")
             else:
-                print(f"  Missing: {file_path.relative_to(plugin_root)}")
-                return False
+                print(f"  Missing: {path.relative_to(plugin_root)}")
+                all_exist = False
 
-        print("  Installation verified successfully")
-        return True
+        if all_exist:
+            print("  Installation structure verified successfully")
+            # Note: Module imports will be verified at runtime, not during installation
+            print("  Module imports will be verified when plugin is first used")
+            return True
+        else:
+            print("  Installation verification incomplete - missing required paths")
+            return False
 
-    except ImportError as e:
-        print(f"  Import verification failed: {e}")
-        return False
     except Exception as e:
         print(f"  Verification failed: {e}")
         return False
@@ -230,6 +224,29 @@ def print_usage_instructions():
     print("=" * 60)
 
 
+def cleanup_resources():
+    """Clean up resources to prevent file locks during marketplace finalization.
+
+    This is critical on Windows where file handles can prevent directory renames.
+    """
+    import gc
+
+    # Force garbage collection to release any file handles
+    gc.collect()
+
+    # Clear any module-level caches that might hold references
+    if 'rag_cli.core.path_resolver' in sys.modules:
+        # Reset PathResolver singleton if it was initialized
+        module = sys.modules['rag_cli.core.path_resolver']
+        if hasattr(module, '_path_resolver'):
+            module._path_resolver = None
+        if hasattr(module.PathResolver, '_instance'):
+            module.PathResolver._instance = None
+
+    # Final garbage collection
+    gc.collect()
+
+
 def main():
     """Main installation entrypoint."""
     print("\n" + "=" * 60)
@@ -237,6 +254,7 @@ def main():
     print("=" * 60)
 
     success = True
+    exit_code = 0
 
     try:
         print("\n[1/5] Installing dependencies...")
@@ -262,17 +280,26 @@ def main():
         print("\n[5/5] Verifying installation...")
         if verify_installation():
             print_usage_instructions()
-            return 0 if success else 1
+            exit_code = 0 if success else 1
         else:
             print("\nInstallation completed with errors")
             print("Please check the output above for details")
-            return 1
+            exit_code = 1
 
     except Exception as e:
         print(f"\nInstallation failed: {e}")
         import traceback
         traceback.print_exc()
-        return 1
+        exit_code = 1
+
+    finally:
+        # CRITICAL: Clean up resources before exit to prevent file locks
+        # This ensures the marketplace cache can be finalized on Windows
+        print("\nCleaning up installation resources...")
+        cleanup_resources()
+        print("Installation complete. Exiting...")
+
+    return exit_code
 
 
 if __name__ == "__main__":

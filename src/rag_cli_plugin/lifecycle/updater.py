@@ -255,6 +255,29 @@ def run_post_update() -> int:
         return 1
 
 
+def cleanup_resources():
+    """Clean up resources to prevent file locks during marketplace operations.
+
+    This is critical on Windows where file handles can prevent directory renames.
+    """
+    import gc
+
+    # Force garbage collection to release any file handles
+    gc.collect()
+
+    # Clear any module-level caches that might hold references
+    if 'rag_cli.core.path_resolver' in sys.modules:
+        # Reset PathResolver singleton if it was initialized
+        module = sys.modules['rag_cli.core.path_resolver']
+        if hasattr(module, '_path_resolver'):
+            module._path_resolver = None
+        if hasattr(module.PathResolver, '_instance'):
+            module.PathResolver._instance = None
+
+    # Final garbage collection
+    gc.collect()
+
+
 def main():
     """Main updater entrypoint."""
     import argparse
@@ -268,14 +291,23 @@ def main():
     )
 
     args = parser.parse_args()
+    exit_code = 1
 
-    if args.mode == "pre":
-        return run_pre_update()
-    elif args.mode == "post":
-        return run_post_update()
-    else:
-        print(f"Unknown mode: {args.mode}")
-        return 1
+    try:
+        if args.mode == "pre":
+            exit_code = run_pre_update()
+        elif args.mode == "post":
+            exit_code = run_post_update()
+        else:
+            print(f"Unknown mode: {args.mode}")
+            exit_code = 1
+    finally:
+        # CRITICAL: Clean up resources before exit to prevent file locks
+        print("\nCleaning up update resources...")
+        cleanup_resources()
+        print("Update lifecycle complete. Exiting...")
+
+    return exit_code
 
 
 if __name__ == "__main__":
