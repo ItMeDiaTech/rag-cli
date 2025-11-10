@@ -4,6 +4,122 @@ This document tracks known limitations and issues in RAG-CLI v2.0, along with th
 
 ## Active Issues
 
+### Marketplace Cache Finalization Error on Windows (FIXED)
+
+**Status:** Fixed in latest commit
+**Severity:** High (prevented marketplace installation)
+**Affected Versions:** v2.0.0 (before fix)
+**Platform:** Windows only
+**Component:** Lifecycle hooks and path resolution
+
+#### Issue Description
+
+When installing RAG-CLI via Claude Code marketplace on Windows, the installation would complete but the marketplace cache finalization would fail with:
+
+```
+Warning: Failed to load marketplace 'rag-cli': Failed to finalize marketplace cache.
+Please manually delete the directory at C:\Users\DiaTech\.claude\plugins\marketplaces\rag-cli
+if it exists and try again.
+
+Technical details: EPERM, Permission denied: \\?\C:\Users\DiaTech\.claude\plugins\marketplaces\rag-cli
+```
+
+**Symptoms:**
+- Plugin installs successfully
+- Post-install hook completes without errors
+- Marketplace cache cannot be finalized
+- Windows EPERM (Permission denied) error on marketplace directory
+- Warning appears every time marketplace is loaded
+
+#### Root Cause
+
+The lifecycle hooks (post_install, pre_update, post_update) were inadvertently creating file handle locks on the marketplace cache directory:
+
+1. Claude Code framework extracts plugin to marketplace cache at `C:\Users\DiaTech\.claude\plugins\marketplaces\rag-cli`
+2. Post-install hook runs from this temporary location
+3. Hook imports modules that use PathResolver and path_utils
+4. PathResolver checks for marketplace directory and finds it (since hook is running from there)
+5. Python creates singleton instances that hold references to marketplace directory
+6. Hook completes but Python interpreter still has file handles open
+7. Framework tries to finalize (rename/move) marketplace cache directory
+8. On Windows, rename fails with EPERM because Python still holds file handles
+
+**Key Technical Details:**
+- Path resolution code in `src/rag_cli/core/path_resolver.py:61-63` checked marketplace directory
+- Hook path utilities in `src/rag_cli_plugin/hooks/path_utils.py:78-79` also checked marketplace
+- Windows file locking is stricter than Unix/Linux
+- Directory rename requires exclusive access to all files within
+
+#### Solution Implemented
+
+Multiple defensive measures were implemented to prevent file locks:
+
+**1. Skip Marketplace During Lifecycle Hooks** (path_resolver.py, path_utils.py)
+- Added `CLAUDE_LIFECYCLE_HOOK` environment variable check
+- Skip marketplace directory entirely when variable is set to "true"
+- Prevents PathResolver from creating references to marketplace cache
+
+**2. Set Environment Variable in Lifecycle Config** (lifecycle.json)
+- All lifecycle hooks now set `CLAUDE_LIFECYCLE_HOOK=true`
+- Applies to post_install, pre_update, and post_update hooks
+
+**3. Removed Module Imports from Verification** (installer.py)
+- Removed `from rag_cli.core import vector_store, embeddings` imports
+- Removed `from rag_cli_plugin.mcp import unified_server` imports
+- Verification now only checks directory structure, not module imports
+- Module imports verified at runtime instead of install time
+
+**4. Explicit Resource Cleanup** (installer.py, updater.py)
+- Added `cleanup_resources()` function to both lifecycle modules
+- Forces garbage collection to release file handles
+- Clears PathResolver singleton instances
+- Runs in `finally` block to ensure execution
+
+**5. Added CLAUDE_PLUGIN_ROOT Support** (path_resolver.py)
+- PathResolver now checks `CLAUDE_PLUGIN_ROOT` environment variable
+- This variable is set by Claude Code to the actual installation directory
+- Ensures hooks use installation directory, not marketplace cache
+
+#### Files Modified
+
+- `src/rag_cli_plugin/lifecycle/installer.py:166-206` - Removed module imports, added cleanup
+- `src/rag_cli_plugin/lifecycle/updater.py:258-314` - Added cleanup function
+- `src/rag_cli/core/path_resolver.py:40-92` - Skip marketplace during lifecycle hooks
+- `src/rag_cli_plugin/hooks/path_utils.py:75-101` - Skip marketplace during lifecycle hooks
+- `.claude-plugin/lifecycle.json:10-46` - Added CLAUDE_LIFECYCLE_HOOK environment variable
+
+#### Testing
+
+To verify the fix works:
+
+1. On Windows, install via marketplace (simulated or actual)
+2. Check that no EPERM errors appear
+3. Verify marketplace cache directory can be renamed after hook completes
+4. Confirm plugin installs and functions correctly
+
+**Expected Results:**
+- Post-install hook completes successfully
+- No permission errors during marketplace finalization
+- Plugin loads without warnings
+- All functionality works as expected
+
+#### Prevention
+
+This fix prevents similar issues in the future by:
+- Explicitly avoiding marketplace cache in all path resolution
+- Using environment variables to signal lifecycle hook context
+- Implementing defensive cleanup even if not strictly necessary
+- Documenting the Windows file locking behavior
+
+**Best Practices for Lifecycle Hooks:**
+- Never import modules that use singleton pattern with file I/O
+- Always clean up resources in finally block
+- Use environment variables to communicate context
+- Prefer environment variable resolution over directory walking
+- Test on Windows where file locking is stricter
+
+---
+
 ### PostToolUse Hook Disabled (Claude Code Framework Bug)
 
 **Status:** Workaround implemented

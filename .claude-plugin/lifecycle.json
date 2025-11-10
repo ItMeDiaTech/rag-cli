@@ -7,6 +7,9 @@
         "rag_cli_plugin.lifecycle.installer",
         "--mode", "marketplace"
       ],
+      "env": {
+        "CLAUDE_LIFECYCLE_HOOK": "true"
+      },
       "timeout": 60000,
       "required": true,
       "description": "Install dependencies and initialize RAG-CLI configuration"
@@ -18,6 +21,9 @@
         "rag_cli_plugin.lifecycle.updater",
         "--mode", "pre"
       ],
+      "env": {
+        "CLAUDE_LIFECYCLE_HOOK": "true"
+      },
       "timeout": 30000,
       "required": false,
       "description": "Backup configuration before update"
@@ -29,6 +35,9 @@
         "rag_cli_plugin.lifecycle.updater",
         "--mode", "post"
       ],
+      "env": {
+        "CLAUDE_LIFECYCLE_HOOK": "true"
+      },
       "timeout": 60000,
       "required": true,
       "description": "Reinstall dependencies and migrate configuration"

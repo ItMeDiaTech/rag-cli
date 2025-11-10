@@ -47,9 +47,16 @@ class PathResolver:
             RuntimeError: If project root cannot be determined
         """
         # Strategy 1: Environment variable (highest priority)
+        # This is used during marketplace installation (CLAUDE_PLUGIN_ROOT)
         if root_env := os.environ.get('RAG_CLI_ROOT'):
             root = Path(root_env)
             if root.exists():
+                return root
+
+        # Also check CLAUDE_PLUGIN_ROOT (set by Claude Code during lifecycle hooks)
+        if claude_root := os.environ.get('CLAUDE_PLUGIN_ROOT'):
+            root = Path(claude_root)
+            if root.exists() and (root / 'src' / 'rag_cli' / 'core').exists():
                 return root
 
         # Strategy 2: Claude plugin directory (v2.0 structure)
@@ -57,10 +64,14 @@ class PathResolver:
         if plugin_dir.exists() and (plugin_dir / 'src' / 'rag_cli' / 'core').exists():
             return plugin_dir
 
-        # Strategy 3: Marketplace plugin directory (v2.0 structure)
-        marketplace_dir = Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli'
-        if marketplace_dir.exists() and (marketplace_dir / 'src' / 'rag_cli' / 'core').exists():
-            return marketplace_dir
+        # Strategy 3: Marketplace cache directory (v2.0 structure)
+        # IMPORTANT: Skip this during lifecycle hooks to prevent file locks
+        # The marketplace cache is temporary and should not be used during installation
+        skip_marketplace = os.environ.get('CLAUDE_LIFECYCLE_HOOK') == 'true'
+        if not skip_marketplace:
+            marketplace_dir = Path.home() / '.claude' / 'plugins' / 'marketplaces' / 'rag-cli'
+            if marketplace_dir.exists() and (marketplace_dir / 'src' / 'rag_cli' / 'core').exists():
+                return marketplace_dir
 
         # Strategy 4: Walk up from current file (v2.0 structure)
         current = Path(__file__).resolve().parent
