@@ -1,20 +1,22 @@
-# RAG-CLI - STATUS: [Sorta WORKING] - Read below
+# RAG-CLI v2.0
 
-## Use dt-cli repo instead, I think it's better
+**Local Retrieval-Augmented Generation system for Claude Code with Multi-Agent Framework integration.**
 
-NEW 11/08/2025: I believe I put this in a semi working state - haven't fully tested but tried to fix a lot of the issues that existed. As a first attempt at utilizing plugins... I find them a bit weird with a lot of overlap with MCP. 
+A production-ready Claude Code plugin that combines ChromaDB vector embeddings with intelligent document retrieval and Multi-Agent Framework (MAF) orchestration for context-aware development assistance.
 
-That being said, I reworked this entire project and decided to go with an even more Open Source / Free approach in this repo: **https://github.com/ItMeDiaTech/dt-cli** . With the use of RAG / MAF, it really isn't needed to use Claude Code CLI as much. Depending on how happy I am with the results, I may cancel my $200 plan I use now to assist in building coding projects.
+## Project Status
 
-In this new repo, I still left in integraion with Claude Code CLI just in case though and you can still use it as a plugin just like this project. 
+**Current Version**: 2.0.0
+**Status**: Production Ready (with known limitations documented in KNOWN_ISSUES.md)
 
-I might end up deprecating this repo in favor of the other. Let me know what you think my leaving a star on whichever you find better so I can get feedback, or using the Discussions which I think I left open? I do have a background in coding, but I do feel we should use the tools available to accelerate our tasks...even if I feel I do more debugging than coding with them.
+**Key Features:**
+- ChromaDB-based vector storage with HNSW indexing
+- Hybrid search combining semantic and keyword matching
+- Multi-Agent Framework for intelligent query routing
+- Zero external API costs for document processing
+- Comprehensive plugin system (hooks, MCP server, slash commands)
 
-## Old News
-
-I'm in the process of refractoring and analyzing best practices for plugins since they just came out. It's not in a workable state, but I just started this project a few days ago. Hoping to get it in a working state / runnable state in the next day or two from 11/07/2025. 
-
-Local Retrieval-Augmented Generation (RAG) plugin for Claude Code that combines FAISS vector embeddings with intelligent info retrieval with Multi-Agent Framework (MAF) orchestration for context-aware development assistance. Uses Open Source / Free frameworks. Implements bridge to Claude Code CLI for agent integration so no additional token use is required. Why spend more money when you can just connect it up and utilize that plan. Could probably connect to other CLI forms easily enough. Just installing the plugin within Claude Code CLI should be enough to setup the entire project. Hooks, MCP, Slash Commands, MAF, and RAG should all be installed from the file that gets pulled. May need to run the enable rag slash command for it to start working fully from there but that's pretty much it.
+**Alternative Project**: For a standalone CLI experience with extended features, see [dt-cli](https://github.com/ItMeDiaTech/dt-cli). Both projects are actively maintained and can be used together.
 
 ## Overview
 
@@ -95,7 +97,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Verify installation
-python -c "import src.core.embeddings; print('Installation successful!')"
+python -c "from rag_cli.core import embeddings; print('Installation successful!')"
 ```
 
 #### Method 3: Development Installation
@@ -371,7 +373,7 @@ RAG-CLI implements a sophisticated document retrieval pipeline:
 - Offline-capable (after initial indexing)
 
 **Performance Optimized:**
-- FAISS vector store (industry standard)
+- ChromaDB vector store with HNSW indexing (industry standard)
 - Batch processing for throughput
 - Async operations for responsiveness
 - Memory-efficient chunking
@@ -394,7 +396,7 @@ Retrieval: Hybrid Search Pipeline
 ML/AI:
   - Embeddings: Sentence Transformers (all-MiniLM-L6-v2)
   - Reranking: Cross-encoder (ms-marco-MiniLM-L-6-v2)
-  - Storage: FAISS (Facebook AI Similarity Search)
+  - Storage: ChromaDB (with HNSW indexing)
 
 Document Processing:
   - Parsing: LangChain + BeautifulSoup + PyPDF2 + python-docx
@@ -492,7 +494,7 @@ RAG-CLI/
     core/               # Core RAG pipeline
        constants.py    # Global configuration constants
        embeddings.py   # Sentence transformer integration
-       vector_store.py # FAISS vector operations
+       vector_store.py # ChromaDB vector operations
        document_processor.py # Document chunking
        retrieval_pipeline.py # Hybrid search
        claude_integration.py # Claude API interface
@@ -517,7 +519,7 @@ RAG-CLI/
 
 1. **Document Processing**: Documents -> Chunks (400-500 tokens) -> Metadata extraction
 2. **Embedding Generation**: Chunks -> sentence-transformers -> 384-dim vectors
-3. **Vector Storage**: Embeddings -> FAISS index -> Persistent storage
+3. **Vector Storage**: Embeddings -> ChromaDB with HNSW indexing -> Persistent storage
 4. **Retrieval**: Query -> Hybrid search -> Reranking -> Top-K results
 5. **Response Generation**: Context + Query -> Claude Haiku -> AI response
 
@@ -543,8 +545,8 @@ embeddings:
 
 # Vector Store
 vector_store:
-  type: faiss
-  index_type: flat    # Use 'hnsw' for >100K documents
+  type: chromadb
+  index_type: hnsw    # ChromaDB uses HNSW for efficient similarity search
   save_path: data/vectors
 
 # Retrieval
@@ -871,7 +873,7 @@ MIT License - see LICENSE file for details.
 ## Acknowledgments
 
 - [Sentence Transformers](https://www.sbert.net/) for embedding models
-- [FAISS](https://github.com/facebookresearch/faiss) for vector search
+- [ChromaDB](https://www.trychroma.com/) for vector database with HNSW indexing
 - [Anthropic](https://www.anthropic.com/) for Claude API
 - [LangChain](https://langchain.com/) for document processing
 

@@ -32,7 +32,8 @@
             "command": "python ${CLAUDE_PLUGIN_ROOT}/src/rag_cli_plugin/hooks/response-post.py",
             "name": "response-post",
             "priority": 80,
-            "description": "Adds inline citations to Claude responses when RAG context is used"
+            "enabled": false,
+            "description": "Adds inline citations to Claude responses when RAG context is used (DISABLED: Claude Code framework bug)"
           }
         ]
       }

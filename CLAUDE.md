@@ -549,11 +549,16 @@ embedding = model.encode("test query")
 print(f"Embedding shape: {embedding.shape}")  # Should be (384,)
 
 # Test ChromaDB
-import faiss
-index = faiss.PersistentClient(384)
-index.add(embedding.reshape(1, -1))
-D, I = index.search(embedding.reshape(1, -1), 1)
-print(f"Search result: distance={D[0][0]}, index={I[0][0]}")  # Should be ~0, 0
+import chromadb
+client = chromadb.PersistentClient(path="./test_chroma")
+collection = client.get_or_create_collection(name="test")
+collection.add(
+    embeddings=[embedding.tolist()],
+    documents=["test query"],
+    ids=["test1"]
+)
+results = collection.query(query_embeddings=[embedding.tolist()], n_results=1)
+print(f"Search result: {results}")  # Should return the test document
 ```
 
 ## Known Issues and Limitations
@@ -588,4 +593,4 @@ The PostToolUse hook (`src/rag_cli_plugin/hooks/response-post.py`) is currently 
 - Full specifications: `RAG-implementation.md`
 - Known issues and workarounds: `KNOWN_ISSUES.md`
 - Claude Code plugin docs: https://docs.claude.com/en/docs/claude-code/
-- ChromaDB documentation: https://github.com/facebookresearch/faiss/wiki
+- ChromaDB documentation: https://docs.trychroma.com/

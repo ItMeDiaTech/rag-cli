@@ -4,8 +4,8 @@ This module implements intelligent caching that matches similar queries
 using cosine similarity rather than exact string matching. This significantly
 improves cache hit rates for semantically equivalent queries.
 
-NOTE: This module now uses HNSW indexing for O(log n) similarity search
-instead of O(n) linear search. See semantic_cache_hnsw.py for implementation.
+The cache uses linear similarity search with LRU eviction for efficiency.
+ChromaDB provides HNSW indexing for the main vector store.
 """
 
 import time
