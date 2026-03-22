@@ -2,7 +2,7 @@
 
 # DO NOT USE THIS TOOL FOR ANTHROPIC / CLAUDE - SEE BELOW
 
-Just a heads-up, turns out Anthropic / Claude does not like it when you avoid token usage cost by routing traffic to the CLI tool from them. This shadow banned me from their platform. They refuse to respond after months of submitting an appeal, etc, and no project I worked on violated any aspect of their Terms. After research, I see many people have been banned on similar cases. You have been warned.
+Just a heads-up, turns out Anthropic / Claude does not like it when you avoid token usage cost by routing traffic to the CLI tool from them. This shadow banned me from their platform when I was on their $200 a month plan. They refuse to respond after months of submitting an appeal, etc, and no project I worked on violated any aspect of their Terms. After research, I see many people have been banned on similar cases. You have been warned.
 
 **Local Retrieval-Augmented Generation system for Claude Code with Multi-Agent Framework integration.**
 
