@@ -1,5 +1,9 @@
 # RAG-CLI v2.0
 
+# DO NOT USE THIS TOOL FOR ANTHROPIC / CLAUDE - SEE BELOW
+
+Just a heads-up, turns out Anthropic / Claude does not like it when you avoid token usage cost by routing traffic to the CLI tool from them. This shadow banned me from their platform. They refuse to respond after months of submitting an appeal, etc, and no project I worked on violated any aspect of their Terms. After research, I see many people have been banned on similar cases. You have been warned.
+
 **Local Retrieval-Augmented Generation system for Claude Code with Multi-Agent Framework integration.**
 
 A production-ready Claude Code plugin that combines ChromaDB vector embeddings with intelligent document retrieval and Multi-Agent Framework (MAF) orchestration for context-aware development assistance.
